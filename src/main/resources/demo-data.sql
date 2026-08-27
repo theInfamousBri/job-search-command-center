@@ -88,6 +88,13 @@ INSERT INTO job_applications (
  'Backend application development, REST APIs, SQL, and production support for enterprise workflows.',
  strftime('%Y-%m-%dT08:00:00','now','localtime','-60 days'), strftime('%Y-%m-%dT08:00:00','now','localtime','-45 days'));
 
+-- v1.1 richer application metadata used by demo screenshots.
+UPDATE job_applications SET location = 'Denver, CO', work_arrangement = 'Hybrid', years_experience_required = '4+', career_lane = 'Backend / Platform Reliability', cover_letter = 1, next_step = 'Awaiting feedback after the technical interview.' WHERE id = 1;
+UPDATE job_applications SET location = 'United States', work_arrangement = 'Remote', years_experience_required = '3+', career_lane = 'Backend / Payments Platform', cover_letter = 1, next_step = 'Final panel is scheduled; review architecture and manager questions.' WHERE id = 2;
+UPDATE job_applications SET location = 'Boulder, CO', work_arrangement = 'Hybrid', years_experience_required = '3+', career_lane = 'Developer Platform / Cloud Infrastructure', cover_letter = 0 WHERE id = 3;
+UPDATE job_applications SET location = 'Denver, CO', work_arrangement = 'Hybrid', years_experience_required = '5+', career_lane = 'Commerce / Backend Platform', cover_letter = 1 WHERE id = 6;
+UPDATE job_applications SET location = 'United States', work_arrangement = 'Remote', years_experience_required = '4+', career_lane = 'Data Platform / Backend Services', cover_letter = 1, next_step = 'Technical interview scheduled; finish linked prep.' WHERE id = 10;
+
 -- ---------------------------------------------------------------------------
 -- Lifecycle / calendar events
 -- ---------------------------------------------------------------------------

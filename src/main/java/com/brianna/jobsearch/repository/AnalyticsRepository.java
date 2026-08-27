@@ -105,9 +105,35 @@ public class AnalyticsRepository {
         return jdbcTemplate.query("""
                 SELECT state, COUNT(*) AS total
                 FROM job_applications
+                WHERE state <> 'CLOSED'
                 GROUP BY state
                 ORDER BY total DESC, state ASC
                 """, (rs, rowNum) -> new StateCount(rs.getString("state"), rs.getLong("total")));
+    }
+
+    public List<OutcomeCount> outcomeCounts() {
+        return jdbcTemplate.query("""
+                SELECT outcome, COUNT(*) AS total
+                FROM (
+                    SELECT CASE
+                        WHEN status = 'NO_RESPONSE' THEN 'NO_RESPONSE'
+                        WHEN status = 'REJECTED' THEN 'REJECTED'
+                        WHEN status = 'WITHDRAWN' THEN 'WITHDRAWN'
+                        WHEN status = 'OFFER' THEN 'OFFER'
+                        WHEN status IN ('RECRUITER_SCREEN', 'ASSESSMENT', 'HIRING_MANAGER', 'TECHNICAL_INTERVIEW', 'FINAL_ROUND')
+                             AND state <> 'CLOSED' THEN 'INTERVIEWING'
+                        WHEN state <> 'CLOSED' THEN 'ACTIVE'
+                        ELSE 'OTHER_CLOSED'
+                    END AS outcome
+                    FROM job_applications ja
+                    WHERE EXISTS (
+                        SELECT 1 FROM application_events applied
+                        WHERE applied.application_id = ja.id AND applied.event_type = 'APPLIED'
+                    )
+                )
+                GROUP BY outcome
+                ORDER BY total DESC, outcome ASC
+                """, (rs, rowNum) -> new OutcomeCount(rs.getString("outcome"), rs.getLong("total")));
     }
 
     public List<MonthCount> applicationCountsByMonth(LocalDate start, LocalDate end) {
@@ -137,30 +163,55 @@ public class AnalyticsRepository {
                 start.toString(), end.toString());
     }
 
-    public List<SourcePerformance> sourcePerformance(int limit) {
-        return jdbcTemplate.query("""
-                SELECT TRIM(ja.source) AS source,
+    public List<DimensionPerformance> sourcePerformance(int limit) {
+        return dimensionPerformance("TRIM(ja.source)", "ja.source IS NOT NULL AND TRIM(ja.source) <> ''", limit);
+    }
+
+    public List<DimensionPerformance> priorityPerformance(int limit) {
+        return dimensionPerformance("COALESCE(ja.priority, 'UNSPECIFIED')", "1 = 1", limit);
+    }
+
+    public List<DimensionPerformance> careerLanePerformance(int limit) {
+        return dimensionPerformance("TRIM(ja.career_lane)", "ja.career_lane IS NOT NULL AND TRIM(ja.career_lane) <> ''", limit);
+    }
+
+    public List<DimensionPerformance> workArrangementPerformance(int limit) {
+        return dimensionPerformance("TRIM(ja.work_arrangement)", "ja.work_arrangement IS NOT NULL AND TRIM(ja.work_arrangement) <> ''", limit);
+    }
+
+    private List<DimensionPerformance> dimensionPerformance(String expression, String whereClause, int limit) {
+        String sql = """
+                SELECT %s AS label,
                        COUNT(*) AS applications,
-                       SUM(
-                           CASE WHEN EXISTS (
-                               SELECT 1
-                               FROM application_events ae
-                               WHERE ae.application_id = ja.id
-                                 AND ae.event_type IN (""" + INTERVIEW_EVENT_TYPES + """
-                               )
-                           ) THEN 1 ELSE 0 END
-                       ) AS interviewed
+                       SUM(CASE WHEN EXISTS (
+                           SELECT 1
+                           FROM application_events ae
+                           WHERE ae.application_id = ja.id
+                             AND ae.event_type IN (%s)
+                       ) THEN 1 ELSE 0 END) AS responses,
+                       SUM(CASE WHEN EXISTS (
+                           SELECT 1
+                           FROM application_events ae
+                           WHERE ae.application_id = ja.id
+                             AND ae.event_type IN (%s)
+                       ) THEN 1 ELSE 0 END) AS interviewed
                 FROM job_applications ja
-                WHERE ja.source IS NOT NULL
-                  AND TRIM(ja.source) <> ''
-                GROUP BY TRIM(ja.source)
-                ORDER BY applications DESC, interviewed DESC, source ASC
+                WHERE EXISTS (
+                    SELECT 1 FROM application_events applied
+                    WHERE applied.application_id = ja.id AND applied.event_type = 'APPLIED'
+                )
+                  AND (%s)
+                GROUP BY %s
+                ORDER BY applications DESC, responses DESC, interviewed DESC, label ASC
                 LIMIT ?
-                """, (rs, rowNum) -> new SourcePerformance(
-                        rs.getString("source"),
-                        rs.getLong("applications"),
-                        rs.getLong("interviewed")),
-                limit);
+                """.formatted(expression, RESPONSE_EVENT_TYPES, INTERVIEW_EVENT_TYPES, whereClause, expression);
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> new DimensionPerformance(
+                rs.getString("label"),
+                rs.getLong("applications"),
+                rs.getLong("responses"),
+                rs.getLong("interviewed")),
+                Math.max(1, limit));
     }
 
     public PrepHealth prepHealth() {
@@ -207,10 +258,13 @@ public class AnalyticsRepository {
     public record StateCount(String state, long total) {
     }
 
+    public record OutcomeCount(String outcome, long total) {
+    }
+
     public record MonthCount(String monthKey, long total) {
     }
 
-    public record SourcePerformance(String source, long applications, long interviewed) {
+    public record DimensionPerformance(String label, long applications, long responses, long interviewed) {
     }
 
     public record PrepHealth(long totalItems, Double averageConfidence, long reviewedItems, long completedReviews) {

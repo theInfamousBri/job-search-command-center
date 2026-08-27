@@ -98,7 +98,7 @@
                     <div>
                         <p class="eyebrow">RIGHT NOW</p>
                         <h2>Current states</h2>
-                        <p class="analytics-panel-subtitle">What your active job search looks like today.</p>
+                        <p class="analytics-panel-subtitle">How your still-open applications are distributed right now.</p>
                     </div>
                 </div>
 
@@ -118,6 +118,54 @@
                         </div>
                         <b th:text="${state.count}">1</b>
                     </div>
+                </div>
+            </article>
+        </section>
+
+        <section class="analytics-insight-grid">
+            <article class="panel analytics-outcome-panel">
+                <div class="analytics-panel-heading">
+                    <div>
+                        <p class="eyebrow">OUTCOMES</p>
+                        <h2>What happened</h2>
+                        <p class="analytics-panel-subtitle">Current high-level outcome mix across submitted applications.</p>
+                    </div>
+                </div>
+
+                <div class="outcome-list" th:unless="${#lists.isEmpty(analytics.outcomes)}">
+                    <div class="outcome-row" th:each="outcome : ${analytics.outcomes}">
+                        <span class="outcome-dot" th:classappend="${' outcome-' + #strings.toLowerCase(#strings.replace(outcome.key, '_', '-'))}"></span>
+                        <div>
+                            <strong th:text="${outcome.label}">No response</strong>
+                            <small th:text="${#numbers.formatDecimal(outcome.percent, 1, 1) + '% of applications'}">50%</small>
+                        </div>
+                        <b th:text="${outcome.count}">82</b>
+                    </div>
+                </div>
+            </article>
+
+            <article class="panel analytics-performance-panel">
+                <div class="analytics-panel-heading">
+                    <div>
+                        <p class="eyebrow">PRIORITY PERFORMANCE</p>
+                        <h2>Where priority turns into traction</h2>
+                        <p class="analytics-panel-subtitle">Compare response and interview rates across your priority labels.</p>
+                    </div>
+                </div>
+                <div class="performance-table-wrap">
+                    <table class="performance-table">
+                        <thead><tr><th>Priority</th><th>Apps</th><th>Responses</th><th>Response rate</th><th>Interviews</th><th>Interview rate</th></tr></thead>
+                        <tbody>
+                        <tr th:each="row : ${analytics.priorities}">
+                            <td><strong th:text="${row.label}">High</strong></td>
+                            <td th:text="${row.applications}">65</td>
+                            <td th:text="${row.responses}">20</td>
+                            <td th:text="${#numbers.formatDecimal(row.responseRate, 1, 1) + '%'}">30%</td>
+                            <td th:text="${row.interviewed}">2</td>
+                            <td th:text="${#numbers.formatDecimal(row.interviewRate, 1, 1) + '%'}">3%</td>
+                        </tr>
+                        </tbody>
+                    </table>
                 </div>
             </article>
         </section>
@@ -216,6 +264,56 @@
             </article>
         </section>
 
+        <section class="analytics-dimension-grid">
+            <article class="panel analytics-performance-panel">
+                <div class="analytics-panel-heading">
+                    <div>
+                        <p class="eyebrow">CAREER LANES</p>
+                        <h2>Which lanes get traction</h2>
+                        <p class="analytics-panel-subtitle">Use response and interview rates to see where your experience is resonating.</p>
+                    </div>
+                </div>
+                <div class="analytics-empty compact" th:if="${#lists.isEmpty(analytics.careerLanes)}">
+                    <span>○</span><strong>No career-lane data yet</strong><small>Add career lanes to applications to compare them.</small>
+                </div>
+                <div class="performance-table-wrap" th:unless="${#lists.isEmpty(analytics.careerLanes)}">
+                    <table class="performance-table">
+                        <thead><tr><th>Career lane</th><th>Apps</th><th>Response</th><th>Interview</th></tr></thead>
+                        <tbody><tr th:each="row : ${analytics.careerLanes}">
+                            <td><strong th:text="${row.label}">Backend / Platform</strong></td>
+                            <td th:text="${row.applications}">20</td>
+                            <td th:text="${#numbers.formatDecimal(row.responseRate, 1, 1) + '%'}">38%</td>
+                            <td th:text="${#numbers.formatDecimal(row.interviewRate, 1, 1) + '%'}">4%</td>
+                        </tr></tbody>
+                    </table>
+                </div>
+            </article>
+
+            <article class="panel analytics-performance-panel">
+                <div class="analytics-panel-heading">
+                    <div>
+                        <p class="eyebrow">WORK ARRANGEMENT</p>
+                        <h2>Remote, hybrid, or on-site</h2>
+                        <p class="analytics-panel-subtitle">Compare where different work arrangements are producing responses.</p>
+                    </div>
+                </div>
+                <div class="analytics-empty compact" th:if="${#lists.isEmpty(analytics.workArrangements)}">
+                    <span>○</span><strong>No work-arrangement data yet</strong><small>Add work arrangements to applications to compare them.</small>
+                </div>
+                <div class="performance-table-wrap" th:unless="${#lists.isEmpty(analytics.workArrangements)}">
+                    <table class="performance-table">
+                        <thead><tr><th>Arrangement</th><th>Apps</th><th>Response</th><th>Interview</th></tr></thead>
+                        <tbody><tr th:each="row : ${analytics.workArrangements}">
+                            <td><strong th:text="${row.label}">Remote</strong></td>
+                            <td th:text="${row.applications}">20</td>
+                            <td th:text="${#numbers.formatDecimal(row.responseRate, 1, 1) + '%'}">38%</td>
+                            <td th:text="${#numbers.formatDecimal(row.interviewRate, 1, 1) + '%'}">4%</td>
+                        </tr></tbody>
+                    </table>
+                </div>
+            </article>
+        </section>
+
         <section class="panel analytics-source-panel">
             <div class="analytics-panel-heading">
                 <div>
@@ -237,19 +335,23 @@
                     <tr>
                         <th>Source</th>
                         <th>Applications</th>
+                        <th>Responses</th>
+                        <th>Response rate</th>
                         <th>Interviewed</th>
                         <th>Interview rate</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr th:each="source : ${analytics.sources}">
-                        <td><strong th:text="${source.source}">LinkedIn</strong></td>
+                        <td><strong th:text="${source.label}">LinkedIn</strong></td>
                         <td th:text="${source.applications}">12</td>
+                        <td th:text="${source.responses}">4</td>
+                        <td th:text="${#numbers.formatDecimal(source.responseRate, 1, 1) + '%'}">33%</td>
                         <td th:text="${source.interviewed}">3</td>
                         <td>
                             <div class="source-rate">
                                 <span><i th:style="|--source-rate:${source.interviewRate}%;|"></i></span>
-                                <b th:text="${#numbers.formatDecimal(source.interviewRate, 1, 0) + '%'}">25%</b>
+                                <b th:text="${#numbers.formatDecimal(source.interviewRate, 1, 1) + '%'}">25%</b>
                             </div>
                         </td>
                     </tr>

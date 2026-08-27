@@ -1,6 +1,6 @@
 # Job Search Command Center — Next Steps
 
-This file is the post-**1.0.0** roadmap. It consolidates the ideas intentionally deferred while the first usable local version was being built.
+This file is the post-**1.1.1** roadmap. It consolidates the ideas intentionally deferred while the first usable local version was being built.
 
 The order below is directional rather than a promise. Features should continue to be added when they solve a real workflow problem rather than just making the project larger.
 
@@ -27,16 +27,13 @@ Possible UX:
 
 ### 2. Smarter dashboard actions
 
-Make **Needs attention** more actionable rather than only stale-date based.
-
-Ideas:
+The 1.1.1 stale-review queue now handles old active applications. Continue making **Needs attention** more context-aware:
 
 - `Waiting 5 days after technical interview`
-- follow-up due reminders
 - interview tomorrow / prep incomplete
-- application untouched for N days
 - application still marked `Interview Scheduled` after the interview date
-- direct buttons for `Open prep`, `Add follow-up`, or `Update state`
+- direct buttons for `Open prep` or context-aware follow-up creation
+- configurable attention rules
 
 ### 3. Contacts / people CRM
 
@@ -75,13 +72,13 @@ Keep the information available on one page for fast navigation, but use tabs or 
 
 ### 5. Calendar refinement
 
-Add:
+Version 1.1.1 adds Actionable / Interviews / Assessments / Follow-ups / All history filters. Remaining ideas:
 
-- event filters: interviews, assessments, communication, follow-ups, pipeline
 - dedicated upcoming-interviews rail
 - click an empty date to add an activity
-- quick-create follow-up from an application
+- quick-create a future follow-up date from an application
 - clearer future vs completed activity states
+- optional communication-only / pipeline-only views if they prove useful
 
 Google Calendar sync belongs later under integrations.
 
@@ -204,15 +201,14 @@ Add:
 
 ### Outcome breakdowns
 
-Compare outcomes by:
+Version 1.1.1 adds outcome mix plus performance by priority, career lane, work arrangement, and source. Continue with:
 
-- application source
 - company
-- role family
+- role family normalization
 - location
-- remote / hybrid / onsite
 - salary band
 - month / quarter
+- statistically safer comparisons when sample sizes are small
 
 ### Search-strategy insights
 
@@ -226,16 +222,15 @@ Possible future insights:
 
 ## Import, export, and backup
 
-### CSV import
+### Import refinements
 
-High-value feature for bringing historical application data into the system.
+The v1.1 preview-first Excel / CSV importer now handles the current historical tracker format. Future refinements:
 
-Support:
-
-- column mapping
-- preview before import
-- validation / duplicate handling
-- status normalization
+- user-defined column mapping for unrelated spreadsheet layouts
+- import batch history / undo
+- richer parsing of interview dates embedded in follow-up text
+- source normalization during import
+- optional dry-run export of the normalized data
 
 ### Export / backup UI
 

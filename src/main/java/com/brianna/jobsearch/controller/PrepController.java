@@ -34,7 +34,7 @@ public class PrepController {
 
     @ModelAttribute("applications")
     public List<JobApplication> applications() {
-        return applicationService.search(null);
+        return applicationService.findAll();
     }
 
     @GetMapping("/prep")

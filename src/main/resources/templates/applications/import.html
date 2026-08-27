@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Import Applications · Job Search</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
+</head>
+<body>
+<div class="app-shell">
+    <aside th:replace="~{fragments :: sidebar('applications')}"></aside>
+    <header th:replace="~{fragments :: topbar}"></header>
+
+    <main class="main import-page">
+        <header class="page-header compact">
+            <div>
+                <a class="back-link" th:href="@{/applications}">← Applications</a>
+                <p class="eyebrow">IMPORT</p>
+                <h1>Import applications</h1>
+                <p class="subtle">Bring historical applications in from Excel or CSV without writing anything until you approve the preview.</p>
+            </div>
+        </header>
+
+        <div th:if="${importError}" class="flash-message flash-error" th:text="${importError}">Import error.</div>
+
+        <section class="panel import-upload-panel">
+            <div class="import-upload-icon">↑</div>
+            <div class="section-heading">
+                <h2>Choose your tracker</h2>
+                <p>Supported formats: <strong>.xlsx</strong>, <strong>.xls</strong>, and <strong>.csv</strong>.</p>
+            </div>
+
+            <form class="import-upload-form" th:action="@{/applications/import/preview}" method="post" enctype="multipart/form-data">
+                <label class="file-drop">
+                    <input type="file" name="file" accept=".xlsx,.xls,.csv" required>
+                    <span class="file-drop-title">Select an application spreadsheet</span>
+                    <span class="file-drop-copy">The file is parsed locally by this Spring app. Your real database is unchanged during preview.</span>
+                </label>
+                <button class="button button-primary" type="submit">Preview import →</button>
+            </form>
+        </section>
+
+        <section class="panel import-help-panel">
+            <div class="panel-header">
+                <div>
+                    <p class="eyebrow">EXPECTED COLUMNS</p>
+                    <h2>2026 tracker mapping</h2>
+                </div>
+            </div>
+            <div class="import-field-grid">
+                <span>Job Title → Role</span>
+                <span>Company → Company</span>
+                <span>Location → Location</span>
+                <span>Work Arrangement → Work arrangement</span>
+                <span>Compensation → Salary</span>
+                <span>YOE Req → Experience required</span>
+                <span>Priority → Priority</span>
+                <span>Career Lane → Career lane</span>
+                <span>Applied On → Applied date</span>
+                <span>Updated Date → historical update</span>
+                <span>Status → Stage + state</span>
+                <span>Next Step / Follow Up → Next step</span>
+                <span>Job Link → Posting URL</span>
+                <span>Cover Letter? → Cover letter</span>
+                <span>Notes → Notes</span>
+            </div>
+            <p class="import-note"><strong>Excel display values are preserved.</strong> This matters for cells such as <code>3-5</code> in the YOE column that Excel may internally store as a date serial.</p>
+        </section>
+    </main>
+</div>
+</body>
+</html>

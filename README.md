@@ -3,9 +3,9 @@
 
 # Job Search Command Center
 
-**A local-first command center for applications, interview prep, follow-ups, calendar events, and job-search analytics.**
+**A local-first command center for applications, interview prep, follow-ups, calendar events, imports, and job-search analytics.**
 
-Version **1.0.0**
+Version **1.1.1**
 </div>
 
 ---
@@ -19,12 +19,15 @@ It is intentionally **local-first**. The application runs on your computer, uses
 The project began as an application tracker and has grown into a small productivity system with:
 
 - application tracking and search
+- richer role metadata for work arrangement, experience requirements, career lane, follow-ups, and cover-letter tracking
 - pipeline-stage and current-state tracking
 - chronological application lifecycles
 - interview / assessment / follow-up calendar events
 - reusable and application-specific interview prep
 - confidence-based review scheduling
 - job-search funnel and timing analytics
+- preview-first Excel / CSV import for historical application data
+- conservative duplicate detection and merge controls
 - a polished dashboard-style UI
 - a sanitized demo mode for screenshots and public repository previews
 
@@ -41,6 +44,7 @@ The landing page provides an at-a-glance view of the active job search:
 - response rate
 - recently updated applications
 - applications that need attention
+- a stale-application review queue for old active / awaiting-feedback records
 
 ### Application tracker
 
@@ -48,17 +52,29 @@ Applications can store:
 
 - company and role
 - location
+- work arrangement
 - pipeline stage
 - current state
-- priority
+- priority, including `Stretch` and `Skip`
 - source
 - original job-posting URL
-- salary range
+- salary / compensation range
+- years of experience required
+- career lane
 - applied date
+- next step / follow-up
+- cover-letter tracking
 - working notes
 - a saved copy of the job description
 
-The tracker supports text search across company, role, location, source, state, notes, and saved job descriptions.
+The tracker supports text search across company, role, location, work arrangement, experience requirements, career lane, source, state, next step, notes, and saved job descriptions.
+
+For larger histories, the application list also supports:
+
+- filters for stage, state, priority, work arrangement, source, career lane, and applied-date range
+- sorting by recent update, oldest update, applied date, or company
+- 25 / 50 / 100-row page sizes
+- server-side pagination so large histories remain fast and scannable
 
 ### Pipeline stage vs. current state
 
@@ -69,6 +85,7 @@ Pipeline stages include:
 - Saved
 - Applied
 - Recruiter Screen
+- Assessment
 - Hiring Manager
 - Technical Interview
 - Final Round
@@ -108,6 +125,83 @@ Timeline events support:
 
 Changing an application's pipeline stage automatically records the new milestone in its lifecycle.
 
+### Spreadsheet import
+
+Version 1.1 adds a preview-first historical import flow for **Excel (`.xlsx` / `.xls`) and CSV (`.csv`)** trackers.
+
+The importer is intentionally designed so uploading a file does **not** immediately modify the private SQLite database. The workflow is:
+
+1. Select an Excel or CSV tracker.
+2. Parse and validate the file locally.
+3. Preview normalized application data.
+4. Review status mappings and duplicate warnings.
+5. Choose `Import separate`, `Merge with existing`, or `Skip` where appropriate.
+6. Explicitly commit the selected rows.
+
+The commit is transactional for the request, so a failed write is rolled back instead of leaving a partially completed import.
+
+#### Supported tracker fields
+
+The current importer recognizes the following tracker columns:
+
+```text
+Job Title
+Company
+Location
+Work Arrangement
+Compensation
+YOE Req
+Priority
+Career Lane
+Applied On
+Updated Date
+Status
+Next Step / Follow Up
+Job Link
+Cover Letter?
+Notes
+```
+
+Only `Job Title`, `Company`, and `Status` are required for the file to be parsed. Missing or unrecognized values are surfaced as warnings during preview rather than silently discarded.
+
+#### Status normalization
+
+Spreadsheet language is translated into the application's **pipeline stage + current state** model before import. For example:
+
+| Spreadsheet status | Application mapping |
+| --- | --- |
+| `Applied` | Applied / Active |
+| `Ghosted` | No Response / Closed |
+| `No Longer Under Consideration` | Rejected / Closed |
+| `Technical Screen` | Assessment / Awaiting Feedback |
+| `Technical Interview` | Technical Interview / Awaiting Feedback |
+| `Final Interview` | Final Round / Awaiting Feedback |
+| `Offer` | Offer / Active |
+| `Skip` | Saved / Closed and skipped by default |
+
+Unrecognized statuses are flagged during preview for review.
+
+#### Duplicate handling
+
+Duplicate handling is deliberately conservative:
+
+- matching **job URLs** are treated as likely exact matches
+- matching **company + role + location + applied date** is also treated as a likely exact match
+- matching **company + role only** is treated as a possible duplicate and is **not** automatically merged
+
+Likely exact matches default to `Merge with existing`; possible matches default to `Import separate` so legitimate applications to similar roles are not accidentally collapsed.
+
+#### Historical lifecycle preservation
+
+Historical dates are retained when possible:
+
+- `Applied On` becomes the application's applied date and lifecycle `Applied` event
+- `Updated Date` can become the historical date for the imported outcome / current milestone
+
+This prevents historical applications from appearing as though they were all created on the day the spreadsheet was imported, and makes Calendar and Analytics useful immediately after migration.
+
+Excel files are read with Apache POI's `DataFormatter`, which preserves displayed cell values such as `3-5` in a YOE column even when Excel internally represents the value as a date-like serial.
+
 ### Calendar
 
 The calendar renders dated lifecycle events in a monthly view and distinguishes event categories visually.
@@ -120,6 +214,9 @@ It includes:
 - event times when available
 - upcoming activity for the next 30 days
 - links from calendar entries back to the relevant application lifecycle
+- focused views for **Actionable**, **Interviews**, **Assessments**, **Follow-ups**, and **All history**
+
+The default **Actionable** view hides routine historical events such as Applied, Rejected, Withdrawn, and No Response so a large imported history does not overwhelm the working calendar.
 
 ### Prep / Notes knowledge base
 
@@ -176,11 +273,15 @@ Current metrics include:
 - offers
 - average time to first response
 - application funnel
-- current application-state breakdown
+- current open-application state breakdown
+- outcome mix across rejected, no-response, active, interviewing, withdrawn, and offer results
 - six-month application / interview activity
 - average time from application to key pipeline stages
 - prep-library confidence and review health
-- interview performance by application source when source data is available
+- response / interview performance by priority
+- response / interview performance by career lane
+- response / interview performance by work arrangement
+- response / interview performance by application source
 
 Analytics become more useful as more application history is entered or imported.
 
@@ -199,6 +300,8 @@ The database is created in the application's working directory (normally the pro
 `jobsearch.db` and its SQLite sidecar files are ignored by Git, so your real job-search data should not be committed to a repository.
 
 For backup, stop the application and copy `jobsearch.db` somewhere safe.
+
+Spreadsheet imports are parsed by the locally running Spring application. Import files are not uploaded to an external service by this project.
 
 ### Safe demo mode
 
@@ -246,7 +349,9 @@ A quick overview of the current pipeline, response metrics, recent applications,
 | Web | Spring Web MVC |
 | Database access | Spring JDBC / `JdbcTemplate` |
 | Database | SQLite |
+| Spreadsheet import | Apache POI / Apache Commons CSV |
 | Validation | Jakarta Validation / Spring Validation |
+| Testing | Spring Boot Test / JUnit |
 | Build | Maven |
 | Frontend | HTML, CSS, minimal vanilla JavaScript |
 
@@ -272,16 +377,38 @@ Repository / JdbcTemplate
 SQLite (`jobsearch.db`, or isolated `demo-jobsearch.db` in demo mode)
 ```
 
+The import flow adds a preview step before persistence:
+
+```text
+Excel / CSV
+    │
+    ▼
+ApplicationImportService
+    │
+    ├── parse + normalize
+    ├── validate
+    ├── detect duplicates
+    │
+    ▼
+Import Preview
+    │
+    ▼ explicit confirmation
+Transactional Commit
+    │
+    ▼
+SQLite + historical lifecycle events
+```
+
 The main data tables are:
 
 | Table | Purpose |
 | --- | --- |
-| `job_applications` | one row per tracked role |
+| `job_applications` | one row per tracked role, including richer role metadata and import source |
 | `application_events` | lifecycle / calendar events |
 | `prep_items` | reusable and role-specific prep material |
 | `prep_item_links` | many-to-many links between reusable prep and applications |
 
-The schema is created from `src/main/resources/schema.sql`. A small startup migration runner handles columns introduced after the earliest project versions.
+The schema is created from `src/main/resources/schema.sql`. A small startup migration runner handles columns introduced after the earliest project versions, including the richer v1.1 application fields.
 
 ## Project structure
 
@@ -298,8 +425,18 @@ src/main/java/com/brianna/jobsearch/
 │   ├── JobApplicationController.java
 │   └── PrepController.java
 ├── model/
+│   └── importing/
+│       ├── ApplicationImportPreview.java
+│       ├── ApplicationImportResult.java
+│       ├── ApplicationImportRow.java
+│       ├── DuplicateMatchType.java
+│       └── ImportDecision.java
 ├── repository/
 ├── service/
+│   ├── AnalyticsService.java
+│   ├── ApplicationImportService.java
+│   ├── JobApplicationService.java
+│   └── PrepService.java
 ├── JobSearchDashboardApplication.java
 └── JobSearchDemoApplication.java
 
@@ -309,6 +446,11 @@ src/main/resources/
 │   └── images/job-search-logo.svg
 ├── templates/
 │   ├── applications/
+│   │   ├── detail.html
+│   │   ├── form.html
+│   │   ├── import.html
+│   │   ├── import-preview.html
+│   │   └── list.html
 │   ├── prep/
 │   ├── analytics.html
 │   ├── calendar.html
@@ -318,6 +460,10 @@ src/main/resources/
 ├── application-demo.properties
 ├── demo-data.sql
 └── schema.sql
+
+src/test/java/com/brianna/jobsearch/
+└── service/
+    └── ApplicationImportServiceTest.java
 ```
 
 ## Getting started
@@ -398,11 +544,17 @@ mvn spring-boot:run -Dspring-boot.run.profiles=demo
 
 The private app opens on port `8080`; the demo opens on port `8081`.
 
+To run tests:
+
+```bash
+mvn test
+```
+
 To create a packaged JAR:
 
 ```bash
 mvn clean package
-java -jar target/job-search-dashboard-1.0.0.jar
+java -jar target/job-search-dashboard-1.1.1.jar
 ```
 
 > The repository does not currently include the Maven Wrapper (`mvnw` / `mvnw.cmd`). Adding it is tracked in `NEXT-STEPS.md`.
@@ -411,14 +563,15 @@ java -jar target/job-search-dashboard-1.0.0.jar
 
 A useful first pass through the app is:
 
-1. Add an application.
-2. Record recruiter outreach, assessments, interviews, and follow-ups on its lifecycle.
-3. Set the current application state independently from the pipeline stage.
-4. Add company-specific research under **Prep / Notes**.
-5. Add reusable technical topics and STAR stories.
-6. Link relevant reusable prep to the application.
-7. Use **Review** to update confidence as interview prep improves.
-8. Use **Calendar** for dated activity and **Analytics** for funnel / timing trends.
+1. Add an application manually, or open **Applications → Import** to migrate an existing Excel / CSV tracker.
+2. Review status normalization, warnings, and duplicate decisions before approving an import.
+3. Record recruiter outreach, assessments, interviews, and follow-ups on application lifecycles.
+4. Set the current application state independently from the pipeline stage.
+5. Add company-specific research under **Prep / Notes**.
+6. Add reusable technical topics and STAR stories.
+7. Link relevant reusable prep to applications.
+8. Use **Review** to update confidence as interview prep improves.
+9. Use **Calendar** for dated activity and **Analytics** for funnel / timing trends.
 
 ## Development notes
 
@@ -452,30 +605,45 @@ When changing the schema, always test against both:
 - a new empty database
 - an existing database containing application / timeline / prep data
 
-## Publishing this project to GitHub
+### Import changes
 
-The repository is designed so local personal data stays out of source control. Before the first public push:
+The current importer deliberately uses a known tracker vocabulary rather than guessing arbitrary column meanings.
 
-1. Confirm `jobsearch.db` is not staged.
-2. Do not commit screenshots containing real recruiter names, interview details, salary information, or other personal job-search data unless intentionally sanitized.
-3. Choose a license if the repository will be public.
-4. Launch `JobSearchDemoApplication` and capture screenshots from `http://localhost:8081` rather than using the private database.
-5. Confirm `demo-jobsearch.db` is also untracked; it is generated locally and should not be committed.
+When changing import behavior:
 
-Typical first-repository commands:
+- keep the preview read-only
+- keep duplicate matching conservative
+- preserve historical dates where available
+- use displayed Excel values rather than raw numeric serials
+- test `.xlsx` and `.csv` normalization
+- verify against both an empty database and a database containing likely duplicates
+
+`ApplicationImportServiceTest` covers core import normalization and duplicate-detection behavior.
+
+## Repository privacy and release hygiene
+
+The repository is designed so local personal data stays out of source control.
+
+Before committing or publishing changes:
+
+1. Confirm `jobsearch.db`, `demo-jobsearch.db`, and SQLite sidecar files are not staged.
+2. Do not commit real application spreadsheets or exports unless they are intentionally sanitized.
+3. Use `JobSearchDemoApplication` for README screenshots and public examples.
+4. Do not commit screenshots containing real recruiter names, interview details, salary information, or other personal job-search data unless intentionally sanitized.
+5. Keep `demo-data.sql` synthetic.
+
+A normal development cycle is:
 
 ```bash
-git init
+git status
 git add .
-git commit -m "Release v1.0.0"
-git branch -M main
-git remote add origin <your-repository-url>
-git push -u origin main
+git commit -m "Describe the change"
+git push
 ```
 
 ## Current limitations
 
-Version 1.0.0 is intentionally a local, single-user application. It includes a public-safe demo profile, but does **not** currently include:
+Version 1.1.1 is intentionally a local, single-user application. It includes a public-safe demo profile and preview-first historical imports, but does **not** currently include:
 
 - authentication or multi-user support
 - cloud hosting / cloud database
@@ -483,7 +651,9 @@ Version 1.0.0 is intentionally a local, single-user application. It includes a p
 - Google Calendar synchronization
 - automatic job-posting imports
 - global cross-app search
-- CSV import / export UI
+- arbitrary spreadsheet column mapping
+- import-batch history / one-click import undo
+- export / backup UI
 - contacts / recruiter CRM
 - dark mode
 
@@ -495,6 +665,6 @@ See [`NEXT-STEPS.md`](NEXT-STEPS.md) for the prioritized product, analytics, aut
 
 ## Version
 
-Current release: **1.0.0**
+Current release: **1.1.1**
 
-This release consolidates the original iterative v1–v9 development work into the first GitHub-ready project baseline, including an isolated synthetic demo profile for public screenshots.
+Version 1.1.1 optimizes the 1.1 import release for large real-world histories with application filters / sorting / pagination, actionable calendar views, stale-application review actions, and richer outcome / strategy analytics.

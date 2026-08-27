@@ -47,7 +47,12 @@
 
                     <label class="field">
                         <span>Location</span>
-                        <input type="text" th:field="*{location}" placeholder="Denver, CO · Hybrid">
+                        <input type="text" th:field="*{location}" placeholder="Denver, CO">
+                    </label>
+
+                    <label class="field">
+                        <span>Work arrangement</span>
+                        <input type="text" th:field="*{workArrangement}" placeholder="Hybrid, Remote, On-Site…">
                     </label>
 
                     <label class="field">
@@ -98,8 +103,27 @@
                     </label>
 
                     <label class="field">
-                        <span>Salary</span>
+                        <span>Salary / compensation</span>
                         <input type="text" th:field="*{salary}" placeholder="$150k–$180k">
+                    </label>
+
+                    <label class="field">
+                        <span>Years of experience required</span>
+                        <input type="text" th:field="*{yearsExperienceRequired}" placeholder="3+, 3–5, 5+…">
+                    </label>
+
+                    <label class="field">
+                        <span>Cover letter</span>
+                        <select th:field="*{coverLetter}">
+                            <option value="">Not tracked</option>
+                            <option value="true">Yes</option>
+                            <option value="false">No</option>
+                        </select>
+                    </label>
+
+                    <label class="field field-full">
+                        <span>Career lane</span>
+                        <input type="text" th:field="*{careerLane}" placeholder="Backend / Payments Platform, AI / Developer Productivity…">
                     </label>
 
                     <label class="field field-full">
@@ -112,6 +136,16 @@
                         <textarea th:field="*{jobDescription}" rows="10" placeholder="Paste the full posting here so you still have it later."></textarea>
                     </label>
                 </div>
+            </section>
+
+            <section class="panel form-section">
+                <div class="section-heading">
+                    <h2>Next step / follow-up</h2>
+                    <p>Keep the current action separate from long-term working notes.</p>
+                </div>
+                <label class="field">
+                    <textarea th:field="*{nextStep}" rows="4" placeholder="Awaiting review, follow up next week, final interview pending…"></textarea>
+                </label>
             </section>
 
             <section class="panel form-section">

@@ -128,13 +128,16 @@
                         <p class="eyebrow">NEXT UP</p>
                         <h2>Needs attention</h2>
                     </div>
+                    <a th:if="${dashboard.staleCount > 0}" class="text-link" th:href="@{/applications/stale}">
+                        Review stale <span class="attention-count" th:text="${dashboard.staleCount}">5</span> →
+                    </a>
                 </div>
 
                 <div th:if="${#lists.isEmpty(dashboard.needsAttention)}" class="attention-clear">
                     <span>✓</span>
                     <div>
-                        <strong>Nothing stale</strong>
-                        <p>No active application has gone untouched for 7+ days.</p>
+                        <strong>Nothing needs attention</strong>
+                        <p th:text="|No follow-up is due and no active application has gone untouched for ${dashboard.staleDays}+ days.|">Everything is current.</p>
                     </div>
                 </div>
 

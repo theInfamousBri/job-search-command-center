@@ -58,6 +58,7 @@ public enum ApplicationEventType {
             case SAVED -> SAVED;
             case APPLIED -> APPLIED;
             case RECRUITER_SCREEN -> RECRUITER_SCREEN;
+            case ASSESSMENT -> CODING_ASSESSMENT;
             case HIRING_MANAGER -> HIRING_MANAGER;
             case TECHNICAL_INTERVIEW -> TECHNICAL_INTERVIEW;
             case FINAL_ROUND -> FINAL_ROUND;

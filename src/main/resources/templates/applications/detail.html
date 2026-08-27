@@ -19,9 +19,9 @@
                 <div class="detail-title-row">
                     <span class="company-avatar company-avatar-large" th:text="${jobApplication.initials}">VI</span>
                     <div>
-                        <p class="eyebrow" th:text="${jobApplication.company}">VISA</p>
+                        <p class="eyebrow" th:text="${jobApplication.company}">NORTHSTAR LABS</p>
                         <h1 th:text="${jobApplication.role}">Senior Software Engineer</h1>
-                        <p class="subtle" th:text="${jobApplication.location == null ? 'No location saved' : jobApplication.location}">Denver, CO</p>
+                        <p class="subtle" th:text="${jobApplication.locationDisplay}">Denver, CO</p>
                     </div>
                 </div>
             </div>
@@ -67,6 +67,15 @@
                 <span>Salary</span>
                 <strong th:text="${jobApplication.salary == null ? '—' : jobApplication.salary}">$150k</strong>
             </div>
+        </section>
+
+        <section th:if="${jobApplication.nextStep != null}" class="panel next-step-panel">
+            <div class="next-step-icon">→</div>
+            <div>
+                <p class="eyebrow">NEXT STEP / FOLLOW-UP</p>
+                <p class="next-step-copy" th:text="${jobApplication.nextStep}">Awaiting review and next steps.</p>
+            </div>
+            <a class="text-link" th:href="@{/applications/{id}/edit(id=${jobApplication.id})}">Edit →</a>
         </section>
 
         <section class="panel lifecycle-panel">
@@ -321,6 +330,10 @@
                 <dl class="info-list">
                     <div><dt>Company</dt><dd th:text="${jobApplication.company}">Northstar Labs</dd></div>
                     <div><dt>Role</dt><dd th:text="${jobApplication.role}">Senior Software Engineer</dd></div>
+                    <div><dt>Work arrangement</dt><dd th:text="${jobApplication.workArrangement == null ? '—' : jobApplication.workArrangement}">Hybrid</dd></div>
+                    <div><dt>Experience required</dt><dd th:text="${jobApplication.yearsExperienceRequired == null ? '—' : jobApplication.yearsExperienceRequired}">3+</dd></div>
+                    <div><dt>Career lane</dt><dd th:text="${jobApplication.careerLane == null ? '—' : jobApplication.careerLane}">Backend / Payments</dd></div>
+                    <div><dt>Cover letter</dt><dd th:text="${jobApplication.coverLetterDisplay}">Yes</dd></div>
                     <div><dt>Pipeline stage</dt><dd th:text="${jobApplication.status.displayName}">Technical Interview</dd></div>
                     <div><dt>Current state</dt><dd th:text="${jobApplication.state.displayName}">Awaiting Feedback</dd></div>
                     <div><dt>Last updated</dt><dd th:text="${jobApplication.updatedDateTimeDisplay}">Aug 26, 2026</dd></div>

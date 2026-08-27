@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Import Preview · Job Search</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
+</head>
+<body>
+<div class="app-shell">
+    <aside th:replace="~{fragments :: sidebar('applications')}"></aside>
+    <header th:replace="~{fragments :: topbar}"></header>
+
+    <main class="main import-page">
+        <header class="page-header">
+            <div>
+                <a class="back-link" th:href="@{/applications/import}">← Choose another file</a>
+                <p class="eyebrow">IMPORT PREVIEW</p>
+                <h1 th:text="${preview.fileName}">applications.xlsx</h1>
+                <p class="subtle">Review normalization and possible duplicates. Nothing has been written to SQLite yet.</p>
+            </div>
+        </header>
+
+        <section class="import-metrics">
+            <article class="metric-card"><span class="metric-label">Rows found</span><strong th:text="${preview.rowCount}">164</strong><small th:text="${preview.fileType + ' source'}">Excel source</small></article>
+            <article class="metric-card"><span class="metric-label">Importable</span><strong th:text="${preview.importableCount}">163</strong><small>Valid company + role</small></article>
+            <article class="metric-card"><span class="metric-label">Likely existing</span><strong th:text="${preview.exactDuplicateCount}">1</strong><small>Merge recommended</small></article>
+            <article class="metric-card"><span class="metric-label">Possible matches</span><strong th:text="${preview.possibleDuplicateCount}">5</strong><small>Never auto-merged</small></article>
+            <article class="metric-card"><span class="metric-label">Default skips</span><strong th:text="${preview.defaultSkipCount}">1</strong><small>Excluded unless changed</small></article>
+        </section>
+
+        <section class="panel import-status-panel">
+            <div class="panel-header">
+                <div>
+                    <p class="eyebrow">NORMALIZATION</p>
+                    <h2>Status mapping</h2>
+                    <p class="panel-subtitle">Spreadsheet language is translated into the app's pipeline-stage + current-state model.</p>
+                </div>
+            </div>
+            <div class="status-mapping-list">
+                <div th:each="mapping : ${preview.statusMappings}" class="status-mapping-row">
+                    <span th:text="${mapping.sourceStatus}">Ghosted</span>
+                    <span class="mapping-arrow">→</span>
+                    <strong th:text="${mapping.targetStatus}">No Response / Closed</strong>
+                    <span class="mapping-count" th:text="${mapping.count}">82</span>
+                </div>
+            </div>
+        </section>
+
+        <form th:action="@{/applications/import/commit}" method="post">
+            <section class="panel import-preview-panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">ROWS</p>
+                        <h2>Review applications</h2>
+                        <p class="panel-subtitle">Exact duplicates default to Merge. Same-company/title matches default to Import separate.</p>
+                    </div>
+                </div>
+
+                <div class="table-wrap import-table-wrap">
+                    <table class="data-table import-table">
+                        <thead>
+                        <tr>
+                            <th>Row</th>
+                            <th>Company / role</th>
+                            <th>Applied</th>
+                            <th>Spreadsheet status</th>
+                            <th>Mapped</th>
+                            <th>Priority</th>
+                            <th>Match</th>
+                            <th>Action</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="row : ${preview.rows}"
+                            th:classappend="${row.exactDuplicate ? ' import-row-exact' : (row.possibleDuplicate ? ' import-row-possible' : '')}">
+                            <td class="muted" th:text="${row.spreadsheetRow}">2</td>
+                            <td>
+                                <strong th:text="${row.application.company == null ? 'Missing company' : row.application.company}">Company</strong>
+                                <small class="table-subline" th:text="${row.application.role == null ? 'Missing role' : row.application.role}">Role</small>
+                                <small class="table-subline" th:if="${!#lists.isEmpty(row.warnings)}" th:text="${row.warningDisplay}">Warning</small>
+                            </td>
+                            <td class="muted" th:text="${row.application.appliedDateDisplay}">Aug 7, 2026</td>
+                            <td th:text="${row.originalStatus == null ? '—' : row.originalStatus}">Applied</td>
+                            <td><span class="import-mapped-pill" th:text="${row.mappedStatus}">Applied / Active</span></td>
+                            <td><span class="priority" th:classappend="${' priority-' + #strings.toLowerCase(row.application.priority.name())}" th:text="${row.application.priority.displayName}">High</span></td>
+                            <td>
+                                <span th:if="${!row.duplicate}" class="duplicate-none">—</span>
+                                <span th:if="${row.duplicate}" class="duplicate-badge" th:classappend="${row.exactDuplicate ? ' duplicate-exact' : ' duplicate-possible'}" th:text="${row.duplicateType.displayName}">Possible</span>
+                                <small th:if="${row.duplicate}" class="table-subline" th:text="${row.existingApplicationLabel}">Existing app</small>
+                            </td>
+                            <td>
+                                <select class="import-action-select" th:name="${'action-' + row.spreadsheetRow}" th:disabled="${!row.importable}">
+                                    <option value="IMPORT" th:selected="${row.defaultDecision.name() == 'IMPORT'}">Import separate</option>
+                                    <option th:if="${row.duplicate}" value="MERGE" th:selected="${row.defaultDecision.name() == 'MERGE'}">Merge with existing</option>
+                                    <option value="SKIP" th:selected="${row.defaultDecision.name() == 'SKIP'}">Skip</option>
+                                </select>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <div class="import-commit-bar">
+                <div>
+                    <strong>Ready when you are</strong>
+                    <span>Import is transactional per request; your selected duplicate actions are applied only after you submit.</span>
+                </div>
+                <div class="header-actions">
+                    <a class="button button-secondary" th:href="@{/applications/import}">Cancel</a>
+                    <button class="button button-primary" type="submit">Import selected applications</button>
+                </div>
+            </div>
+        </form>
+    </main>
+</div>
+</body>
+</html>

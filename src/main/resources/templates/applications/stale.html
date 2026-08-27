@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Review stale applications · Job Search</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
+</head>
+<body>
+<div class="app-shell">
+    <aside th:replace="~{fragments :: sidebar('applications')}"></aside>
+    <header th:replace="~{fragments :: topbar}"></header>
+
+    <main class="main stale-review-main">
+        <header class="page-header">
+            <div>
+                <a class="back-link" th:href="@{/applications}">← Applications</a>
+                <p class="eyebrow">PIPELINE HYGIENE</p>
+                <h1>Review stale applications</h1>
+                <p class="subtle">Decide what to do with active applications that have not changed recently. Nothing is closed automatically.</p>
+            </div>
+        </header>
+
+        <div th:if="${staleSuccess}" class="flash-message flash-success" th:text="${staleSuccess}">Updated.</div>
+        <div th:if="${staleError}" class="flash-message flash-error" th:text="${staleError}">Choose an application.</div>
+
+        <section class="panel stale-controls-panel">
+            <form method="get" th:action="@{/applications/stale}" class="stale-threshold-form">
+                <div>
+                    <p class="eyebrow">STALE THRESHOLD</p>
+                    <strong th:text="|${#lists.size(staleApplications)} application${#lists.size(staleApplications) == 1 ? '' : 's'} need review|">5 applications need review</strong>
+                </div>
+                <label>
+                    <span>Untouched for</span>
+                    <select name="days" class="filter-control" onchange="this.form.submit()">
+                        <option th:each="option : ${staleDayOptions}"
+                                th:value="${option}"
+                                th:text="|${option}+ days|"
+                                th:selected="${option == staleDays}">21+ days</option>
+                    </select>
+                </label>
+            </form>
+        </section>
+
+        <section th:if="${#lists.isEmpty(staleApplications)}" class="panel stale-empty-panel">
+            <div class="attention-clear">
+                <span>✓</span>
+                <div>
+                    <strong>All caught up</strong>
+                    <p th:text="|No active applications have gone untouched for ${staleDays}+ days.|">No stale applications.</p>
+                </div>
+            </div>
+        </section>
+
+        <div th:unless="${#lists.isEmpty(staleApplications)}" class="stale-review-form">
+            <form id="bulk-stale-form" method="post" th:action="@{/applications/stale/bulk}" class="stale-bulk-bar panel">
+                <input type="hidden" name="days" th:value="${staleDays}">
+                <label class="checkbox-label">
+                    <input id="select-all-stale" type="checkbox">
+                    <span>Select all</span>
+                </label>
+                <div class="stale-bulk-actions">
+                    <button class="button button-secondary" name="action" value="KEEP_ACTIVE" type="submit">Keep active</button>
+                    <button class="button button-secondary" name="action" value="FOLLOW_UP" type="submit">Set follow-up due</button>
+                    <button class="button button-danger-soft" name="action" value="NO_RESPONSE" type="submit">Mark no response</button>
+                </div>
+            </form>
+
+            <div class="stale-card-list">
+                <article class="panel stale-application-card" th:each="app : ${staleApplications}">
+                    <label class="stale-card-check">
+                        <input class="stale-checkbox" type="checkbox" name="selectedIds" th:value="${app.id}" form="bulk-stale-form">
+                    </label>
+
+                    <div class="stale-card-main">
+                        <div class="stale-card-heading">
+                            <a class="company-cell" th:href="@{/applications/{id}(id=${app.id})}">
+                                <span class="company-avatar" th:text="${app.initials}">CO</span>
+                                <span>
+                                    <strong th:text="${app.company}">Company</strong>
+                                    <small th:text="${app.role}">Role</small>
+                                </span>
+                            </a>
+                            <span class="stale-age" th:text="${app.staleAgeDisplay}">29 days since update</span>
+                        </div>
+
+                        <div class="stale-card-meta">
+                            <span class="status-pill"
+                                  th:classappend="${' status-' + #strings.toLowerCase(app.status.name())}"
+                                  th:text="${app.status.displayName}">Applied</span>
+                            <span class="state-pill"
+                                  th:classappend="${' state-' + #strings.toLowerCase(app.state.name())}"
+                                  th:text="${app.state.displayName}">Active</span>
+                            <span class="priority"
+                                  th:classappend="${' priority-' + #strings.toLowerCase(app.priority.name())}"
+                                  th:text="${app.priority.displayName}">High</span>
+                            <span class="muted" th:text="|Applied ${app.appliedDateDisplay}|">Applied Jul 29, 2026</span>
+                        </div>
+
+                        <p class="stale-next-step" th:if="${app.nextStep != null}">
+                            <strong>Next step:</strong> <span th:text="${app.nextStep}">Follow up with recruiter.</span>
+                        </p>
+                    </div>
+
+                    <div class="stale-card-actions">
+                        <button type="submit" class="text-action" th:attr="form=|keep-active-${app.id}|">Still active</button>
+                        <button type="submit" class="text-action" th:attr="form=|follow-up-${app.id}|">Follow-up due</button>
+                        <button type="submit" class="text-action danger" th:attr="form=|no-response-${app.id}|">No response</button>
+                        <a class="text-action" th:href="@{/applications/{id}(id=${app.id})}">Open →</a>
+                    </div>
+                </article>
+            </div>
+        </div>
+
+        <div th:unless="${#lists.isEmpty(staleApplications)}" class="stale-hidden-forms" aria-hidden="true">
+            <th:block th:each="app : ${staleApplications}">
+                <form th:id="|keep-active-${app.id}|" method="post" th:action="@{/applications/{id}/stale/keep-active(id=${app.id})}">
+                    <input type="hidden" name="days" th:value="${staleDays}">
+                </form>
+                <form th:id="|follow-up-${app.id}|" method="post" th:action="@{/applications/{id}/stale/follow-up(id=${app.id})}">
+                    <input type="hidden" name="days" th:value="${staleDays}">
+                </form>
+                <form th:id="|no-response-${app.id}|" method="post" th:action="@{/applications/{id}/stale/no-response(id=${app.id})}">
+                    <input type="hidden" name="days" th:value="${staleDays}">
+                </form>
+            </th:block>
+        </div>
+    </main>
+</div>
+<script>
+    const selectAll = document.getElementById('select-all-stale');
+    if (selectAll) {
+        selectAll.addEventListener('change', () => {
+            document.querySelectorAll('.stale-checkbox').forEach(box => box.checked = selectAll.checked);
+        });
+    }
+</script>
+</body>
+</html>

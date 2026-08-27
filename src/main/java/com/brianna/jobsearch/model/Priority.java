@@ -1,9 +1,12 @@
 package com.brianna.jobsearch.model;
 
 public enum Priority {
+    UNSPECIFIED("Not set"),
     LOW("Low"),
     MEDIUM("Medium"),
-    HIGH("High");
+    HIGH("High"),
+    STRETCH("Stretch"),
+    SKIP("Skip");
 
     private final String displayName;
 

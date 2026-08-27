@@ -149,6 +149,17 @@ public class ApplicationEventRepository {
                 """, eventId, applicationId);
     }
 
+    public boolean exists(long applicationId, ApplicationEventType eventType, LocalDate eventDate) {
+        Long count = jdbcTemplate.queryForObject("""
+                SELECT COUNT(*)
+                FROM application_events
+                WHERE application_id = ?
+                  AND event_type = ?
+                  AND event_date = ?
+                """, Long.class, applicationId, eventType.name(), eventDate.toString());
+        return count != null && count > 0;
+    }
+
     public void deleteByApplicationId(long applicationId) {
         jdbcTemplate.update("DELETE FROM application_events WHERE application_id = ?", applicationId);
     }

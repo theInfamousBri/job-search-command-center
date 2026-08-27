@@ -1,10 +1,12 @@
 package com.brianna.jobsearch.service;
 
 import com.brianna.jobsearch.model.ApplicationState;
+import com.brianna.jobsearch.model.Priority;
 import com.brianna.jobsearch.repository.AnalyticsRepository;
+import com.brianna.jobsearch.repository.AnalyticsRepository.DimensionPerformance;
 import com.brianna.jobsearch.repository.AnalyticsRepository.MonthCount;
+import com.brianna.jobsearch.repository.AnalyticsRepository.OutcomeCount;
 import com.brianna.jobsearch.repository.AnalyticsRepository.PrepHealth;
-import com.brianna.jobsearch.repository.AnalyticsRepository.SourcePerformance;
 import com.brianna.jobsearch.repository.AnalyticsRepository.StageTiming;
 import com.brianna.jobsearch.repository.AnalyticsRepository.StateCount;
 import java.time.LocalDate;
@@ -39,9 +41,13 @@ public class AnalyticsService {
 
         List<FunnelStage> funnel = buildFunnel(applied, responded);
         List<StateBreakdown> states = buildStateBreakdown();
+        List<OutcomeRow> outcomes = buildOutcomes(applied);
         List<MonthlyActivity> monthlyActivity = buildMonthlyActivity();
         List<StageSpeed> stageSpeeds = buildStageSpeeds();
-        List<SourceRow> sources = buildSources();
+        List<PerformanceRow> priorities = buildPerformance(repository.priorityPerformance(8), true);
+        List<PerformanceRow> careerLanes = buildPerformance(repository.careerLanePerformance(10), false);
+        List<PerformanceRow> workArrangements = buildPerformance(repository.workArrangementPerformance(10), false);
+        List<PerformanceRow> sources = buildPerformance(repository.sourcePerformance(10), false);
         PrepSnapshot prep = buildPrepSnapshot();
 
         return new AnalyticsSnapshot(
@@ -52,8 +58,12 @@ public class AnalyticsService {
                 averageFirstResponseDays,
                 funnel,
                 states,
+                outcomes,
                 monthlyActivity,
                 stageSpeeds,
+                priorities,
+                careerLanes,
+                workArrangements,
                 sources,
                 prep);
     }
@@ -63,6 +73,7 @@ public class AnalyticsService {
         stages.add(funnelStage("Applied", applied, applied));
         stages.add(funnelStage("Responded", responded, applied));
         stages.add(funnelStage("Recruiter screen", repository.countApplicationsThatReached("RECRUITER_SCREEN"), applied));
+        stages.add(funnelStage("Assessment", repository.countApplicationsThatReached("CODING_ASSESSMENT"), applied));
         stages.add(funnelStage("Technical", repository.countApplicationsThatReached("TECHNICAL_INTERVIEW"), applied));
         stages.add(funnelStage("Final round", repository.countApplicationsThatReached("FINAL_ROUND"), applied));
         stages.add(funnelStage("Offer", repository.countApplicationsThatReached("OFFER"), applied));
@@ -83,6 +94,18 @@ public class AnalyticsService {
         for (StateCount count : counts) {
             String displayName = displayState(count.state());
             result.add(new StateBreakdown(displayName, count.state(), count.total(), percent(count.total(), total)));
+        }
+        return result;
+    }
+
+    private List<OutcomeRow> buildOutcomes(long applied) {
+        List<OutcomeRow> result = new ArrayList<>();
+        for (OutcomeCount count : repository.outcomeCounts()) {
+            result.add(new OutcomeRow(
+                    displayOutcome(count.outcome()),
+                    count.outcome(),
+                    count.total(),
+                    percent(count.total(), applied)));
         }
         return result;
     }
@@ -133,6 +156,7 @@ public class AnalyticsService {
         speeds.add(stageSpeed("First response", new StageTiming(repository.averageDaysToFirstResponse(),
                 repository.countRespondedApplications())));
         speeds.add(stageSpeed("Recruiter screen", repository.averageDaysToStage("RECRUITER_SCREEN")));
+        speeds.add(stageSpeed("Assessment", repository.averageDaysToStage("CODING_ASSESSMENT")));
         speeds.add(stageSpeed("Technical interview", repository.averageDaysToStage("TECHNICAL_INTERVIEW")));
         speeds.add(stageSpeed("Final round", repository.averageDaysToStage("FINAL_ROUND")));
         speeds.add(stageSpeed("Offer", repository.averageDaysToStage("OFFER")));
@@ -143,12 +167,15 @@ public class AnalyticsService {
         return new StageSpeed(label, timing.averageDays(), timing.sampleSize());
     }
 
-    private List<SourceRow> buildSources() {
-        List<SourceRow> result = new ArrayList<>();
-        for (SourcePerformance row : repository.sourcePerformance(8)) {
-            result.add(new SourceRow(
-                    row.source(),
+    private List<PerformanceRow> buildPerformance(List<DimensionPerformance> rows, boolean priorityLabels) {
+        List<PerformanceRow> result = new ArrayList<>();
+        for (DimensionPerformance row : rows) {
+            String label = priorityLabels ? displayPriority(row.label()) : row.label();
+            result.add(new PerformanceRow(
+                    label,
                     row.applications(),
+                    row.responses(),
+                    percent(row.responses(), row.applications()),
                     row.interviewed(),
                     percent(row.interviewed(), row.applications())));
         }
@@ -182,6 +209,33 @@ public class AnalyticsService {
         }
     }
 
+    private String displayPriority(String priority) {
+        if (priority == null || priority.isBlank()) {
+            return "Not set";
+        }
+        try {
+            return Priority.valueOf(priority).getDisplayName();
+        } catch (IllegalArgumentException ignored) {
+            return priority.replace('_', ' ');
+        }
+    }
+
+    private String displayOutcome(String outcome) {
+        if (outcome == null) {
+            return "Other";
+        }
+        return switch (outcome) {
+            case "NO_RESPONSE" -> "No response";
+            case "REJECTED" -> "Rejected";
+            case "WITHDRAWN" -> "Withdrawn";
+            case "OFFER" -> "Offer";
+            case "INTERVIEWING" -> "Interviewing";
+            case "ACTIVE" -> "Active / applied";
+            case "OTHER_CLOSED" -> "Other closed";
+            default -> outcome.replace('_', ' ');
+        };
+    }
+
     private double percent(long numerator, long denominator) {
         return denominator == 0 ? 0.0 : (numerator * 100.0) / denominator;
     }
@@ -201,9 +255,13 @@ public class AnalyticsService {
             Double averageFirstResponseDays,
             List<FunnelStage> funnel,
             List<StateBreakdown> states,
+            List<OutcomeRow> outcomes,
             List<MonthlyActivity> monthlyActivity,
             List<StageSpeed> stageSpeeds,
-            List<SourceRow> sources,
+            List<PerformanceRow> priorities,
+            List<PerformanceRow> careerLanes,
+            List<PerformanceRow> workArrangements,
+            List<PerformanceRow> sources,
             PrepSnapshot prep) {
     }
 
@@ -211,6 +269,9 @@ public class AnalyticsService {
     }
 
     public record StateBreakdown(String label, String key, long count, double percent) {
+    }
+
+    public record OutcomeRow(String label, String key, long count, double percent) {
     }
 
     public record MonthlyActivity(
@@ -225,7 +286,13 @@ public class AnalyticsService {
     public record StageSpeed(String label, Double averageDays, long sampleSize) {
     }
 
-    public record SourceRow(String source, long applications, long interviewed, double interviewRate) {
+    public record PerformanceRow(
+            String label,
+            long applications,
+            long responses,
+            double responseRate,
+            long interviewed,
+            double interviewRate) {
     }
 
     public record PrepSnapshot(

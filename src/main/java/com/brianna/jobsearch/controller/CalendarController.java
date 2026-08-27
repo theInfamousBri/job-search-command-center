@@ -2,6 +2,7 @@ package com.brianna.jobsearch.controller;
 
 import com.brianna.jobsearch.model.CalendarDay;
 import com.brianna.jobsearch.model.CalendarEntry;
+import com.brianna.jobsearch.model.CalendarFilter;
 import com.brianna.jobsearch.service.JobApplicationService;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -30,8 +31,12 @@ public class CalendarController {
     }
 
     @GetMapping("/calendar")
-    public String calendar(@RequestParam(required = false) String month, Model model) {
+    public String calendar(
+            @RequestParam(required = false) String month,
+            @RequestParam(required = false) CalendarFilter view,
+            Model model) {
         YearMonth selectedMonth = parseMonth(month);
+        CalendarFilter selectedView = view == null ? CalendarFilter.ACTIONABLE : view;
         LocalDate today = LocalDate.now();
 
         LocalDate gridStart = selectedMonth.atDay(1)
@@ -39,7 +44,7 @@ public class CalendarController {
         LocalDate gridEnd = selectedMonth.atEndOfMonth()
                 .with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
 
-        List<CalendarEntry> entries = service.calendarEvents(gridStart, gridEnd);
+        List<CalendarEntry> entries = service.calendarEvents(gridStart, gridEnd, selectedView);
         Map<LocalDate, List<CalendarEntry>> eventsByDate = entries.stream()
                 .collect(Collectors.groupingBy(CalendarEntry::getEventDate));
 
@@ -52,7 +57,7 @@ public class CalendarController {
                     eventsByDate.getOrDefault(date, List.of())));
         }
 
-        List<CalendarEntry> upcoming = service.calendarEvents(today, today.plusDays(30));
+        List<CalendarEntry> upcoming = service.calendarEvents(today, today.plusDays(30), selectedView);
 
         model.addAttribute("selectedMonth", selectedMonth.toString());
         model.addAttribute("monthTitle", selectedMonth.format(MONTH_TITLE));
@@ -61,6 +66,8 @@ public class CalendarController {
         model.addAttribute("todayMonth", YearMonth.from(today).toString());
         model.addAttribute("days", days);
         model.addAttribute("upcoming", upcoming);
+        model.addAttribute("calendarView", selectedView);
+        model.addAttribute("calendarViews", CalendarFilter.values());
         return "calendar";
     }
 

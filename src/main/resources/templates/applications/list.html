@@ -17,37 +17,130 @@
             <div>
                 <p class="eyebrow">TRACKER</p>
                 <h1>Applications</h1>
-                <p class="subtle">Every role, status, note, and saved posting in one place.</p>
+                <p class="subtle">Search, filter, sort, and review every role in your pipeline.</p>
             </div>
             <div class="header-actions">
+                <a class="button button-secondary" th:href="@{/applications/import}">↑ Import</a>
                 <a class="button button-primary" th:href="@{/applications/new}">+ Add application</a>
             </div>
         </header>
 
-        <section class="panel">
-            <div class="application-toolbar">
-                <form class="search-large" th:action="@{/applications}" method="get">
-                    <span>⌕</span>
-                    <input type="search" name="q" th:value="${query}" placeholder="Search company, role, location, notes, tech…">
-                    <button type="submit" class="button button-secondary">Search</button>
-                    <a th:if="${query != null and !query.isBlank()}" class="text-link" th:href="@{/applications}">Clear</a>
-                </form>
+        <div th:if="${importSuccess}" class="flash-message flash-success" th:text="${importSuccess}">Import complete.</div>
+        <div th:if="${importError}" class="flash-message flash-error" th:text="${importError}">Import error.</div>
 
-                <p class="result-count">
-                    <strong th:text="${#lists.size(applications)}">0</strong>
-                    <span th:text="${#lists.size(applications) == 1 ? 'application' : 'applications'}">applications</span>
-                </p>
-            </div>
+        <section class="panel application-index-panel">
+            <form class="application-filter-form" th:action="@{/applications}" method="get">
+                <div class="application-search-row">
+                    <label class="search-large application-filter-search">
+                        <span>⌕</span>
+                        <input type="search" name="q" th:value="${filters.query}" placeholder="Search company, role, location, notes, tech…">
+                    </label>
+                    <select name="sort" class="filter-control filter-sort" aria-label="Sort applications">
+                        <option th:each="option : ${sortOptions}"
+                                th:value="${option.name()}"
+                                th:text="${option.displayName}"
+                                th:selected="${filters.sort == option}">Recently updated</option>
+                    </select>
+                    <button type="submit" class="button button-primary">Apply</button>
+                </div>
+
+                <div class="application-filter-grid">
+                    <label>
+                        <span>Stage</span>
+                        <select name="status" class="filter-control">
+                            <option value="">All stages</option>
+                            <option th:each="option : ${statuses}"
+                                    th:value="${option.name()}"
+                                    th:text="${option.displayName}"
+                                    th:selected="${filters.status == option}">Applied</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span>State</span>
+                        <select name="state" class="filter-control">
+                            <option value="">All states</option>
+                            <option th:each="option : ${states}"
+                                    th:value="${option.name()}"
+                                    th:text="${option.displayName}"
+                                    th:selected="${filters.state == option}">Active</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span>Priority</span>
+                        <select name="priority" class="filter-control">
+                            <option value="">All priorities</option>
+                            <option th:each="option : ${priorities}"
+                                    th:value="${option.name()}"
+                                    th:text="${option.displayName}"
+                                    th:selected="${filters.priority == option}">High</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span>Work type</span>
+                        <select name="workArrangement" class="filter-control">
+                            <option value="">All work types</option>
+                            <option th:each="option : ${workArrangements}"
+                                    th:value="${option}"
+                                    th:text="${option}"
+                                    th:selected="${filters.workArrangement == option}">Remote</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span>Source</span>
+                        <select name="source" class="filter-control">
+                            <option value="">All sources</option>
+                            <option th:each="option : ${sources}"
+                                    th:value="${option}"
+                                    th:text="${option}"
+                                    th:selected="${filters.source == option}">LinkedIn</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span>Career lane</span>
+                        <select name="careerLane" class="filter-control">
+                            <option value="">All career lanes</option>
+                            <option th:each="option : ${careerLanes}"
+                                    th:value="${option}"
+                                    th:text="${option}"
+                                    th:selected="${filters.careerLane == option}">Backend / Platform</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span>Applied from</span>
+                        <input class="filter-control" type="date" name="appliedFrom" th:value="${filters.appliedFrom}">
+                    </label>
+                    <label>
+                        <span>Applied to</span>
+                        <input class="filter-control" type="date" name="appliedTo" th:value="${filters.appliedTo}">
+                    </label>
+                    <label>
+                        <span>Per page</span>
+                        <select name="size" class="filter-control">
+                            <option value="25" th:selected="${applicationPage.size == 25}">25</option>
+                            <option value="50" th:selected="${applicationPage.size == 50}">50</option>
+                            <option value="100" th:selected="${applicationPage.size == 100}">100</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div class="application-filter-footer">
+                    <div class="filter-summary">
+                        <strong th:text="${applicationPage.totalItems}">0</strong>
+                        <span th:text="${applicationPage.totalItems == 1 ? 'matching application' : 'matching applications'}">matching applications</span>
+                        <span th:if="${applicationPage.totalItems > 0}"
+                              th:text="|· showing ${applicationPage.firstItem}–${applicationPage.lastItem}|">· showing 1–25</span>
+                    </div>
+                    <a th:if="${filters.hasFilters()}" class="text-link" th:href="@{/applications}">Clear filters</a>
+                </div>
+            </form>
 
             <div th:if="${#lists.isEmpty(applications)}" class="empty-state">
                 <div class="empty-icon">⌕</div>
-                <h3 th:text="${query != null and !query.isBlank() ? 'No matching applications' : 'No applications yet'}">No applications yet</h3>
-                <p th:text="${query != null and !query.isBlank()
-                    ? 'Try a different search term.'
-                    : 'Start by tracking the next job you apply to.'}">
+                <h3 th:text="${filters.hasFilters() ? 'No matching applications' : 'No applications yet'}">No applications yet</h3>
+                <p th:text="${filters.hasFilters() ? 'Try changing or clearing one of the filters.' : 'Start by tracking the next job you apply to.'}">
                     Start by tracking the next job you apply to.
                 </p>
-                <a th:if="${query == null or query.isBlank()}" class="button button-primary" th:href="@{/applications/new}">Add application</a>
+                <a th:if="${!filters.hasFilters()}" class="button button-primary" th:href="@{/applications/new}">Add application</a>
             </div>
 
             <div th:unless="${#lists.isEmpty(applications)}" class="table-wrap">
@@ -74,7 +167,10 @@
                                 </span>
                             </a>
                         </td>
-                        <td class="muted" th:text="${app.location == null ? '—' : app.location}">Denver, CO</td>
+                        <td class="muted">
+                            <span th:text="${app.location == null ? '—' : app.location}">Denver, CO</span>
+                            <small class="table-subline" th:if="${app.workArrangement != null}" th:text="${app.workArrangement}">Hybrid</small>
+                        </td>
                         <td>
                             <span class="status-pill"
                                   th:classappend="${' status-' + #strings.toLowerCase(app.status.name())}"
@@ -96,6 +192,24 @@
                     </tbody>
                 </table>
             </div>
+
+            <nav class="pagination" th:if="${applicationPage.totalPages > 1}" aria-label="Application pages">
+                <a class="pagination-button"
+                   th:classappend="${!applicationPage.hasPrevious ? ' disabled' : ''}"
+                   th:href="@{/applications(q=${filters.query},status=${filters.status},state=${filters.state},priority=${filters.priority},workArrangement=${filters.workArrangement},source=${filters.source},careerLane=${filters.careerLane},appliedFrom=${filters.appliedFrom},appliedTo=${filters.appliedTo},sort=${filters.sort},size=${applicationPage.size},page=${applicationPage.pageNumber - 1})}"><span>←</span> Previous</a>
+
+                <div class="pagination-pages">
+                    <a th:each="pageIndex : ${applicationPage.visiblePages}"
+                       class="pagination-page"
+                       th:classappend="${pageIndex == applicationPage.page ? ' active' : ''}"
+                       th:text="${pageIndex + 1}"
+                       th:href="@{/applications(q=${filters.query},status=${filters.status},state=${filters.state},priority=${filters.priority},workArrangement=${filters.workArrangement},source=${filters.source},careerLane=${filters.careerLane},appliedFrom=${filters.appliedFrom},appliedTo=${filters.appliedTo},sort=${filters.sort},size=${applicationPage.size},page=${pageIndex + 1})}">1</a>
+                </div>
+
+                <a class="pagination-button"
+                   th:classappend="${!applicationPage.hasNext ? ' disabled' : ''}"
+                   th:href="@{/applications(q=${filters.query},status=${filters.status},state=${filters.state},priority=${filters.priority},workArrangement=${filters.workArrangement},source=${filters.source},careerLane=${filters.careerLane},appliedFrom=${filters.appliedFrom},appliedTo=${filters.appliedTo},sort=${filters.sort},size=${applicationPage.size},page=${applicationPage.pageNumber + 1})}">Next <span>→</span></a>
+            </nav>
         </section>
     </main>
 </div>

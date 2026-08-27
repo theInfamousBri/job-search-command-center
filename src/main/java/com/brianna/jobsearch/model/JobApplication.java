@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.time.format.DateTimeFormatter;
 
 public class JobApplication {
@@ -19,6 +20,9 @@ public class JobApplication {
     private String role;
 
     private String location;
+    private String workArrangement;
+    private String yearsExperienceRequired;
+    private String careerLane;
     private ApplicationStatus status = ApplicationStatus.APPLIED;
     private ApplicationState state = ApplicationState.ACTIVE;
     private Priority priority = Priority.MEDIUM;
@@ -26,6 +30,8 @@ public class JobApplication {
     private String jobUrl;
     private String salary;
     private LocalDate appliedDate = LocalDate.now();
+    private String nextStep;
+    private Boolean coverLetter;
     private String notes;
     private String jobDescription;
     private LocalDateTime createdAt;
@@ -45,6 +51,45 @@ public class JobApplication {
 
     public String getUpdatedDateTimeDisplay() {
         return updatedAt == null ? "—" : updatedAt.format(DateTimeFormatter.ofPattern("MMM d, yyyy 'at' h:mm a"));
+    }
+
+
+    public long getDaysSinceUpdated() {
+        if (updatedAt == null) {
+            return 0L;
+        }
+        return Math.max(0L, ChronoUnit.DAYS.between(updatedAt.toLocalDate(), LocalDate.now()));
+    }
+
+    public String getStaleAgeDisplay() {
+        long days = getDaysSinceUpdated();
+        if (days == 0) {
+            return "Updated today";
+        }
+        return days + " day" + (days == 1 ? "" : "s") + " since update";
+    }
+
+    public String getCoverLetterDisplay() {
+        if (coverLetter == null) {
+            return "Not tracked";
+        }
+        return coverLetter ? "Yes" : "No";
+    }
+
+    public String getLocationDisplay() {
+        if (location == null || location.isBlank()) {
+            return workArrangement == null || workArrangement.isBlank() ? "No location saved" : workArrangement;
+        }
+        if (workArrangement == null || workArrangement.isBlank()) {
+            return location;
+        }
+
+        String normalizedLocation = location.trim().toLowerCase();
+        String normalizedArrangement = workArrangement.trim().toLowerCase();
+        if (normalizedLocation.endsWith(normalizedArrangement)) {
+            return location;
+        }
+        return location + " · " + workArrangement;
     }
 
     public String getInitials() {
@@ -71,6 +116,15 @@ public class JobApplication {
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }
 
+    public String getWorkArrangement() { return workArrangement; }
+    public void setWorkArrangement(String workArrangement) { this.workArrangement = workArrangement; }
+
+    public String getYearsExperienceRequired() { return yearsExperienceRequired; }
+    public void setYearsExperienceRequired(String yearsExperienceRequired) { this.yearsExperienceRequired = yearsExperienceRequired; }
+
+    public String getCareerLane() { return careerLane; }
+    public void setCareerLane(String careerLane) { this.careerLane = careerLane; }
+
     public ApplicationStatus getStatus() { return status; }
     public void setStatus(ApplicationStatus status) { this.status = status; }
 
@@ -91,6 +145,12 @@ public class JobApplication {
 
     public LocalDate getAppliedDate() { return appliedDate; }
     public void setAppliedDate(LocalDate appliedDate) { this.appliedDate = appliedDate; }
+
+    public String getNextStep() { return nextStep; }
+    public void setNextStep(String nextStep) { this.nextStep = nextStep; }
+
+    public Boolean getCoverLetter() { return coverLetter; }
+    public void setCoverLetter(Boolean coverLetter) { this.coverLetter = coverLetter; }
 
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }

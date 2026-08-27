@@ -17,21 +17,36 @@
             <div>
                 <p class="eyebrow">SCHEDULE</p>
                 <h1>Calendar</h1>
-                <p class="subtle">Every dated lifecycle event, from recruiter outreach to interviews and follow-ups.</p>
+                <p class="subtle">Actionable activity by default, with historical lifecycle events available when you want them.</p>
             </div>
 
             <div class="calendar-nav" aria-label="Calendar month navigation">
-                <a class="calendar-nav-button" th:href="@{/calendar(month=${previousMonth})}" aria-label="Previous month">←</a>
-                <a class="button button-secondary" th:href="@{/calendar(month=${todayMonth})}">Today</a>
-                <a class="calendar-nav-button" th:href="@{/calendar(month=${nextMonth})}" aria-label="Next month">→</a>
+                <a class="calendar-nav-button" th:href="@{/calendar(month=${previousMonth},view=${calendarView})}" aria-label="Previous month">←</a>
+                <a class="button button-secondary" th:href="@{/calendar(month=${todayMonth},view=${calendarView})}">Today</a>
+                <a class="calendar-nav-button" th:href="@{/calendar(month=${nextMonth},view=${calendarView})}" aria-label="Next month">→</a>
             </div>
         </header>
+
+        <nav class="calendar-filter-tabs" aria-label="Calendar event filters">
+            <a th:each="viewOption : ${calendarViews}"
+               class="calendar-filter-tab"
+               th:classappend="${calendarView == viewOption ? ' active' : ''}"
+               th:href="@{/calendar(month=${selectedMonth},view=${viewOption})}"
+               th:text="${viewOption.displayName}">Actionable</a>
+        </nav>
 
         <section class="panel calendar-panel">
             <div class="calendar-toolbar">
                 <div>
                     <p class="eyebrow">MONTH</p>
                     <h2 class="calendar-month-title" th:text="${monthTitle}">August 2026</h2>
+                    <p class="calendar-view-copy" th:switch="${calendarView.name()}">
+                        <span th:case="'ACTIONABLE'">Hides applied, rejected, withdrawn, and no-response history.</span>
+                        <span th:case="'INTERVIEWS'">Recruiter screens, scheduled interviews, technical interviews, and final rounds.</span>
+                        <span th:case="'ASSESSMENTS'">Coding assessments and take-home assignments.</span>
+                        <span th:case="'FOLLOW_UPS'">Only follow-up reminders and follow-up activity.</span>
+                        <span th:case="*">Every dated lifecycle event, including historical outcomes.</span>
+                    </p>
                 </div>
 
                 <div class="calendar-legend" aria-label="Event category legend">
@@ -86,13 +101,14 @@
                     <p class="eyebrow">NEXT 30 DAYS</p>
                     <h2>Upcoming activity</h2>
                 </div>
+                <span class="analytics-panel-kicker" th:text="${calendarView.displayName}">Actionable</span>
             </div>
 
             <div th:if="${#lists.isEmpty(upcoming)}" class="calendar-upcoming-empty">
                 <span>○</span>
                 <div>
-                    <strong>Nothing scheduled yet</strong>
-                    <p>Add a future interview, follow-up, assessment, or other activity from an application timeline.</p>
+                    <strong>Nothing scheduled in this view</strong>
+                    <p>Try another calendar filter or add a future interview, assessment, or follow-up from an application timeline.</p>
                 </div>
             </div>
 

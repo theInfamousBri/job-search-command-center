@@ -4,6 +4,7 @@ public enum ApplicationStatus {
     SAVED("Saved"),
     APPLIED("Applied"),
     RECRUITER_SCREEN("Recruiter Screen"),
+    ASSESSMENT("Assessment"),
     HIRING_MANAGER("Hiring Manager"),
     TECHNICAL_INTERVIEW("Technical Interview"),
     FINAL_ROUND("Final Round"),
