@@ -40,6 +40,12 @@
                     </label>
 
                     <label class="field">
+                        <span>Company domain</span>
+                        <input type="text" th:field="*{companyDomain}" placeholder="northstarlabs.com">
+                        <small class="field-help">Optional. Used to fetch and cache a company logo locally.</small>
+                    </label>
+
+                    <label class="field">
                         <span>Role <em>*</em></span>
                         <input type="text" th:field="*{role}" placeholder="Senior Software Engineer">
                         <small class="field-error" th:if="${#fields.hasErrors('role')}" th:errors="*{role}">Role error</small>
@@ -112,15 +118,6 @@
                         <input type="text" th:field="*{yearsExperienceRequired}" placeholder="3+, 3–5, 5+…">
                     </label>
 
-                    <label class="field">
-                        <span>Cover letter</span>
-                        <select th:field="*{coverLetter}">
-                            <option value="">Not tracked</option>
-                            <option value="true">Yes</option>
-                            <option value="false">No</option>
-                        </select>
-                    </label>
-
                     <label class="field field-full">
                         <span>Career lane</span>
                         <input type="text" th:field="*{careerLane}" placeholder="Backend / Payments Platform, AI / Developer Productivity…">
@@ -131,8 +128,33 @@
                         <input type="url" th:field="*{jobUrl}" placeholder="https://…">
                     </label>
 
+                </div>
+            </section>
+
+            <section class="panel form-section">
+                <div class="section-heading">
+                    <h2>Application materials</h2>
+                    <p>Archive the material you submitted or want to keep after the posting disappears.</p>
+                </div>
+
+                <div class="form-grid">
+                    <label class="field">
+                        <span>Cover letter used?</span>
+                        <select th:field="*{coverLetter}">
+                            <option value="">Not tracked</option>
+                            <option value="true">Yes</option>
+                            <option value="false">No</option>
+                        </select>
+                        <small class="field-help">Saving cover-letter text below automatically marks this as Yes.</small>
+                    </label>
+
                     <label class="field field-full">
-                        <span>Job description</span>
+                        <span>Cover letter text</span>
+                        <textarea th:field="*{coverLetterText}" rows="10" placeholder="Paste the cover letter you submitted here."></textarea>
+                    </label>
+
+                    <label class="field field-full">
+                        <span>Saved job description</span>
                         <textarea th:field="*{jobDescription}" rows="10" placeholder="Paste the full posting here so you still have it later."></textarea>
                     </label>
                 </div>

@@ -5,7 +5,7 @@
 
 **A local-first command center for applications, interview prep, follow-ups, calendar events, imports, and job-search analytics.**
 
-Version **1.1.1**
+Version **1.1.2**
 </div>
 
 ---
@@ -19,7 +19,8 @@ It is intentionally **local-first**. The application runs on your computer, uses
 The project began as an application tracker and has grown into a small productivity system with:
 
 - application tracking and search
-- richer role metadata for work arrangement, experience requirements, career lane, follow-ups, and cover-letter tracking
+- richer role metadata for work arrangement, experience requirements, career lane, follow-ups, and archived cover-letter content
+- optional company-domain branding with locally cached logos and initials fallback
 - pipeline-stage and current-state tracking
 - chronological application lifecycles
 - interview / assessment / follow-up calendar events
@@ -50,7 +51,7 @@ The landing page provides an at-a-glance view of the active job search:
 
 Applications can store:
 
-- company and role
+- company, role, and optional company domain
 - location
 - work arrangement
 - pipeline stage
@@ -63,11 +64,11 @@ Applications can store:
 - career lane
 - applied date
 - next step / follow-up
-- cover-letter tracking
+- cover-letter usage and archived cover-letter text
 - working notes
 - a saved copy of the job description
 
-The tracker supports text search across company, role, location, work arrangement, experience requirements, career lane, source, state, next step, notes, and saved job descriptions.
+The tracker supports text search across company, company domain, role, location, work arrangement, experience requirements, career lane, source, state, next step, archived cover-letter text, notes, and saved job descriptions.
 
 For larger histories, the application list also supports:
 
@@ -75,6 +76,29 @@ For larger histories, the application list also supports:
 - sorting by recent update, oldest update, applied date, or company
 - 25 / 50 / 100-row page sizes
 - server-side pagination so large histories remain fast and scannable
+
+### Application materials
+
+Long-form material is archived with the application but stays collapsed by default on the detail page so it does not dominate the working view.
+
+The **Application Materials** panel currently stores:
+
+- cover-letter usage (`Yes`, `No`, or `Not tracked`)
+- the full cover-letter text when available
+- a saved copy of the job description
+
+Cover letters and job descriptions open as inline expandable panels. Saving cover-letter text automatically marks the application as having used a cover letter, while historical rows can still record that a cover letter was used even when the original text is unavailable.
+
+### Company logos
+
+Applications can optionally store a company domain such as `mastercard.com`. The detail page can then:
+
+- fetch a logo from common favicon locations on the company's public website
+- cache the resulting image directly in the local SQLite database
+- accept a manual PNG, JPEG, WebP, GIF, or ICO upload when favicon discovery is not useful
+- fall back to the existing company initials when no cached logo is available
+
+Logo fetching only happens when explicitly requested. Cached images are shared by company domain, so multiple applications to the same company can reuse one locally stored logo without a cloud service or per-page third-party request.
 
 ### Pipeline stage vs. current state
 
@@ -147,6 +171,7 @@ The current importer recognizes the following tracker columns:
 ```text
 Job Title
 Company
+Company Domain (optional)
 Location
 Work Arrangement
 Compensation
@@ -159,6 +184,7 @@ Status
 Next Step / Follow Up
 Job Link
 Cover Letter?
+Cover Letter Text (optional)
 Notes
 ```
 
@@ -303,6 +329,8 @@ For backup, stop the application and copy `jobsearch.db` somewhere safe.
 
 Spreadsheet imports are parsed by the locally running Spring application. Import files are not uploaded to an external service by this project.
 
+Company-logo fetching is the one intentionally networked helper in the core app: it runs only when you press **Fetch from domain**, requests common icon paths from the public company domain you saved, and then stores the resulting image bytes locally in SQLite. Normal page rendering uses the cached database copy rather than an external logo URL.
+
 ### Safe demo mode
 
 The repository also includes a separate **demo profile** for screenshots, portfolio previews, and public repository evaluation. Demo mode:
@@ -403,12 +431,13 @@ The main data tables are:
 
 | Table | Purpose |
 | --- | --- |
-| `job_applications` | one row per tracked role, including richer role metadata and import source |
+| `job_applications` | one row per tracked role, including richer role metadata, application materials, and import source |
+| `company_logos` | locally cached company-logo image data keyed by normalized domain |
 | `application_events` | lifecycle / calendar events |
 | `prep_items` | reusable and role-specific prep material |
 | `prep_item_links` | many-to-many links between reusable prep and applications |
 
-The schema is created from `src/main/resources/schema.sql`. A small startup migration runner handles columns introduced after the earliest project versions, including the richer v1.1 application fields.
+The schema is created from `src/main/resources/schema.sql`. A small startup migration runner handles columns introduced after the earliest project versions, including the richer v1.1 application fields and v1.1.2 company/material columns.
 
 ## Project structure
 
@@ -432,9 +461,12 @@ src/main/java/com/brianna/jobsearch/
 │       ├── DuplicateMatchType.java
 │       └── ImportDecision.java
 ├── repository/
+│   ├── CompanyLogoRepository.java
+│   └── ...
 ├── service/
 │   ├── AnalyticsService.java
 │   ├── ApplicationImportService.java
+│   ├── CompanyLogoService.java
 │   ├── JobApplicationService.java
 │   └── PrepService.java
 ├── JobSearchDashboardApplication.java
@@ -554,7 +586,7 @@ To create a packaged JAR:
 
 ```bash
 mvn clean package
-java -jar target/job-search-dashboard-1.1.1.jar
+java -jar target/job-search-dashboard-1.1.2.jar
 ```
 
 > The repository does not currently include the Maven Wrapper (`mvnw` / `mvnw.cmd`). Adding it is tracked in `NEXT-STEPS.md`.
@@ -643,7 +675,7 @@ git push
 
 ## Current limitations
 
-Version 1.1.1 is intentionally a local, single-user application. It includes a public-safe demo profile and preview-first historical imports, but does **not** currently include:
+Version 1.1.2 is intentionally a local, single-user application. It includes a public-safe demo profile and preview-first historical imports, but does **not** currently include:
 
 - authentication or multi-user support
 - cloud hosting / cloud database
@@ -655,6 +687,7 @@ Version 1.1.1 is intentionally a local, single-user application. It includes a p
 - import-batch history / one-click import undo
 - export / backup UI
 - contacts / recruiter CRM
+- general resume / file attachments beyond archived cover-letter text and job descriptions
 - dark mode
 
 Those and other ideas are tracked in [`NEXT-STEPS.md`](NEXT-STEPS.md).
@@ -665,6 +698,6 @@ See [`NEXT-STEPS.md`](NEXT-STEPS.md) for the prioritized product, analytics, aut
 
 ## Version
 
-Current release: **1.1.1**
+Current release: **1.1.2**
 
-Version 1.1.1 optimizes the 1.1 import release for large real-world histories with application filters / sorting / pagination, actionable calendar views, stale-application review actions, and richer outcome / strategy analytics.
+Version 1.1.2 adds locally cached company branding plus expandable application materials for archived cover letters and job descriptions, while retaining initials as the no-logo fallback.

@@ -37,11 +37,13 @@ public class DatabaseConfig {
             columns.forEach(column -> applicationColumns.add(String.valueOf(column.get("name")).toLowerCase(Locale.ROOT)));
 
             addColumnIfMissing(jdbcTemplate, applicationColumns, "state", "TEXT NOT NULL DEFAULT 'ACTIVE'");
+            addColumnIfMissing(jdbcTemplate, applicationColumns, "company_domain", "TEXT");
             addColumnIfMissing(jdbcTemplate, applicationColumns, "work_arrangement", "TEXT");
             addColumnIfMissing(jdbcTemplate, applicationColumns, "years_experience_required", "TEXT");
             addColumnIfMissing(jdbcTemplate, applicationColumns, "career_lane", "TEXT");
             addColumnIfMissing(jdbcTemplate, applicationColumns, "next_step", "TEXT");
             addColumnIfMissing(jdbcTemplate, applicationColumns, "cover_letter", "INTEGER");
+            addColumnIfMissing(jdbcTemplate, applicationColumns, "cover_letter_text", "TEXT");
             addColumnIfMissing(jdbcTemplate, applicationColumns, "import_source", "TEXT");
 
             // Terminal outcomes are closed by definition. This also tidies data created before
@@ -73,8 +75,19 @@ public class DatabaseConfig {
                     """);
 
             jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_job_applications_state ON job_applications(state)");
+            jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_job_applications_company_domain ON job_applications(company_domain)");
             jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_job_applications_career_lane ON job_applications(career_lane)");
             jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_job_applications_work_arrangement ON job_applications(work_arrangement)");
+
+            jdbcTemplate.execute("""
+                    CREATE TABLE IF NOT EXISTS company_logos (
+                        domain TEXT PRIMARY KEY,
+                        mime_type TEXT NOT NULL,
+                        image_data BLOB NOT NULL,
+                        source_url TEXT,
+                        updated_at TEXT NOT NULL
+                    )
+                    """);
 
             List<Map<String, Object>> prepColumns = jdbcTemplate.queryForList("PRAGMA table_info(prep_items)");
             Set<String> prepColumnNames = new HashSet<>();

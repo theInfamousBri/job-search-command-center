@@ -29,6 +29,7 @@ public class JobApplicationRepository {
         JobApplication application = new JobApplication();
         application.setId(rs.getLong("id"));
         application.setCompany(rs.getString("company"));
+        application.setCompanyDomain(rs.getString("company_domain"));
         application.setRole(rs.getString("role"));
         application.setLocation(rs.getString("location"));
         application.setWorkArrangement(rs.getString("work_arrangement"));
@@ -49,6 +50,7 @@ public class JobApplicationRepository {
         application.setNextStep(rs.getString("next_step"));
         Object coverLetter = rs.getObject("cover_letter");
         application.setCoverLetter(coverLetter == null ? null : rs.getInt("cover_letter") != 0);
+        application.setCoverLetterText(rs.getString("cover_letter_text"));
         application.setNotes(rs.getString("notes"));
         application.setJobDescription(rs.getString("job_description"));
 
@@ -78,6 +80,7 @@ public class JobApplicationRepository {
                 FROM job_applications
                 WHERE LOWER(company) LIKE LOWER(?)
                    OR LOWER(role) LIKE LOWER(?)
+                   OR LOWER(COALESCE(company_domain, '')) LIKE LOWER(?)
                    OR LOWER(COALESCE(location, '')) LIKE LOWER(?)
                    OR LOWER(COALESCE(work_arrangement, '')) LIKE LOWER(?)
                    OR LOWER(COALESCE(years_experience_required, '')) LIKE LOWER(?)
@@ -85,10 +88,11 @@ public class JobApplicationRepository {
                    OR LOWER(COALESCE(source, '')) LIKE LOWER(?)
                    OR LOWER(COALESCE(state, '')) LIKE LOWER(?)
                    OR LOWER(COALESCE(next_step, '')) LIKE LOWER(?)
+                   OR LOWER(COALESCE(cover_letter_text, '')) LIKE LOWER(?)
                    OR LOWER(COALESCE(notes, '')) LIKE LOWER(?)
                    OR LOWER(COALESCE(job_description, '')) LIKE LOWER(?)
                 ORDER BY updated_at DESC
-                """, rowMapper, like, like, like, like, like, like, like, like, like, like, like);
+                """, rowMapper, like, like, like, like, like, like, like, like, like, like, like, like, like);
     }
 
     public ApplicationPage findPage(ApplicationSearchCriteria criteria) {
@@ -101,17 +105,19 @@ public class JobApplicationRepository {
                      AND (
                          LOWER(company) LIKE LOWER(?)
                          OR LOWER(role) LIKE LOWER(?)
+                         OR LOWER(COALESCE(company_domain, '')) LIKE LOWER(?)
                          OR LOWER(COALESCE(location, '')) LIKE LOWER(?)
                          OR LOWER(COALESCE(work_arrangement, '')) LIKE LOWER(?)
                          OR LOWER(COALESCE(years_experience_required, '')) LIKE LOWER(?)
                          OR LOWER(COALESCE(career_lane, '')) LIKE LOWER(?)
                          OR LOWER(COALESCE(source, '')) LIKE LOWER(?)
                          OR LOWER(COALESCE(next_step, '')) LIKE LOWER(?)
+                         OR LOWER(COALESCE(cover_letter_text, '')) LIKE LOWER(?)
                          OR LOWER(COALESCE(notes, '')) LIKE LOWER(?)
                          OR LOWER(COALESCE(job_description, '')) LIKE LOWER(?)
                      )
                     """);
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 12; i++) {
                 params.add(like);
             }
         }
@@ -228,17 +234,17 @@ public class JobApplicationRepository {
         jdbcTemplate.update(connection -> {
             PreparedStatement statement = connection.prepareStatement("""
                     INSERT INTO job_applications (
-                        company, role, location, work_arrangement, years_experience_required,
+                        company, company_domain, role, location, work_arrangement, years_experience_required,
                         career_lane, status, state, priority, source, job_url, salary,
-                        applied_date, next_step, cover_letter, notes, job_description,
+                        applied_date, next_step, cover_letter, cover_letter_text, notes, job_description,
                         import_source, created_at, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """, Statement.RETURN_GENERATED_KEYS);
 
             bindApplication(statement, application);
-            statement.setString(18, blankToNull(importSource));
-            statement.setString(19, createdAt);
-            statement.setString(20, updatedAt);
+            statement.setString(20, blankToNull(importSource));
+            statement.setString(21, createdAt);
+            statement.setString(22, updatedAt);
             return statement;
         }, keyHolder);
 
@@ -251,26 +257,28 @@ public class JobApplicationRepository {
 
     private void bindApplication(PreparedStatement statement, JobApplication application) throws java.sql.SQLException {
         statement.setString(1, application.getCompany().trim());
-        statement.setString(2, application.getRole().trim());
-        statement.setString(3, blankToNull(application.getLocation()));
-        statement.setString(4, blankToNull(application.getWorkArrangement()));
-        statement.setString(5, blankToNull(application.getYearsExperienceRequired()));
-        statement.setString(6, blankToNull(application.getCareerLane()));
-        statement.setString(7, application.getStatus().name());
-        statement.setString(8, application.getState().name());
-        statement.setString(9, application.getPriority().name());
-        statement.setString(10, blankToNull(application.getSource()));
-        statement.setString(11, blankToNull(application.getJobUrl()));
-        statement.setString(12, blankToNull(application.getSalary()));
-        statement.setString(13, application.getAppliedDate() == null ? null : application.getAppliedDate().toString());
-        statement.setString(14, blankToNull(application.getNextStep()));
+        statement.setString(2, blankToNull(application.getCompanyDomain()));
+        statement.setString(3, application.getRole().trim());
+        statement.setString(4, blankToNull(application.getLocation()));
+        statement.setString(5, blankToNull(application.getWorkArrangement()));
+        statement.setString(6, blankToNull(application.getYearsExperienceRequired()));
+        statement.setString(7, blankToNull(application.getCareerLane()));
+        statement.setString(8, application.getStatus().name());
+        statement.setString(9, application.getState().name());
+        statement.setString(10, application.getPriority().name());
+        statement.setString(11, blankToNull(application.getSource()));
+        statement.setString(12, blankToNull(application.getJobUrl()));
+        statement.setString(13, blankToNull(application.getSalary()));
+        statement.setString(14, application.getAppliedDate() == null ? null : application.getAppliedDate().toString());
+        statement.setString(15, blankToNull(application.getNextStep()));
         if (application.getCoverLetter() == null) {
-            statement.setObject(15, null);
+            statement.setObject(16, null);
         } else {
-            statement.setInt(15, application.getCoverLetter() ? 1 : 0);
+            statement.setInt(16, application.getCoverLetter() ? 1 : 0);
         }
-        statement.setString(16, blankToNull(application.getNotes()));
-        statement.setString(17, blankToNull(application.getJobDescription()));
+        statement.setString(17, blankToNull(application.getCoverLetterText()));
+        statement.setString(18, blankToNull(application.getNotes()));
+        statement.setString(19, blankToNull(application.getJobDescription()));
     }
 
     public void update(JobApplication application) {
@@ -285,6 +293,7 @@ public class JobApplicationRepository {
         jdbcTemplate.update("""
                 UPDATE job_applications
                 SET company = ?,
+                    company_domain = ?,
                     role = ?,
                     location = ?,
                     work_arrangement = ?,
@@ -299,12 +308,14 @@ public class JobApplicationRepository {
                     applied_date = ?,
                     next_step = ?,
                     cover_letter = ?,
+                    cover_letter_text = ?,
                     notes = ?,
                     job_description = ?,
                     updated_at = ?
                 WHERE id = ?
                 """,
                 application.getCompany().trim(),
+                blankToNull(application.getCompanyDomain()),
                 application.getRole().trim(),
                 blankToNull(application.getLocation()),
                 blankToNull(application.getWorkArrangement()),
@@ -319,6 +330,7 @@ public class JobApplicationRepository {
                 application.getAppliedDate() == null ? null : application.getAppliedDate().toString(),
                 blankToNull(application.getNextStep()),
                 application.getCoverLetter() == null ? null : (application.getCoverLetter() ? 1 : 0),
+                blankToNull(application.getCoverLetterText()),
                 blankToNull(application.getNotes()),
                 blankToNull(application.getJobDescription()),
                 updatedAt.toString(),

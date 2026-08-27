@@ -1,6 +1,6 @@
 # Job Search Command Center — Next Steps
 
-This file is the post-**1.1.1** roadmap. It consolidates the ideas intentionally deferred while the first usable local version was being built.
+This file is the post-**1.1.2** roadmap. It consolidates the ideas intentionally deferred while the first usable local version was being built.
 
 The order below is directional rather than a promise. Features should continue to be added when they solve a real workflow problem rather than just making the project larger.
 
@@ -84,6 +84,17 @@ Google Calendar sync belongs later under integrations.
 
 ## Application tracking improvements
 
+### Application attachments
+
+Version 1.1.2 archives cover-letter text and saved job descriptions directly on the application. A future generalized attachment model could add:
+
+- the exact resume version submitted
+- original cover-letter PDF / DOCX files
+- portfolio or writing samples
+- other application-specific documents
+
+Prefer a reusable attachment table or equivalent model rather than adding one file column per material type. Because the product is local-first, keeping modest attachments inside SQLite would make a database backup self-contained.
+
 ### Company pages
 
 Group multiple applications under one company and surface:
@@ -93,6 +104,18 @@ Group multiple applications under one company and surface:
 - company research
 - cumulative interview history
 - outcomes
+
+### Company branding management
+
+Build on the v1.1.2 domain-based logo cache with company-level tooling so branding does not have to be maintained one application at a time:
+
+- propagate a company domain to every application with the same normalized company name
+- reuse the same cached logo automatically across those matching applications
+- add a centralized branding cleanup screen grouped by company
+- show application count, current domain, logo status, and initials fallback at a glance
+- allow setting / correcting a domain once for the whole company group
+- allow refresh, manual upload, or logo removal from the centralized screen
+- keep per-application overrides possible if two similarly named companies ever need different branding
 
 ### Source normalization
 

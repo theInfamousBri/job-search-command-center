@@ -93,7 +93,15 @@
                         <tr th:each="app : ${dashboard.recent}">
                             <td>
                                 <a class="company-cell" th:href="@{/applications/{id}(id=${app.id})}">
-                                    <span class="company-avatar" th:text="${app.initials}">CO</span>
+                                    <span class="company-avatar">
+                                    <span class="company-avatar-initials" th:text="${app.initials}">CO</span>
+                                    <img th:if="${app.companyDomain != null}"
+                                         class="company-avatar-logo"
+                                         th:src="@{/applications/{id}/logo(id=${app.id})}"
+                                         th:alt="${app.company + ' logo'}"
+                                         loading="lazy"
+                                         onerror="this.style.display='none'">
+                                </span>
                                     <span>
                                         <strong th:text="${app.company}">Company</strong>
                                         <small th:text="${app.role}">Role</small>

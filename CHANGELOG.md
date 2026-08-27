@@ -1,5 +1,32 @@
 # Changelog
 
+## 1.1.2
+
+Application materials and company-branding polish.
+
+### Added
+
+- Optional company-domain metadata on applications.
+- Locally cached company logos keyed by normalized domain, with initials as the fallback.
+- Explicit `Fetch from domain`, manual image upload, refresh, and cached-logo removal controls.
+- Full archived cover-letter text in addition to the existing cover-letter-used flag.
+- Expandable Application Materials panel for cover letters and saved job descriptions.
+- Optional `Company Domain` and `Cover Letter Text` fields for future Excel / CSV imports.
+- Demo cover-letter content so the materials accordion can be exercised without personal data.
+
+### Changed
+
+- Company avatars on Dashboard, Applications, stale review, and application detail can render cached logos.
+- Saving archived cover-letter text automatically marks the application as having used a cover letter.
+- Application search now includes company domain and archived cover-letter content.
+- Long-form job descriptions moved into the same collapsed Application Materials area as cover letters.
+
+### Local-first behavior
+
+- Logo bytes are stored in SQLite rather than relying on a third-party image URL during normal page rendering.
+- Automatic logo fetching only runs when explicitly requested and only targets common image locations on a public company domain.
+- Manual logo uploads are limited to 1 MB and supported raster / icon image formats.
+
 ## 1.1.1
 
 Large-history usability and analytics optimization.

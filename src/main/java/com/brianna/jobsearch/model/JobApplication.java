@@ -14,6 +14,7 @@ public class JobApplication {
     @NotBlank(message = "Company is required.")
     @Size(max = 150, message = "Company must be 150 characters or fewer.")
     private String company;
+    private String companyDomain;
 
     @NotBlank(message = "Role is required.")
     @Size(max = 200, message = "Role must be 200 characters or fewer.")
@@ -32,6 +33,7 @@ public class JobApplication {
     private LocalDate appliedDate = LocalDate.now();
     private String nextStep;
     private Boolean coverLetter;
+    private String coverLetterText;
     private String notes;
     private String jobDescription;
     private LocalDateTime createdAt;
@@ -70,10 +72,21 @@ public class JobApplication {
     }
 
     public String getCoverLetterDisplay() {
+        if (hasCoverLetterText()) {
+            return "Used · archived";
+        }
         if (coverLetter == null) {
             return "Not tracked";
         }
-        return coverLetter ? "Yes" : "No";
+        return coverLetter ? "Used · content not archived" : "Not used";
+    }
+
+    public boolean hasCoverLetterText() {
+        return coverLetterText != null && !coverLetterText.isBlank();
+    }
+
+    public boolean hasJobDescription() {
+        return jobDescription != null && !jobDescription.isBlank();
     }
 
     public String getLocationDisplay() {
@@ -109,6 +122,9 @@ public class JobApplication {
 
     public String getCompany() { return company; }
     public void setCompany(String company) { this.company = company; }
+
+    public String getCompanyDomain() { return companyDomain; }
+    public void setCompanyDomain(String companyDomain) { this.companyDomain = companyDomain; }
 
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
@@ -151,6 +167,9 @@ public class JobApplication {
 
     public Boolean getCoverLetter() { return coverLetter; }
     public void setCoverLetter(Boolean coverLetter) { this.coverLetter = coverLetter; }
+
+    public String getCoverLetterText() { return coverLetterText; }
+    public void setCoverLetterText(String coverLetterText) { this.coverLetterText = coverLetterText; }
 
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }

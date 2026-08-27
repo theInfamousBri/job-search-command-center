@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS job_applications (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     company TEXT NOT NULL,
+    company_domain TEXT,
     role TEXT NOT NULL,
     location TEXT,
     work_arrangement TEXT,
@@ -15,6 +16,7 @@ CREATE TABLE IF NOT EXISTS job_applications (
     applied_date TEXT,
     next_step TEXT,
     cover_letter INTEGER,
+    cover_letter_text TEXT,
     notes TEXT,
     job_description TEXT,
     import_source TEXT,
@@ -30,6 +32,15 @@ CREATE INDEX IF NOT EXISTS idx_job_applications_updated_at
     ON job_applications(updated_at);
 CREATE INDEX IF NOT EXISTS idx_job_applications_company
     ON job_applications(company);
+
+
+CREATE TABLE IF NOT EXISTS company_logos (
+    domain TEXT PRIMARY KEY,
+    mime_type TEXT NOT NULL,
+    image_data BLOB NOT NULL,
+    source_url TEXT,
+    updated_at TEXT NOT NULL
+);
 
 CREATE TABLE IF NOT EXISTS application_events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

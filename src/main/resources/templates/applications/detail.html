@@ -17,7 +17,14 @@
             <div>
                 <a class="back-link" th:href="@{/applications}">← Applications</a>
                 <div class="detail-title-row">
-                    <span class="company-avatar company-avatar-large" th:text="${jobApplication.initials}">VI</span>
+                    <span class="company-avatar company-avatar-large">
+                        <span class="company-avatar-initials" th:text="${jobApplication.initials}">VI</span>
+                        <img th:if="${jobApplication.companyDomain != null}"
+                             class="company-avatar-logo"
+                             th:src="@{/applications/{id}/logo(id=${jobApplication.id})}"
+                             th:alt="${jobApplication.company + ' logo'}"
+                             onerror="this.style.display='none'">
+                    </span>
                     <div>
                         <p class="eyebrow" th:text="${jobApplication.company}">NORTHSTAR LABS</p>
                         <h1 th:text="${jobApplication.role}">Senior Software Engineer</h1>
@@ -35,6 +42,13 @@
                 <a class="button button-primary" th:href="@{/applications/{id}/edit(id=${jobApplication.id})}">Edit</a>
             </div>
         </header>
+
+        <div th:if="${logoAutoSuccess != null}"
+             class="inline-alert inline-alert-success"
+             th:text="${logoAutoSuccess}">Company logo refreshed automatically.</div>
+        <div th:if="${logoAutoWarning != null}"
+             class="inline-alert inline-alert-error"
+             th:text="${logoAutoWarning}">Company domain saved, but the logo could not be fetched automatically.</div>
 
         <section class="detail-summary detail-summary-six">
             <div>
@@ -329,11 +343,11 @@
 
                 <dl class="info-list">
                     <div><dt>Company</dt><dd th:text="${jobApplication.company}">Northstar Labs</dd></div>
+                    <div><dt>Company domain</dt><dd th:text="${jobApplication.companyDomain == null ? '—' : jobApplication.companyDomain}">northstarlabs.com</dd></div>
                     <div><dt>Role</dt><dd th:text="${jobApplication.role}">Senior Software Engineer</dd></div>
                     <div><dt>Work arrangement</dt><dd th:text="${jobApplication.workArrangement == null ? '—' : jobApplication.workArrangement}">Hybrid</dd></div>
                     <div><dt>Experience required</dt><dd th:text="${jobApplication.yearsExperienceRequired == null ? '—' : jobApplication.yearsExperienceRequired}">3+</dd></div>
                     <div><dt>Career lane</dt><dd th:text="${jobApplication.careerLane == null ? '—' : jobApplication.careerLane}">Backend / Payments</dd></div>
-                    <div><dt>Cover letter</dt><dd th:text="${jobApplication.coverLetterDisplay}">Yes</dd></div>
                     <div><dt>Pipeline stage</dt><dd th:text="${jobApplication.status.displayName}">Technical Interview</dd></div>
                     <div><dt>Current state</dt><dd th:text="${jobApplication.state.displayName}">Awaiting Feedback</dd></div>
                     <div><dt>Last updated</dt><dd th:text="${jobApplication.updatedDateTimeDisplay}">Aug 26, 2026</dd></div>
@@ -351,22 +365,101 @@
                 </dl>
             </section>
 
-            <section class="panel panel-full">
+            <section class="panel panel-full materials-panel" id="application-materials">
                 <div class="panel-header">
                     <div>
-                        <p class="eyebrow">ARCHIVE</p>
-                        <h2>Saved job description</h2>
+                        <p class="eyebrow">APPLICATION MATERIALS</p>
+                        <h2>Archived materials</h2>
+                        <p class="panel-subtitle">Reference what you submitted without keeping long-form text open all the time.</p>
                     </div>
+                    <a class="text-link" th:href="@{/applications/{id}/edit(id=${jobApplication.id})}">Edit materials →</a>
                 </div>
 
-                <div th:if="${jobApplication.jobDescription == null}" class="empty-mini">
-                    <p>No job description saved yet. Add it before the original posting disappears.</p>
-                </div>
-                <div th:unless="${jobApplication.jobDescription == null}" class="prose job-description" th:text="${jobApplication.jobDescription}">
-                    Job description.
+                <div class="material-list">
+                    <details class="material-item">
+                        <summary class="material-summary">
+                            <span class="material-summary-main">
+                                <span class="material-icon">CL</span>
+                                <span>
+                                    <strong>Cover letter</strong>
+                                    <small th:text="${jobApplication.coverLetterDisplay}">Used · archived</small>
+                                </span>
+                            </span>
+                            <span class="material-toggle">View <span aria-hidden="true">⌄</span></span>
+                        </summary>
+                        <div class="material-body">
+                            <div th:if="${jobApplication.hasCoverLetterText()}" class="prose material-prose" th:text="${jobApplication.coverLetterText}">Cover letter.</div>
+                            <div th:unless="${jobApplication.hasCoverLetterText()}" class="empty-mini material-empty">
+                                <p th:if="${jobApplication.coverLetter == true}">A cover letter was used, but its content has not been archived.</p>
+                                <p th:if="${jobApplication.coverLetter == false}">No cover letter was used for this application.</p>
+                                <p th:if="${jobApplication.coverLetter == null}">Cover-letter usage has not been tracked for this application.</p>
+                            </div>
+                        </div>
+                    </details>
+
+                    <details class="material-item">
+                        <summary class="material-summary">
+                            <span class="material-summary-main">
+                                <span class="material-icon">JD</span>
+                                <span>
+                                    <strong>Saved job description</strong>
+                                    <small th:text="${jobApplication.hasJobDescription() ? 'Archived' : 'Not saved'}">Archived</small>
+                                </span>
+                            </span>
+                            <span class="material-toggle">View <span aria-hidden="true">⌄</span></span>
+                        </summary>
+                        <div class="material-body">
+                            <div th:if="${jobApplication.hasJobDescription()}" class="prose job-description material-prose" th:text="${jobApplication.jobDescription}">Job description.</div>
+                            <div th:unless="${jobApplication.hasJobDescription()}" class="empty-mini material-empty">
+                                <p>No job description saved yet. Add it before the original posting disappears.</p>
+                            </div>
+                        </div>
+                    </details>
                 </div>
             </section>
         </div>
+
+        <details class="panel company-branding-panel" id="company-branding" th:attr="open=${logoSuccess != null or logoError != null} ? 'open' : null">
+            <summary class="company-branding-summary">
+                <span>
+                    <span class="eyebrow">COMPANY BRANDING</span>
+                    <strong>Company logo</strong>
+                    <small th:if="${jobApplication.companyDomain == null}">Add a company domain to enable logo caching.</small>
+                    <small th:if="${jobApplication.companyDomain != null and logoCached}" th:text="${'Cached locally for ' + jobApplication.companyDomain}">Cached locally</small>
+                    <small th:if="${jobApplication.companyDomain != null and !logoCached}" th:text="${'Using initials · ' + jobApplication.companyDomain}">Using initials</small>
+                </span>
+                <span class="material-toggle">Manage <span aria-hidden="true">⌄</span></span>
+            </summary>
+
+            <div class="company-branding-body">
+                <div th:if="${logoSuccess != null}" class="inline-alert inline-alert-success" th:text="${logoSuccess}">Logo updated.</div>
+                <div th:if="${logoError != null}" class="inline-alert inline-alert-error" th:text="${logoError}">Logo error.</div>
+
+                <div th:if="${jobApplication.companyDomain == null}" class="branding-empty">
+                    <p>Add a company domain such as <code>mastercard.com</code> on the Edit Application screen. Initials remain the fallback.</p>
+                    <a class="button button-secondary button-small" th:href="@{/applications/{id}/edit(id=${jobApplication.id})}">Add company domain</a>
+                </div>
+
+                <div th:if="${jobApplication.companyDomain != null}" class="branding-actions">
+                    <div>
+                        <strong th:text="${jobApplication.companyDomain}">mastercard.com</strong>
+                        <p>Fetch reads the company's homepage for declared favicons and touch icons, checks its web app manifest when present, then falls back to common icon locations. The selected image is cached in your local SQLite database.</p>
+                    </div>
+                    <div class="branding-button-row">
+                        <form th:action="@{/applications/{id}/logo/fetch(id=${jobApplication.id})}" method="post">
+                            <button class="button button-secondary button-small" type="submit" th:text="${logoCached ? 'Refresh from domain' : 'Fetch from domain'}">Fetch from domain</button>
+                        </form>
+                        <form class="logo-upload-form" th:action="@{/applications/{id}/logo/upload(id=${jobApplication.id})}" method="post" enctype="multipart/form-data">
+                            <input id="company-logo-upload" type="file" name="logo" accept="image/png,image/jpeg,image/webp,image/gif,image/x-icon,image/vnd.microsoft.icon,image/svg+xml" required>
+                            <button class="button button-secondary button-small" type="submit">Upload image</button>
+                        </form>
+                        <form th:if="${logoCached}" th:action="@{/applications/{id}/logo/delete(id=${jobApplication.id})}" method="post">
+                            <button class="button button-quiet button-small" type="submit">Remove cached logo</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </details>
 
         <section class="danger-zone">
             <div>

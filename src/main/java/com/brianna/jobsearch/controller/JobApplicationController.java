@@ -13,6 +13,7 @@ import com.brianna.jobsearch.model.importing.ApplicationImportPreview;
 import com.brianna.jobsearch.model.importing.ApplicationImportResult;
 import com.brianna.jobsearch.model.importing.ImportDecision;
 import com.brianna.jobsearch.service.ApplicationImportService;
+import com.brianna.jobsearch.service.CompanyLogoService;
 import com.brianna.jobsearch.service.JobApplicationService;
 import com.brianna.jobsearch.service.PrepService;
 import jakarta.servlet.http.HttpSession;
@@ -21,7 +22,11 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.CacheControl;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -41,14 +46,17 @@ public class JobApplicationController {
     private final JobApplicationService service;
     private final PrepService prepService;
     private final ApplicationImportService importService;
+    private final CompanyLogoService companyLogoService;
 
     public JobApplicationController(
             JobApplicationService service,
             PrepService prepService,
-            ApplicationImportService importService) {
+            ApplicationImportService importService,
+            CompanyLogoService companyLogoService) {
         this.service = service;
         this.prepService = prepService;
         this.importService = importService;
+        this.companyLogoService = companyLogoService;
     }
 
     @ModelAttribute("statuses")
@@ -242,7 +250,8 @@ public class JobApplicationController {
     public String create(
             @Valid @ModelAttribute("jobApplication") JobApplication application,
             BindingResult bindingResult,
-            Model model) {
+            Model model,
+            RedirectAttributes redirectAttributes) {
 
         if (bindingResult.hasErrors()) {
             model.addAttribute("editing", false);
@@ -250,6 +259,7 @@ public class JobApplicationController {
         }
 
         long id = service.create(application);
+        refreshLogoWhenDomainChanges(null, application.getCompanyDomain(), redirectAttributes);
         return "redirect:/applications/" + id;
     }
 
@@ -259,7 +269,9 @@ public class JobApplicationController {
             @RequestParam(required = false) Long editEvent,
             Model model) {
 
-        model.addAttribute("jobApplication", service.get(id));
+        JobApplication application = service.get(id);
+        model.addAttribute("jobApplication", application);
+        model.addAttribute("logoCached", companyLogoService.hasLogo(application.getCompanyDomain()));
         model.addAttribute("events", service.eventsForApplication(id));
         model.addAttribute("applicationPrepItems", prepService.forApplication(id));
         model.addAttribute("linkablePrepItems", prepService.linkableReusableForApplication(id));
@@ -275,6 +287,56 @@ public class JobApplicationController {
         }
 
         return "applications/detail";
+    }
+
+    @GetMapping("/applications/{id}/logo")
+    public ResponseEntity<byte[]> companyLogo(@PathVariable long id) {
+        JobApplication application = service.get(id);
+        return companyLogoService.find(application.getCompanyDomain())
+                .map(logo -> ResponseEntity.ok()
+                        .cacheControl(CacheControl.noStore())
+                        .contentType(MediaType.parseMediaType(logo.mimeType()))
+                        .body(logo.data()))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/applications/{id}/logo/fetch")
+    public String fetchCompanyLogo(@PathVariable long id, RedirectAttributes redirectAttributes) {
+        JobApplication application = service.get(id);
+        try {
+            companyLogoService.fetchAndCache(application.getCompanyDomain());
+            redirectAttributes.addFlashAttribute("logoSuccess", "Company logo cached locally.");
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("logoError", ex.getMessage());
+        }
+        return "redirect:/applications/" + id + "#company-branding";
+    }
+
+    @PostMapping("/applications/{id}/logo/upload")
+    public String uploadCompanyLogo(
+            @PathVariable long id,
+            @RequestParam("logo") MultipartFile logo,
+            RedirectAttributes redirectAttributes) {
+        JobApplication application = service.get(id);
+        try {
+            companyLogoService.storeUpload(application.getCompanyDomain(), logo);
+            redirectAttributes.addFlashAttribute("logoSuccess", "Company logo uploaded and cached locally.");
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("logoError", ex.getMessage());
+        }
+        return "redirect:/applications/" + id + "#company-branding";
+    }
+
+    @PostMapping("/applications/{id}/logo/delete")
+    public String deleteCompanyLogo(@PathVariable long id, RedirectAttributes redirectAttributes) {
+        JobApplication application = service.get(id);
+        try {
+            companyLogoService.delete(application.getCompanyDomain());
+            redirectAttributes.addFlashAttribute("logoSuccess", "Cached company logo removed. Initials will be used instead.");
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("logoError", ex.getMessage());
+        }
+        return "redirect:/applications/" + id + "#company-branding";
     }
 
     @PostMapping("/applications/{id}/events")
@@ -328,16 +390,51 @@ public class JobApplicationController {
             @PathVariable long id,
             @Valid @ModelAttribute("jobApplication") JobApplication application,
             BindingResult bindingResult,
-            Model model) {
+            Model model,
+            RedirectAttributes redirectAttributes) {
 
         if (bindingResult.hasErrors()) {
             model.addAttribute("editing", true);
             return "applications/form";
         }
 
+        JobApplication previous = service.get(id);
+        String previousDomain = previous.getCompanyDomain();
+
         application.setId(id);
         service.update(application);
+        refreshLogoWhenDomainChanges(previousDomain, application.getCompanyDomain(), redirectAttributes);
         return "redirect:/applications/" + id;
+    }
+
+
+    /**
+     * Domain edits should feel like enough configuration on their own. Save the
+     * application first, then refresh the cached logo as a best-effort network
+     * operation. A failed logo lookup must never roll back the application edit.
+     */
+    private void refreshLogoWhenDomainChanges(
+            String previousDomain,
+            String currentDomain,
+            RedirectAttributes redirectAttributes) {
+
+        String before = CompanyLogoService.normalizeDomain(previousDomain);
+        String after = CompanyLogoService.normalizeDomain(currentDomain);
+
+        if (after == null || Objects.equals(before, after)) {
+            return;
+        }
+
+        try {
+            companyLogoService.fetchAndCache(after);
+            redirectAttributes.addFlashAttribute(
+                    "logoAutoSuccess",
+                    "Company domain updated and the logo was refreshed automatically.");
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute(
+                    "logoAutoWarning",
+                    "Company domain saved, but a logo could not be fetched automatically. " + ex.getMessage());
+        }
     }
 
     @PostMapping("/applications/{id}/delete")

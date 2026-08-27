@@ -84,7 +84,7 @@ public class JobApplicationService {
 
     @Transactional
     public long create(JobApplication application) {
-        normalizeState(application);
+        normalizeApplication(application);
         long id = repository.save(application);
 
         ApplicationEvent firstEvent = new ApplicationEvent();
@@ -114,7 +114,7 @@ public class JobApplicationService {
     @Transactional
     public void update(JobApplication application) {
         JobApplication previous = get(application.getId());
-        normalizeState(application);
+        normalizeApplication(application);
         repository.update(application);
 
         if (previous.getStatus() != application.getStatus()) {
@@ -299,6 +299,14 @@ public class JobApplicationService {
         }
         if (event.getEventDate() == null) {
             event.setEventDate(LocalDate.now());
+        }
+    }
+
+    private void normalizeApplication(JobApplication application) {
+        normalizeState(application);
+        application.setCompanyDomain(CompanyLogoService.normalizeDomain(application.getCompanyDomain()));
+        if (application.hasCoverLetterText()) {
+            application.setCoverLetter(true);
         }
     }
 

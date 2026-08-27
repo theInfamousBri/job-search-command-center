@@ -227,6 +227,7 @@ public class ApplicationImportService {
 
         JobApplication application = new JobApplication();
         application.setCompany(value(parsed, "Company"));
+        application.setCompanyDomain(CompanyLogoService.normalizeDomain(value(parsed, "Company Domain")));
         application.setRole(value(parsed, "Job Title"));
         application.setLocation(value(parsed, "Location"));
         application.setWorkArrangement(value(parsed, "Work Arrangement"));
@@ -238,6 +239,10 @@ public class ApplicationImportService {
         application.setNextStep(value(parsed, "Next Step / Follow Up"));
         application.setJobUrl(value(parsed, "Job Link"));
         application.setCoverLetter(parseBoolean(value(parsed, "Cover Letter?")));
+        application.setCoverLetterText(value(parsed, "Cover Letter Text"));
+        if (application.hasCoverLetterText()) {
+            application.setCoverLetter(true);
+        }
         application.setNotes(value(parsed, "Notes"));
         application.setPriority(mapPriority(value(parsed, "Priority"), row));
 
@@ -383,6 +388,7 @@ public class ApplicationImportService {
         } else {
             existing.setLocation(prefer(existing.getLocation(), imported.getLocation()));
         }
+        existing.setCompanyDomain(prefer(existing.getCompanyDomain(), imported.getCompanyDomain()));
         existing.setWorkArrangement(prefer(existing.getWorkArrangement(), imported.getWorkArrangement()));
         existing.setYearsExperienceRequired(prefer(existing.getYearsExperienceRequired(), imported.getYearsExperienceRequired()));
         existing.setCareerLane(prefer(existing.getCareerLane(), imported.getCareerLane()));
@@ -392,6 +398,10 @@ public class ApplicationImportService {
         existing.setNextStep(prefer(existing.getNextStep(), imported.getNextStep()));
         if (existing.getCoverLetter() == null) {
             existing.setCoverLetter(imported.getCoverLetter());
+        }
+        existing.setCoverLetterText(prefer(existing.getCoverLetterText(), imported.getCoverLetterText()));
+        if (existing.hasCoverLetterText()) {
+            existing.setCoverLetter(true);
         }
         if (existing.getAppliedDate() == null || (imported.getAppliedDate() != null && imported.getAppliedDate().isBefore(existing.getAppliedDate()))) {
             existing.setAppliedDate(imported.getAppliedDate());
