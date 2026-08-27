@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Prep / Notes · Job Search</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
+</head>
+<body>
+<div class="app-shell">
+    <aside th:replace="~{fragments :: sidebar('prep')}"></aside>
+    <header th:replace="~{fragments :: topbar}"></header>
+
+    <main class="main prep-main">
+        <header class="page-header">
+            <div>
+                <p class="eyebrow">KNOWLEDGE BASE</p>
+                <h1>Prep / Notes</h1>
+                <p class="subtle">Reusable interview prep, STAR stories, questions, and application-specific research.</p>
+            </div>
+            <a class="button button-primary" th:href="@{/prep/new}">+ Add prep item</a>
+        </header>
+
+        <div th:if="${reviewedItemId != null}" class="review-success" role="status">
+            <span>✓</span>
+            <div>
+                <strong>Review recorded</strong>
+                <small>Your confidence and review history were updated.</small>
+            </div>
+        </div>
+
+        <section class="metric-grid prep-metrics">
+            <article class="metric-card">
+                <span class="metric-icon metric-icon-blue">▰</span>
+                <span class="metric-label">Total items</span>
+                <strong th:text="${prep.total}">0</strong>
+                <small>Your full prep library</small>
+            </article>
+            <article class="metric-card">
+                <span class="metric-icon metric-icon-purple">&lt;/&gt;</span>
+                <span class="metric-label">Technical</span>
+                <strong th:text="${prep.technical}">0</strong>
+                <small>Concepts and coding topics</small>
+            </article>
+            <article class="metric-card">
+                <span class="metric-icon metric-icon-orange">★</span>
+                <span class="metric-label">STAR stories</span>
+                <strong th:text="${prep.starStories}">0</strong>
+                <small>Reusable behavioral examples</small>
+            </article>
+            <article class="metric-card">
+                <span class="metric-icon metric-icon-green">▦</span>
+                <span class="metric-label">Application-linked</span>
+                <strong th:text="${prep.linked}">0</strong>
+                <small>Prep tied to a specific role</small>
+            </article>
+            <article class="metric-card">
+                <span class="metric-icon metric-icon-rose">◷</span>
+                <span class="metric-label">Needs review</span>
+                <strong th:text="${prep.needsReviewCount}">0</strong>
+                <small>Low-confidence or stale</small>
+            </article>
+        </section>
+
+        <section class="panel prep-filter-panel">
+            <form class="prep-filter-form" th:action="@{/prep}" method="get">
+                <div class="prep-search">
+                    <span>⌕</span>
+                    <input type="search" name="q" th:value="${query}" placeholder="Search Java, Spring, STAR stories, Northstar…">
+                </div>
+
+                <select name="type" aria-label="Filter by prep type">
+                    <option value="">All types</option>
+                    <option th:each="prepType : ${prepTypes}"
+                            th:value="${prepType.name()}"
+                            th:text="${prepType.displayName}"
+                            th:selected="${selectedType == prepType}">Technical Topic</option>
+                </select>
+
+                <select name="applicationId" aria-label="Filter by application">
+                    <option value="">All applications</option>
+                    <option th:each="app : ${applications}"
+                            th:value="${app.id}"
+                            th:text="${app.company + ' · ' + app.role}"
+                            th:selected="${selectedApplicationId != null and selectedApplicationId == app.id}">Northstar Labs · Senior Backend Engineer</option>
+                </select>
+
+                <button class="button button-secondary" type="submit">Filter</button>
+                <a class="text-link prep-clear-link" th:if="${!#strings.isEmpty(query) or selectedType != null or selectedApplicationId != null}" th:href="@{/prep}">Clear</a>
+            </form>
+        </section>
+
+        <div class="prep-layout">
+            <section class="prep-library">
+                <div class="prep-section-heading">
+                    <div>
+                        <p class="eyebrow">LIBRARY</p>
+                        <h2 th:text="${#lists.size(items) + (#lists.size(items) == 1 ? ' item' : ' items')}">0 items</h2>
+                    </div>
+                </div>
+
+                <div th:if="${#lists.isEmpty(items)}" class="panel empty-state prep-empty-state">
+                    <div class="empty-icon">✎</div>
+                    <h3>Your prep library is ready</h3>
+                    <p>Start with a technical topic you keep reviewing, a STAR story, or notes for an upcoming interview.</p>
+                    <a class="button button-primary" th:href="@{/prep/new}">Add first prep item</a>
+                </div>
+
+                <div th:unless="${#lists.isEmpty(items)}" class="prep-card-grid">
+                    <article th:each="item : ${items}" class="panel prep-card">
+                        <div class="prep-card-topline">
+                            <span class="prep-type-pill"
+                                  th:classappend="${' prep-type-' + #strings.toLowerCase(item.type.name())}"
+                                  th:text="${item.type.shortLabel}">Technical</span>
+                            <span class="prep-confidence" th:classappend="${item.safeConfidence <= 2 ? ' confidence-low' : ''}">
+                                <span>Confidence</span>
+                                <span class="confidence-dots" aria-label="Confidence out of five">
+                                    <i th:each="level : ${#numbers.sequence(1,5)}"
+                                       th:classappend="${level <= item.safeConfidence ? ' filled' : ''}"></i>
+                                </span>
+                            </span>
+                        </div>
+
+                        <div class="prep-card-copy">
+                            <h3><a th:href="@{/prep/{id}/review(id=${item.id})}" th:text="${item.title}">HashMap vs ConcurrentHashMap</a></h3>
+                            <p class="prep-category" th:if="${item.category != null}" th:text="${item.category}">Java · Collections</p>
+                            <p class="prep-preview" th:text="${item.contentPreview}">Notes preview…</p>
+                        </div>
+
+                        <div class="prep-tags" th:if="${!#lists.isEmpty(item.tagList)}">
+                            <span th:each="tag : ${item.tagList}" th:text="${tag}">Spring</span>
+                        </div>
+
+                        <div class="prep-card-footer prep-card-footer-review">
+                            <div>
+                                <a th:if="${item.linkedToApplication}"
+                                   class="prep-app-link"
+                                   th:href="@{/applications/{id}(id=${item.applicationId})}"
+                                   th:text="${item.applicationLabel}">Northstar Labs · Senior Backend Engineer</a>
+                                <span th:unless="${item.linkedToApplication}" class="prep-reusable-label">Reusable</span>
+                                <small class="prep-review-meta" th:text="${item.reviewAgeLabel}">Never reviewed</small>
+                            </div>
+                            <div class="prep-card-actions">
+                                <a class="text-link" th:href="@{/prep/{id}/review(id=${item.id})}">Review</a>
+                                <a class="text-link muted-link" th:href="@{/prep/{id}/edit(id=${item.id})}">Edit</a>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <aside class="panel prep-review-panel" id="review-queue">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">REVIEW QUEUE</p>
+                        <h2>Needs review</h2>
+                    </div>
+                </div>
+
+                <div th:if="${#lists.isEmpty(prep.needsReview)}" class="prep-review-empty">
+                    <span>✓</span>
+                    <div>
+                        <strong>All caught up</strong>
+                        <p>Low-confidence items and older material will automatically come back for review.</p>
+                    </div>
+                </div>
+
+                <div th:unless="${#lists.isEmpty(prep.needsReview)}" class="prep-review-list">
+                    <a th:each="item : ${prep.needsReview}"
+                       class="prep-review-item"
+                       th:href="@{/prep/{id}/review(id=${item.id})}">
+                        <span class="prep-review-score" th:text="${item.safeConfidence + '/5'}">2/5</span>
+                        <span>
+                            <strong th:text="${item.title}">Java concurrency</strong>
+                            <small th:text="${item.reviewDueReason}">Low confidence · never reviewed</small>
+                        </span>
+                        <span class="prep-review-arrow">Review →</span>
+                    </a>
+                </div>
+            </aside>
+        </div>
+    </main>
+</div>
+</body>
+</html>

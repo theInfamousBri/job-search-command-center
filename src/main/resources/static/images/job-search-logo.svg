@@ -1,0 +1,22 @@
+<svg width="96" height="72" viewBox="0 0 96 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="peakA" x1="12" y1="58" x2="55" y2="12" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7659F3"/>
+      <stop offset="1" stop-color="#3B6BFF"/>
+    </linearGradient>
+    <linearGradient id="peakB" x1="42" y1="57" x2="78" y2="22" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5A4EE6"/>
+      <stop offset="1" stop-color="#8B78FF"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#305EF9" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+  <g filter="url(#glow)">
+    <path d="M10 58 34 27l9 11 12-18 31 38H70L56 41 43 57 34 46 25 58H10Z" fill="url(#peakA)"/>
+    <path d="M34 27 43 38l12-18 31 38H74L56 35 44 50 34 39l-13 19H10L34 27Z" fill="white" fill-opacity="0.98"/>
+    <path d="M18 58 34 38l10 12 12-15 18 23H62l-7-9-11 13-10-12-6 8H18Z" fill="url(#peakB)"/>
+  </g>
+  <path d="M75 9v10M70 14h10" stroke="#6CA0FF" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M82 23v5M79.5 25.5h5" stroke="#9A8AFF" stroke-width="1.8" stroke-linecap="round"/>
+</svg>

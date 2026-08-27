@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${editing ? 'Edit Application · Job Search' : 'Add Application · Job Search'}">Application · Job Search</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
+</head>
+<body>
+<div class="app-shell">
+    <aside th:replace="~{fragments :: sidebar('applications')}"></aside>
+    <header th:replace="~{fragments :: topbar}"></header>
+
+    <main class="main">
+        <header class="page-header compact">
+            <div>
+                <a class="back-link" th:href="${editing ? '/applications/' + jobApplication.id : '/applications'}">← Back</a>
+                <p class="eyebrow" th:text="${editing ? 'EDIT' : 'NEW APPLICATION'}">NEW APPLICATION</p>
+                <h1 th:text="${editing ? 'Edit application' : 'Add application'}">Add application</h1>
+            </div>
+        </header>
+
+        <form class="application-form"
+              th:object="${jobApplication}"
+              th:action="${editing ? '/applications/' + jobApplication.id : '/applications'}"
+              method="post">
+
+            <section class="panel form-section">
+                <div class="section-heading">
+                    <h2>The basics</h2>
+                    <p>The two required fields are company and role.</p>
+                </div>
+
+                <div class="form-grid">
+                    <label class="field">
+                        <span>Company <em>*</em></span>
+                        <input type="text" th:field="*{company}" placeholder="Northstar Labs">
+                        <small class="field-error" th:if="${#fields.hasErrors('company')}" th:errors="*{company}">Company error</small>
+                    </label>
+
+                    <label class="field">
+                        <span>Role <em>*</em></span>
+                        <input type="text" th:field="*{role}" placeholder="Senior Software Engineer">
+                        <small class="field-error" th:if="${#fields.hasErrors('role')}" th:errors="*{role}">Role error</small>
+                    </label>
+
+                    <label class="field">
+                        <span>Location</span>
+                        <input type="text" th:field="*{location}" placeholder="Denver, CO · Hybrid">
+                    </label>
+
+                    <label class="field">
+                        <span>Applied date</span>
+                        <input type="date" name="appliedDate" th:value="${jobApplication.appliedDateInputValue}">
+                    </label>
+
+                    <label class="field">
+                        <span>Pipeline stage</span>
+                        <select th:field="*{status}">
+                            <option th:each="status : ${statuses}"
+                                    th:value="${status}"
+                                    th:text="${status.displayName}">Applied</option>
+                        </select>
+                    </label>
+
+                    <label class="field">
+                        <span>Current state</span>
+                        <select th:field="*{state}">
+                            <option th:each="state : ${states}"
+                                    th:value="${state}"
+                                    th:text="${state.displayName}">Active</option>
+                        </select>
+                        <small class="field-help">Stage says where you are in the funnel; state says what is happening right now.</small>
+                    </label>
+
+                    <label class="field">
+                        <span>Priority</span>
+                        <select th:field="*{priority}">
+                            <option th:each="priority : ${priorities}"
+                                    th:value="${priority}"
+                                    th:text="${priority.displayName}">Medium</option>
+                        </select>
+                    </label>
+                </div>
+            </section>
+
+            <section class="panel form-section">
+                <div class="section-heading">
+                    <h2>Job details</h2>
+                    <p>Useful context you do not want to lose when the posting disappears.</p>
+                </div>
+
+                <div class="form-grid">
+                    <label class="field">
+                        <span>Source</span>
+                        <input type="text" th:field="*{source}" placeholder="LinkedIn, referral, recruiter…">
+                    </label>
+
+                    <label class="field">
+                        <span>Salary</span>
+                        <input type="text" th:field="*{salary}" placeholder="$150k–$180k">
+                    </label>
+
+                    <label class="field field-full">
+                        <span>Job posting URL</span>
+                        <input type="url" th:field="*{jobUrl}" placeholder="https://…">
+                    </label>
+
+                    <label class="field field-full">
+                        <span>Job description</span>
+                        <textarea th:field="*{jobDescription}" rows="10" placeholder="Paste the full posting here so you still have it later."></textarea>
+                    </label>
+                </div>
+            </section>
+
+            <section class="panel form-section">
+                <div class="section-heading">
+                    <h2>Notes</h2>
+                    <p>Recruiter names, team details, follow-up thoughts, prep reminders—anything useful.</p>
+                </div>
+                <label class="field">
+                    <textarea th:field="*{notes}" rows="8" placeholder="Notes…"></textarea>
+                </label>
+            </section>
+
+            <div class="form-actions">
+                <a class="button button-secondary" th:href="${editing ? '/applications/' + jobApplication.id : '/applications'}">Cancel</a>
+                <button class="button button-primary" type="submit" th:text="${editing ? 'Save changes' : 'Create application'}">Create application</button>
+            </div>
+        </form>
+    </main>
+</div>
+</body>
+</html>

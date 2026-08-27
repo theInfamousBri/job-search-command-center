@@ -1,0 +1,27 @@
+# Build output
+target/
+
+# Local application data
+jobsearch.db
+jobsearch.db-*
+demo-jobsearch.db
+demo-jobsearch.db-*
+*.db-journal
+
+# IDEs / editors
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs / temporary files
+*.log
+logs/
+*.tmp
+*.swp

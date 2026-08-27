@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics · Job Search</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
+</head>
+<body>
+<div class="app-shell">
+    <aside th:replace="~{fragments :: sidebar('analytics')}"></aside>
+    <header th:replace="~{fragments :: topbar}"></header>
+
+    <main class="main analytics-main">
+        <header class="page-header analytics-header">
+            <div>
+                <p class="eyebrow">INSIGHTS</p>
+                <h1>Analytics</h1>
+                <p class="subtle">See where opportunities move, how quickly companies respond, and where your prep stands.</p>
+            </div>
+        </header>
+
+        <section class="analytics-metric-grid">
+            <article class="metric-card analytics-metric-card">
+                <span class="analytics-metric-icon metric-icon-blue">↗</span>
+                <span class="metric-label">Applications</span>
+                <strong th:text="${analytics.applications}">0</strong>
+                <small>Applications actually submitted</small>
+            </article>
+
+            <article class="metric-card analytics-metric-card">
+                <span class="analytics-metric-icon metric-icon-green">%</span>
+                <span class="metric-label">Response rate</span>
+                <strong th:text="${#numbers.formatDecimal(analytics.responseRate, 1, 1) + '%'}">0.0%</strong>
+                <small>Any meaningful company response</small>
+            </article>
+
+            <article class="metric-card analytics-metric-card">
+                <span class="analytics-metric-icon metric-icon-purple">◇</span>
+                <span class="metric-label">Interview rate</span>
+                <strong th:text="${#numbers.formatDecimal(analytics.interviewRate, 1, 1) + '%'}">0.0%</strong>
+                <small>Reached recruiter screen or later</small>
+            </article>
+
+            <article class="metric-card analytics-metric-card">
+                <span class="analytics-metric-icon metric-icon-orange">★</span>
+                <span class="metric-label">Offers</span>
+                <strong th:text="${analytics.offers}">0</strong>
+                <small>Applications that reached offer</small>
+            </article>
+
+            <article class="metric-card analytics-metric-card">
+                <span class="analytics-metric-icon metric-icon-slate">◷</span>
+                <span class="metric-label">First response</span>
+                <strong th:if="${analytics.averageFirstResponseDays != null}"
+                        th:text="${#numbers.formatDecimal(analytics.averageFirstResponseDays, 1, 1) + 'd'}">4.0d</strong>
+                <strong th:unless="${analytics.averageFirstResponseDays != null}">—</strong>
+                <small>Average days after applying</small>
+            </article>
+        </section>
+
+        <section class="analytics-primary-grid">
+            <article class="panel analytics-funnel-panel">
+                <div class="analytics-panel-heading">
+                    <div>
+                        <p class="eyebrow">PIPELINE</p>
+                        <h2>Application funnel</h2>
+                        <p class="analytics-panel-subtitle">Share of submitted applications that reached each milestone.</p>
+                    </div>
+                    <span class="analytics-panel-kicker" th:text="${analytics.applications + ' applied'}">0 applied</span>
+                </div>
+
+                <div class="analytics-empty" th:if="${analytics.applications == 0}">
+                    <span>↗</span>
+                    <strong>Your funnel will build as you apply</strong>
+                    <small>Add applications and lifecycle events to start seeing conversion.</small>
+                </div>
+
+                <div class="funnel-list" th:unless="${analytics.applications == 0}">
+                    <div class="funnel-row" th:each="stage : ${analytics.funnel}">
+                        <div class="funnel-label">
+                            <strong th:text="${stage.label}">Applied</strong>
+                            <span>
+                                <b th:text="${stage.count}">1</b>
+                                <small th:text="${#numbers.formatDecimal(stage.rate, 1, 0) + '%'}">100%</small>
+                            </span>
+                        </div>
+                        <div class="funnel-track">
+                            <span th:style="|--funnel-width:${stage.widthPercent}%;|"></span>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <article class="panel analytics-state-panel">
+                <div class="analytics-panel-heading">
+                    <div>
+                        <p class="eyebrow">RIGHT NOW</p>
+                        <h2>Current states</h2>
+                        <p class="analytics-panel-subtitle">What your active job search looks like today.</p>
+                    </div>
+                </div>
+
+                <div class="analytics-empty compact" th:if="${#lists.isEmpty(analytics.states)}">
+                    <span>○</span>
+                    <strong>No applications yet</strong>
+                    <small>Current states will appear here.</small>
+                </div>
+
+                <div class="state-breakdown" th:unless="${#lists.isEmpty(analytics.states)}">
+                    <div class="state-row" th:each="state : ${analytics.states}">
+                        <span class="state-dot"
+                              th:classappend="${' analytics-state-' + #strings.toLowerCase(#strings.replace(state.key, '_', '-'))}"></span>
+                        <div>
+                            <strong th:text="${state.label}">Awaiting Feedback</strong>
+                            <small th:text="${#numbers.formatDecimal(state.percent, 1, 0) + '% of applications'}">100%</small>
+                        </div>
+                        <b th:text="${state.count}">1</b>
+                    </div>
+                </div>
+            </article>
+        </section>
+
+        <section class="panel analytics-activity-panel">
+            <div class="analytics-panel-heading analytics-heading-with-legend">
+                <div>
+                    <p class="eyebrow">LAST 6 MONTHS</p>
+                    <h2>Search activity</h2>
+                    <p class="analytics-panel-subtitle">Applications submitted and interview events over time.</p>
+                </div>
+                <div class="chart-legend">
+                    <span><i class="legend-applications"></i>Applications</span>
+                    <span><i class="legend-interviews"></i>Interviews</span>
+                </div>
+            </div>
+
+            <div class="activity-chart">
+                <div class="activity-month"
+                     th:each="month : ${analytics.monthlyActivity}"
+                     th:style="|--apps:${month.applicationsHeight}%; --interviews:${month.interviewsHeight}%;|">
+                    <div class="activity-values">
+                        <span th:if="${month.applications > 0}" th:text="${month.applications}">1</span>
+                        <span th:if="${month.interviews > 0}" th:text="${month.interviews}">2</span>
+                    </div>
+                    <div class="activity-bars">
+                        <span class="activity-bar applications-bar" th:title="|${month.applications} applications|"></span>
+                        <span class="activity-bar interviews-bar" th:title="|${month.interviews} interviews|"></span>
+                    </div>
+                    <strong th:text="${month.label}">Aug</strong>
+                </div>
+            </div>
+        </section>
+
+        <section class="analytics-secondary-grid">
+            <article class="panel analytics-speed-panel">
+                <div class="analytics-panel-heading">
+                    <div>
+                        <p class="eyebrow">VELOCITY</p>
+                        <h2>Pipeline speed</h2>
+                        <p class="analytics-panel-subtitle">Average time from application to each stage.</p>
+                    </div>
+                </div>
+
+                <div class="speed-list">
+                    <div class="speed-row" th:each="speed : ${analytics.stageSpeeds}">
+                        <div>
+                            <strong th:text="${speed.label}">First response</strong>
+                            <small th:if="${speed.sampleSize > 0}" th:text="|${speed.sampleSize} application${speed.sampleSize == 1 ? '' : 's'}|">1 application</small>
+                            <small th:unless="${speed.sampleSize > 0}">No data yet</small>
+                        </div>
+                        <b th:if="${speed.averageDays != null}" th:text="${#numbers.formatDecimal(speed.averageDays, 1, 1) + ' days'}">4.0 days</b>
+                        <b class="analytics-muted-value" th:unless="${speed.averageDays != null}">—</b>
+                    </div>
+                </div>
+            </article>
+
+            <article class="panel analytics-prep-panel">
+                <div class="analytics-panel-heading">
+                    <div>
+                        <p class="eyebrow">PREP HEALTH</p>
+                        <h2>Knowledge base</h2>
+                        <p class="analytics-panel-subtitle">How your reusable interview prep is holding up.</p>
+                    </div>
+                    <a class="text-link" th:href="@{/prep}">Open prep →</a>
+                </div>
+
+                <div class="prep-health-score">
+                    <div>
+                        <span>Average confidence</span>
+                        <strong th:text="${analytics.prep.totalItems == 0 ? '—' : #numbers.formatDecimal(analytics.prep.averageConfidence, 1, 1) + ' / 5'}">4.0 / 5</strong>
+                    </div>
+                    <div class="prep-health-track">
+                        <span th:style="|--prep-confidence:${analytics.prep.confidencePercent}%;|"></span>
+                    </div>
+                </div>
+
+                <div class="prep-health-grid">
+                    <div>
+                        <span>Total items</span>
+                        <strong th:text="${analytics.prep.totalItems}">4</strong>
+                    </div>
+                    <div>
+                        <span>Reviewed</span>
+                        <strong th:text="${analytics.prep.reviewedItems}">1</strong>
+                    </div>
+                    <div>
+                        <span>Needs review</span>
+                        <strong th:text="${analytics.prep.needsReview}">0</strong>
+                    </div>
+                    <div>
+                        <span>Reviews done</span>
+                        <strong th:text="${analytics.prep.completedReviews}">1</strong>
+                    </div>
+                </div>
+            </article>
+        </section>
+
+        <section class="panel analytics-source-panel">
+            <div class="analytics-panel-heading">
+                <div>
+                    <p class="eyebrow">SOURCE PERFORMANCE</p>
+                    <h2>Where interviews come from</h2>
+                    <p class="analytics-panel-subtitle">Compare application volume with the sources that actually turn into interviews.</p>
+                </div>
+            </div>
+
+            <div class="analytics-empty compact source-empty" th:if="${#lists.isEmpty(analytics.sources)}">
+                <span>⌕</span>
+                <strong>No source data yet</strong>
+                <small>Add a Source when you create or edit applications (LinkedIn, referral, company site, recruiter, etc.) and this table will fill itself in.</small>
+            </div>
+
+            <div class="source-table-wrap" th:unless="${#lists.isEmpty(analytics.sources)}">
+                <table class="source-table">
+                    <thead>
+                    <tr>
+                        <th>Source</th>
+                        <th>Applications</th>
+                        <th>Interviewed</th>
+                        <th>Interview rate</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="source : ${analytics.sources}">
+                        <td><strong th:text="${source.source}">LinkedIn</strong></td>
+                        <td th:text="${source.applications}">12</td>
+                        <td th:text="${source.interviewed}">3</td>
+                        <td>
+                            <div class="source-rate">
+                                <span><i th:style="|--source-rate:${source.interviewRate}%;|"></i></span>
+                                <b th:text="${#numbers.formatDecimal(source.interviewRate, 1, 0) + '%'}">25%</b>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <p class="analytics-footnote">Analytics are calculated entirely from your local application, lifecycle, and prep data in <code>jobsearch.db</code>. They get more useful as your history grows.</p>
+    </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${'Review · ' + prepItem.title + ' · Job Search'}">Review prep item · Job Search</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
+</head>
+<body>
+<div class="app-shell">
+    <aside th:replace="~{fragments :: sidebar('prep')}"></aside>
+    <header th:replace="~{fragments :: topbar}"></header>
+
+    <main class="main prep-review-main">
+        <header class="review-page-header">
+            <div>
+                <a class="back-link"
+                   th:href="${returnApplicationId != null ? '/applications/' + returnApplicationId + '#interview-prep' : '/prep'}"
+                   th:text="${returnApplicationId != null ? '← Back to application' : '← Prep / Notes'}">← Prep / Notes</a>
+                <p class="eyebrow">REVIEW MODE</p>
+                <h1 th:text="${prepItem.title}">HashMap vs ConcurrentHashMap</h1>
+                <p class="subtle">Read through your notes, then rate how confidently you could explain this in an interview right now.</p>
+            </div>
+            <a class="button button-secondary" th:href="@{/prep/{id}/edit(id=${prepItem.id})}">Edit content</a>
+        </header>
+
+        <div class="review-layout">
+            <section class="review-content-column">
+                <article class="panel review-item-card">
+                    <div class="review-item-topline">
+                        <div class="review-item-labels">
+                            <span class="prep-type-pill"
+                                  th:classappend="${' prep-type-' + #strings.toLowerCase(prepItem.type.name())}"
+                                  th:text="${prepItem.type.shortLabel}">Technical</span>
+                            <span class="review-category" th:if="${prepItem.category != null}" th:text="${prepItem.category}">Java · Collections</span>
+                        </div>
+                        <span class="prep-confidence" th:classappend="${prepItem.safeConfidence <= 2 ? ' confidence-low' : ''}">
+                            <span>Current confidence</span>
+                            <span class="confidence-dots" aria-label="Current confidence out of five">
+                                <i th:each="level : ${#numbers.sequence(1,5)}"
+                                   th:classappend="${level <= prepItem.safeConfidence ? ' filled' : ''}"></i>
+                            </span>
+                        </span>
+                    </div>
+
+                    <div class="review-context-row">
+                        <a th:if="${prepItem.linkedToApplication}"
+                           class="prep-app-link"
+                           th:href="@{/applications/{id}(id=${prepItem.applicationId})}"
+                           th:text="${prepItem.applicationLabel}">Northstar Labs · Senior Backend Engineer</a>
+                        <span th:unless="${prepItem.linkedToApplication}" class="prep-reusable-label">Reusable</span>
+                        <span th:text="${'Updated ' + prepItem.updatedDisplay}">Updated Aug 26, 2026</span>
+                    </div>
+
+                    <div class="prep-tags review-tags" th:if="${!#lists.isEmpty(prepItem.tagList)}">
+                        <span th:each="tag : ${prepItem.tagList}" th:text="${tag}">java</span>
+                    </div>
+
+                    <div class="review-notes" th:classappend="${prepItem.content == null or #strings.isEmpty(prepItem.content) ? ' review-notes-empty' : ''}">
+                        <p th:if="${prepItem.content == null or #strings.isEmpty(prepItem.content)}">No notes have been added yet. You can still record a review, or edit the item first.</p>
+                        <div th:unless="${prepItem.content == null or #strings.isEmpty(prepItem.content)}" th:text="${prepItem.content}">Prep content</div>
+                    </div>
+                </article>
+
+                <section class="panel review-history-card">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">REVIEW HISTORY</p>
+                            <h2>Study rhythm</h2>
+                        </div>
+                    </div>
+                    <div class="review-history-grid">
+                        <div>
+                            <span>Last reviewed</span>
+                            <strong th:text="${prepItem.lastReviewedDisplay}">Never reviewed</strong>
+                        </div>
+                        <div>
+                            <span>Reviews completed</span>
+                            <strong th:text="${prepItem.reviewCount}">0</strong>
+                        </div>
+                        <div>
+                            <span>Next suggested review</span>
+                            <strong th:text="${prepItem.nextReviewDisplay}">Sep 25, 2026</strong>
+                        </div>
+                    </div>
+                </section>
+            </section>
+
+            <aside class="panel review-composer">
+                <div class="review-composer-heading">
+                    <span class="review-composer-icon">✓</span>
+                    <div>
+                        <p class="eyebrow">CHECK IN</p>
+                        <h2>How confident are you now?</h2>
+                        <p th:text="${prepItem.reviewCadenceLabel}">Suggested refresh every 30 days</p>
+                    </div>
+                </div>
+
+                <form th:action="@{/prep/{id}/review(id=${prepItem.id})}" method="post">
+                    <input th:if="${returnApplicationId != null}" type="hidden" name="applicationId" th:value="${returnApplicationId}">
+                    <div class="review-confidence-choice" role="radiogroup" aria-label="New confidence level">
+                        <label th:each="level : ${#numbers.sequence(1,5)}">
+                            <input type="radio" name="confidence" th:value="${level}" th:checked="${level == prepItem.safeConfidence}" required>
+                            <span>
+                                <strong th:text="${level}">1</strong>
+                                <small th:text="${level == 1 ? 'Need to learn' : level == 2 ? 'Shaky' : level == 3 ? 'Okay' : level == 4 ? 'Strong' : 'Interview ready'}">Okay</small>
+                            </span>
+                        </label>
+                    </div>
+
+                    <div class="review-explainer">
+                        <strong>What happens when you mark this reviewed?</strong>
+                        <p>We save today as the review date, increase the review count, and use your new confidence to decide when this should come back.</p>
+                    </div>
+
+                    <button class="button button-primary review-submit" type="submit">Mark reviewed</button>
+                    <a class="button button-secondary review-cancel"
+                       th:href="${returnApplicationId != null ? '/applications/' + returnApplicationId + '#interview-prep' : '/prep'}"
+                       th:text="${returnApplicationId != null ? 'Back to application' : 'Back to library'}">Back to library</a>
+                </form>
+            </aside>
+        </div>
+    </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${editing ? 'Edit Prep Item · Job Search' : 'Add Prep Item · Job Search'}">Prep Item · Job Search</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
+</head>
+<body>
+<div class="app-shell">
+    <aside th:replace="~{fragments :: sidebar('prep')}"></aside>
+    <header th:replace="~{fragments :: topbar}"></header>
+
+    <main class="main prep-form-main">
+        <header class="page-header compact">
+            <div>
+                <a class="back-link" th:href="@{/prep}">← Prep / Notes</a>
+                <p class="eyebrow" th:text="${editing ? 'EDIT PREP' : 'NEW PREP'}">NEW PREP</p>
+                <h1 th:text="${editing ? 'Edit prep item' : 'Add prep item'}">Add prep item</h1>
+                <p class="subtle">Keep reusable knowledge here, or attach it to one specific application.</p>
+            </div>
+        </header>
+
+        <form class="application-form prep-item-form"
+              th:object="${prepItem}"
+              th:action="${editing ? '/prep/' + prepItem.id : '/prep'}"
+              method="post">
+
+            <section class="panel form-section">
+                <div class="section-heading">
+                    <h2>What are you saving?</h2>
+                    <p>Technical topics and STAR stories can stay reusable; company research can be tied to one role.</p>
+                </div>
+
+                <div class="form-grid">
+                    <label class="field">
+                        <span>Type</span>
+                        <select th:field="*{type}" id="prepType">
+                            <option th:each="prepType : ${prepTypes}"
+                                    th:value="${prepType}"
+                                    th:text="${prepType.displayName}">Technical Topic</option>
+                        </select>
+                    </label>
+
+                    <label class="field">
+                        <span>Linked application <small>optional</small></span>
+                        <select th:field="*{applicationId}">
+                            <option value="">Reusable / not linked</option>
+                            <option th:each="app : ${applications}"
+                                    th:value="${app.id}"
+                                    th:text="${app.company + ' · ' + app.role}">Northstar Labs · Senior Backend Engineer</option>
+                        </select>
+                    </label>
+
+                    <label class="field field-full">
+                        <span>Title <em>*</em></span>
+                        <input type="text" th:field="*{title}" placeholder="e.g. HashMap vs ConcurrentHashMap">
+                        <small class="field-error" th:if="${#fields.hasErrors('title')}" th:errors="*{title}">Title error</small>
+                    </label>
+
+                    <label class="field">
+                        <span>Category <small>optional</small></span>
+                        <input type="text" th:field="*{category}" placeholder="Java · Collections">
+                    </label>
+
+                    <label class="field">
+                        <span>Tags <small>comma separated</small></span>
+                        <input type="text" th:field="*{tags}" placeholder="java, collections, concurrency">
+                    </label>
+                </div>
+            </section>
+
+            <section class="panel form-section">
+                <div class="section-heading">
+                    <h2>Notes / answer</h2>
+                    <p id="prepPrompt">Capture the explanation in a way future-you can review quickly.</p>
+                </div>
+
+                <label class="field">
+                    <textarea id="prepContent" th:field="*{content}" rows="14" placeholder="Definition / when to use / example / gotchas…"></textarea>
+                </label>
+            </section>
+
+            <section class="panel form-section confidence-section">
+                <div class="section-heading">
+                    <h2>Confidence</h2>
+                    <p>Low-confidence items appear immediately; stronger items come back as they get stale.</p>
+                </div>
+
+                <div class="confidence-choice" role="radiogroup" aria-label="Confidence level">
+                    <label th:each="level : ${#numbers.sequence(1,5)}">
+                        <input type="radio" th:field="*{confidence}" th:value="${level}">
+                        <span>
+                            <strong th:text="${level}">1</strong>
+                            <small th:text="${level == 1 ? 'Need to learn' : level == 2 ? 'Shaky' : level == 3 ? 'Okay' : level == 4 ? 'Strong' : 'Interview ready'}">Okay</small>
+                        </span>
+                    </label>
+                </div>
+            </section>
+
+            <div class="form-actions">
+                <a class="button button-secondary" th:href="@{/prep}">Cancel</a>
+                <button class="button button-primary" type="submit" th:text="${editing ? 'Save changes' : 'Add to library'}">Add to library</button>
+            </div>
+        </form>
+
+        <section th:if="${editing}" class="danger-zone prep-delete-zone">
+            <div>
+                <strong>Delete prep item</strong>
+                <small>This permanently removes it from your local prep library.</small>
+            </div>
+            <form th:action="@{/prep/{id}/delete(id=${prepItem.id})}" method="post" onsubmit="return confirm('Delete this prep item?');">
+                <button class="button button-danger" type="submit">Delete</button>
+            </form>
+        </section>
+    </main>
+</div>
+
+<script>
+(function () {
+    const type = document.getElementById('prepType');
+    const content = document.getElementById('prepContent');
+    const prompt = document.getElementById('prepPrompt');
+
+    const copy = {
+        TECHNICAL_TOPIC: {
+            prompt: 'Capture the explanation in a way future-you can review quickly.',
+            placeholder: 'Definition:\n\nWhen I would use it:\n\nExample:\n\nGotchas / tradeoffs:'
+        },
+        STAR_STORY: {
+            prompt: 'Write enough detail to tell the story naturally, not memorize a script.',
+            placeholder: 'Situation:\n\nTask:\n\nAction:\n\nResult:\n\nUseful for questions about:'
+        },
+        INTERVIEW_QUESTION: {
+            prompt: 'Save the question and the talking points you want available under pressure.',
+            placeholder: 'Answer / talking points:\n\nExample I can use:\n\nWhat I tend to forget:'
+        },
+        COMPANY_RESEARCH: {
+            prompt: 'Keep the company and team context you want immediately before the interview.',
+            placeholder: 'What they do:\n\nTeam / product:\n\nWhy I am interested:\n\nQuestions to ask:\n\nThings to remember:'
+        },
+        GENERAL_NOTE: {
+            prompt: 'Save anything useful that does not fit the other prep types.',
+            placeholder: 'Notes…'
+        }
+    };
+
+    function updateHelper() {
+        const selected = copy[type.value] || copy.GENERAL_NOTE;
+        prompt.textContent = selected.prompt;
+        content.placeholder = selected.placeholder;
+    }
+
+    type.addEventListener('change', updateHelper);
+    updateHelper();
+})();
+</script>
+</body>
+</html>

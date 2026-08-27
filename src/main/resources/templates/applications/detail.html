@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${jobApplication.company + ' · ' + jobApplication.role}">Application · Job Search</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
+</head>
+<body>
+<div class="app-shell">
+    <aside th:replace="~{fragments :: sidebar('applications')}"></aside>
+    <header th:replace="~{fragments :: topbar}"></header>
+
+    <main class="main">
+        <header class="detail-header">
+            <div>
+                <a class="back-link" th:href="@{/applications}">← Applications</a>
+                <div class="detail-title-row">
+                    <span class="company-avatar company-avatar-large" th:text="${jobApplication.initials}">VI</span>
+                    <div>
+                        <p class="eyebrow" th:text="${jobApplication.company}">VISA</p>
+                        <h1 th:text="${jobApplication.role}">Senior Software Engineer</h1>
+                        <p class="subtle" th:text="${jobApplication.location == null ? 'No location saved' : jobApplication.location}">Denver, CO</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <a th:if="${jobApplication.jobUrl != null}"
+                   class="button button-secondary"
+                   th:href="${jobApplication.jobUrl}"
+                   target="_blank"
+                   rel="noopener noreferrer">Open posting ↗</a>
+                <a class="button button-primary" th:href="@{/applications/{id}/edit(id=${jobApplication.id})}">Edit</a>
+            </div>
+        </header>
+
+        <section class="detail-summary detail-summary-six">
+            <div>
+                <span>Pipeline stage</span>
+                <strong class="status-pill"
+                        th:classappend="${' status-' + #strings.toLowerCase(jobApplication.status.name())}"
+                        th:text="${jobApplication.status.displayName}">Technical Interview</strong>
+            </div>
+            <div>
+                <span>Current state</span>
+                <strong class="state-pill"
+                        th:classappend="${' state-' + #strings.toLowerCase(jobApplication.state.name())}"
+                        th:text="${jobApplication.state.displayName}">Awaiting Feedback</strong>
+            </div>
+            <div>
+                <span>Priority</span>
+                <strong class="priority"
+                        th:classappend="${' priority-' + #strings.toLowerCase(jobApplication.priority.name())}"
+                        th:text="${jobApplication.priority.displayName}">High</strong>
+            </div>
+            <div>
+                <span>Applied</span>
+                <strong th:text="${jobApplication.appliedDateDisplay}">Aug 26, 2026</strong>
+            </div>
+            <div>
+                <span>Source</span>
+                <strong th:text="${jobApplication.source == null ? '—' : jobApplication.source}">LinkedIn</strong>
+            </div>
+            <div>
+                <span>Salary</span>
+                <strong th:text="${jobApplication.salary == null ? '—' : jobApplication.salary}">$150k</strong>
+            </div>
+        </section>
+
+        <section class="panel lifecycle-panel">
+            <div class="panel-header lifecycle-header">
+                <div>
+                    <p class="eyebrow">LIFECYCLE</p>
+                    <h2>Application timeline</h2>
+                    <p class="panel-subtitle">Pipeline milestones and day-to-day activity, kept in one chronological history.</p>
+                </div>
+                <span class="event-count"><strong th:text="${#lists.size(events)}">2</strong> events</span>
+            </div>
+
+            <div class="lifecycle-layout">
+                <div class="timeline-wrap">
+                    <div th:if="${#lists.isEmpty(events)}" class="empty-mini timeline-empty">
+                        <p>No activity yet. Add the first event to start this application's lifecycle.</p>
+                    </div>
+
+                    <ol th:unless="${#lists.isEmpty(events)}" class="timeline">
+                        <li th:each="event : ${events}" class="timeline-item"
+                            th:id="${'event-' + event.id}"
+                            th:classappend="${event.pipelineMilestone ? ' timeline-milestone' : ''}">
+                            <div class="timeline-rail">
+                                <span class="timeline-dot"
+                                      th:classappend="${' category-' + #strings.toLowerCase(event.category.name())}"></span>
+                            </div>
+
+                            <div class="timeline-content">
+                                <div class="timeline-topline">
+                                    <div>
+                                        <div class="event-label-row">
+                                            <span class="event-category"
+                                                  th:classappend="${' category-' + #strings.toLowerCase(event.category.name())}"
+                                                  th:text="${event.category.displayName}">Pipeline</span>
+                                            <span class="event-type" th:text="${event.eventType.displayName}">Technical Interview</span>
+                                        </div>
+                                        <h3 th:text="${event.displayTitle}">Technical Interview</h3>
+                                    </div>
+                                    <div class="event-actions">
+                                        <a class="icon-button icon-button-edit"
+                                           th:href="|/applications/${jobApplication.id}?editEvent=${event.id}#activity-composer|"
+                                           aria-label="Edit timeline event"
+                                           title="Edit">✎</a>
+                                        <form th:action="@{/applications/{applicationId}/events/{eventId}/delete(applicationId=${jobApplication.id}, eventId=${event.id})}"
+                                              method="post"
+                                              onsubmit="return confirm('Remove this timeline event?');">
+                                            <button type="submit" class="icon-button" aria-label="Delete timeline event" title="Delete">×</button>
+                                        </form>
+                                    </div>
+                                </div>
+
+                                <div class="event-meta">
+                                    <span th:text="${event.eventDateDisplay}">Aug 26, 2026</span>
+                                    <span th:if="${event.eventTimeDisplay != null}" th:text="${event.eventTimeDisplay}">2:00 PM</span>
+                                    <span th:if="${event.contactName != null}" th:text="${'with ' + event.contactName}">with Jay</span>
+                                    <span th:if="${event.interview}" class="mini-pill">Interview</span>
+                                    <span th:if="${event.eventType.name() == 'CODING_ASSESSMENT' or event.eventType.name() == 'TAKE_HOME_ASSESSMENT'}"
+                                          class="mini-pill mini-pill-assessment">Assessment</span>
+                                </div>
+
+                                <p th:if="${event.notes != null}" class="event-notes" th:text="${event.notes}">Interview notes.</p>
+                            </div>
+                        </li>
+                    </ol>
+                </div>
+
+                <details class="activity-composer" id="activity-composer"
+                         th:classappend="${editingEvent ? ' activity-composer-editing' : ''}"
+                         th:attr="open=${editingEvent} ? 'open' : null">
+                    <summary class="activity-composer-summary">
+                        <span class="composer-icon" th:text="${editingEvent ? '✎' : '＋'}">＋</span>
+                        <span class="activity-composer-heading-copy">
+                            <strong th:text="${editingEvent ? 'Edit activity' : 'Add activity'}">Add activity</strong>
+                            <small th:text="${editingEvent
+                                    ? 'Update the event without deleting and recreating it.'
+                                    : 'Add a lifecycle event when you need it.'}">
+                                Add timeline activity.
+                            </small>
+                        </span>
+                        <span class="composer-chevron" aria-hidden="true">⌄</span>
+                    </summary>
+
+                    <form class="event-form"
+                          th:action="${editingEvent
+                              ? '/applications/' + jobApplication.id + '/events/' + eventForm.id
+                              : '/applications/' + jobApplication.id + '/events'}"
+                          th:object="${eventForm}"
+                          method="post">
+                        <label class="field">
+                            <span>Activity type</span>
+                            <select th:field="*{eventType}" required>
+                                <option th:each="type : ${eventTypes}"
+                                        th:value="${type}"
+                                        th:text="${type.category.displayName + ' · ' + type.displayName}">Activity · Other</option>
+                            </select>
+                        </label>
+
+                        <label class="field">
+                            <span>Title <em class="optional">Optional</em></span>
+                            <input type="text" th:field="*{title}" placeholder="e.g. Recruiter reached out">
+                        </label>
+
+                        <div class="event-form-row">
+                            <label class="field">
+                                <span>Date</span>
+                                <input type="date" name="eventDate" th:value="${eventForm.eventDateInputValue}" required>
+                            </label>
+                            <label class="field">
+                                <span>Time <em class="optional">Optional</em></span>
+                                <input type="time" name="eventTime" th:value="${eventForm.eventTimeInputValue}">
+                            </label>
+                        </div>
+
+                        <label class="field">
+                            <span>Person <em class="optional">Optional</em></span>
+                            <input type="text" th:field="*{contactName}" placeholder="e.g. Jay, team lead">
+                        </label>
+
+                        <label class="field">
+                            <span>Notes <em class="optional">Optional</em></span>
+                            <textarea th:field="*{notes}" rows="4" placeholder="What happened? What should future-you remember?"></textarea>
+                        </label>
+
+                        <div class="event-form-actions" th:if="${editingEvent}">
+                            <a class="button button-secondary" th:href="@{/applications/{id}(id=${jobApplication.id})}">Cancel</a>
+                            <button type="submit" class="button button-primary">Save activity</button>
+                        </div>
+                        <button th:unless="${editingEvent}" type="submit" class="button button-primary event-submit">Add to timeline</button>
+                    </form>
+                </details>
+            </div>
+        </section>
+
+        <section class="panel application-prep-panel" id="interview-prep">
+            <div class="panel-header application-prep-header">
+                <div>
+                    <p class="eyebrow">INTERVIEW PREP</p>
+                    <h2>Prep for this role</h2>
+                    <p class="panel-subtitle">Application-specific research and reusable material you want close at hand.</p>
+                </div>
+                <div class="application-prep-actions">
+                    <a class="text-link"
+                       th:href="@{/prep(applicationId=${jobApplication.id})}">View in library →</a>
+                    <a class="button button-primary button-small"
+                       th:href="@{/prep/new(applicationId=${jobApplication.id})}">+ New prep item</a>
+                </div>
+            </div>
+
+            <div th:if="${#lists.isEmpty(applicationPrepItems)}" class="application-prep-empty">
+                <div>
+                    <span class="prep-empty-icon">✎</span>
+                    <strong>No prep linked yet</strong>
+                    <p>Add company research for this role, or link reusable technical and behavioral prep from your library.</p>
+                </div>
+            </div>
+
+            <div th:unless="${#lists.isEmpty(applicationPrepItems)}" class="application-prep-grid">
+                <article th:each="item : ${applicationPrepItems}" class="application-prep-card">
+                    <div class="application-prep-card-top">
+                        <span class="prep-type-pill"
+                              th:classappend="${' prep-type-' + #strings.toLowerCase(item.type.name())}"
+                              th:text="${item.type.shortLabel}">Technical</span>
+                        <span class="prep-confidence"
+                              th:classappend="${item.safeConfidence <= 2 ? ' confidence-low' : ''}">
+                            <span>Confidence</span>
+                            <span class="confidence-dots" aria-hidden="true">
+                                <i th:each="level : ${#numbers.sequence(1,5)}"
+                                   th:classappend="${level <= item.safeConfidence ? ' filled' : ''}"></i>
+                            </span>
+                        </span>
+                    </div>
+
+                    <div class="application-prep-card-copy">
+                        <h3>
+                            <a th:href="@{/prep/{id}/edit(id=${item.id})}" th:text="${item.title}">HashMap vs ConcurrentHashMap</a>
+                        </h3>
+                        <p th:if="${item.category != null}" class="prep-category" th:text="${item.category}">Java · Collections</p>
+                        <p class="prep-preview" th:text="${item.contentPreview}">Prep notes.</p>
+                    </div>
+
+                    <div th:unless="${#lists.isEmpty(item.tagList)}" class="prep-tags application-prep-tags">
+                        <span th:each="tag : ${item.tagList}" th:text="${tag}">java</span>
+                    </div>
+
+                    <div class="application-prep-card-footer">
+                        <span th:if="${item.applicationId == jobApplication.id}" class="prep-owned-label">Role-specific</span>
+                        <span th:if="${item.applicationId == null}" class="prep-reusable-label">Reusable</span>
+
+                        <div class="application-prep-card-actions">
+                            <a class="text-link" th:href="@{/prep/{id}/review(id=${item.id},applicationId=${jobApplication.id})}">Review</a>
+                            <a class="text-link" th:href="@{/prep/{id}/edit(id=${item.id})}">Edit</a>
+                            <form th:if="${item.applicationId == null}"
+                                  th:action="@{/applications/{applicationId}/prep/{prepId}/unlink(applicationId=${jobApplication.id}, prepId=${item.id})}"
+                                  method="post">
+                                <button class="text-button muted-action" type="submit">Unlink</button>
+                            </form>
+                        </div>
+                    </div>
+                </article>
+            </div>
+
+            <details class="prep-linker" th:if="${!#lists.isEmpty(linkablePrepItems)}">
+                <summary>
+                    <span class="composer-icon">＋</span>
+                    <span>
+                        <strong>Link reusable prep</strong>
+                        <small>Attach an existing technical topic, STAR story, question, or note to this application.</small>
+                    </span>
+                    <span class="composer-chevron" aria-hidden="true">⌄</span>
+                </summary>
+
+                <div class="prep-linker-list">
+                    <div th:each="item : ${linkablePrepItems}" class="prep-linker-item">
+                        <div>
+                            <span class="prep-type-pill"
+                                  th:classappend="${' prep-type-' + #strings.toLowerCase(item.type.name())}"
+                                  th:text="${item.type.shortLabel}">Technical</span>
+                            <strong th:text="${item.title}">Spring @Service vs @Bean</strong>
+                            <small th:text="${item.category == null ? 'Reusable prep' : item.category}">Spring · Dependency Injection</small>
+                        </div>
+                        <form th:action="@{/applications/{applicationId}/prep/{prepId}/link(applicationId=${jobApplication.id}, prepId=${item.id})}"
+                              method="post">
+                            <button class="button button-secondary button-small" type="submit">Link</button>
+                        </form>
+                    </div>
+                </div>
+            </details>
+        </section>
+
+        <div class="detail-grid">
+            <section class="panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">WORKING NOTES</p>
+                        <h2>Notes</h2>
+                    </div>
+                    <a class="text-link" th:href="@{/applications/{id}/edit(id=${jobApplication.id})}">Edit →</a>
+                </div>
+
+                <div th:if="${jobApplication.notes == null}" class="empty-mini"><p>No notes yet.</p></div>
+                <div th:unless="${jobApplication.notes == null}" class="prose" th:text="${jobApplication.notes}">Notes go here.</div>
+            </section>
+
+            <section class="panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">ACTIVITY</p>
+                        <h2>Application info</h2>
+                    </div>
+                </div>
+
+                <dl class="info-list">
+                    <div><dt>Company</dt><dd th:text="${jobApplication.company}">Northstar Labs</dd></div>
+                    <div><dt>Role</dt><dd th:text="${jobApplication.role}">Senior Software Engineer</dd></div>
+                    <div><dt>Pipeline stage</dt><dd th:text="${jobApplication.status.displayName}">Technical Interview</dd></div>
+                    <div><dt>Current state</dt><dd th:text="${jobApplication.state.displayName}">Awaiting Feedback</dd></div>
+                    <div><dt>Last updated</dt><dd th:text="${jobApplication.updatedDateTimeDisplay}">Aug 26, 2026</dd></div>
+                    <div>
+                        <dt>Posting</dt>
+                        <dd>
+                            <a th:if="${jobApplication.jobUrl != null}"
+                               class="text-link"
+                               th:href="${jobApplication.jobUrl}"
+                               target="_blank"
+                               rel="noopener noreferrer">Open original ↗</a>
+                            <span th:if="${jobApplication.jobUrl == null}">—</span>
+                        </dd>
+                    </div>
+                </dl>
+            </section>
+
+            <section class="panel panel-full">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">ARCHIVE</p>
+                        <h2>Saved job description</h2>
+                    </div>
+                </div>
+
+                <div th:if="${jobApplication.jobDescription == null}" class="empty-mini">
+                    <p>No job description saved yet. Add it before the original posting disappears.</p>
+                </div>
+                <div th:unless="${jobApplication.jobDescription == null}" class="prose job-description" th:text="${jobApplication.jobDescription}">
+                    Job description.
+                </div>
+            </section>
+        </div>
+
+        <section class="danger-zone">
+            <div>
+                <strong>Delete application</strong>
+                <p>This permanently removes the application and its timeline from your local database.</p>
+            </div>
+            <form th:action="@{/applications/{id}/delete(id=${jobApplication.id})}"
+                  method="post"
+                  onsubmit="return confirm('Delete this application? This cannot be undone.');">
+                <button type="submit" class="button button-danger">Delete</button>
+            </form>
+        </section>
+    </main>
+</div>
+</body>
+</html>

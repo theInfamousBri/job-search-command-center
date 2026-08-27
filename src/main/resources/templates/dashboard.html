@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard · Job Search</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
+</head>
+<body>
+<div class="app-shell">
+    <aside th:replace="~{fragments :: sidebar('dashboard')}"></aside>
+    <header th:replace="~{fragments :: topbar}"></header>
+
+    <main class="main">
+        <header class="page-header">
+            <div>
+                <p class="eyebrow">JOB SEARCH</p>
+                <h1>Dashboard</h1>
+                <p class="subtle">Your current pipeline and what needs attention next.</p>
+            </div>
+
+            <div class="header-actions">
+                <form class="global-search" th:action="@{/applications}" method="get">
+                    <span>⌕</span>
+                    <input type="search" name="q" placeholder="Search anything…">
+                </form>
+                <a class="button button-primary" th:href="@{/applications/new}">+ Add application</a>
+            </div>
+        </header>
+
+        <section class="metric-grid">
+            <article class="metric-card">
+                <span class="metric-icon metric-icon-blue">▰</span>
+                <span class="metric-label">Total applications</span>
+                <strong th:text="${dashboard.total}">0</strong>
+                <small>All tracked applications</small>
+            </article>
+            <article class="metric-card">
+                <span class="metric-icon metric-icon-green">↗</span>
+                <span class="metric-label">Active</span>
+                <strong th:text="${dashboard.active}">0</strong>
+                <small>Still in motion</small>
+            </article>
+            <article class="metric-card">
+                <span class="metric-icon metric-icon-purple">◇</span>
+                <span class="metric-label">Interviewing</span>
+                <strong th:text="${dashboard.interviewing}">0</strong>
+                <small>Recruiter through final</small>
+            </article>
+            <article class="metric-card">
+                <span class="metric-icon metric-icon-orange">★</span>
+                <span class="metric-label">Offers</span>
+                <strong th:text="${dashboard.offers}">0</strong>
+                <small>Current offers</small>
+            </article>
+            <article class="metric-card">
+                <span class="metric-icon metric-icon-rose">%</span>
+                <span class="metric-label">Response rate</span>
+                <strong th:text="${#numbers.formatDecimal(dashboard.responseRate, 1, 1) + '%'}">0.0%</strong>
+                <small>Tracked employer responses</small>
+            </article>
+        </section>
+
+        <div class="dashboard-grid">
+            <section class="panel panel-wide">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">RECENT</p>
+                        <h2>Applications</h2>
+                    </div>
+                    <a class="text-link" th:href="@{/applications}">View all →</a>
+                </div>
+
+                <div th:if="${#lists.isEmpty(dashboard.recent)}" class="empty-state">
+                    <div class="empty-icon">＋</div>
+                    <h3>Add your first application</h3>
+                    <p>The dashboard will start filling itself in as soon as you track a role.</p>
+                    <a class="button button-primary" th:href="@{/applications/new}">Add application</a>
+                </div>
+
+                <div th:unless="${#lists.isEmpty(dashboard.recent)}" class="table-wrap">
+                    <table class="data-table">
+                        <thead>
+                        <tr>
+                            <th>Company / role</th>
+                            <th>Stage / state</th>
+                            <th>Priority</th>
+                            <th>Updated</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="app : ${dashboard.recent}">
+                            <td>
+                                <a class="company-cell" th:href="@{/applications/{id}(id=${app.id})}">
+                                    <span class="company-avatar" th:text="${app.initials}">CO</span>
+                                    <span>
+                                        <strong th:text="${app.company}">Company</strong>
+                                        <small th:text="${app.role}">Role</small>
+                                    </span>
+                                </a>
+                            </td>
+                            <td>
+                                <div class="stage-state-stack">
+                                    <span class="status-pill"
+                                          th:classappend="${' status-' + #strings.toLowerCase(app.status.name())}"
+                                          th:text="${app.status.displayName}">Applied</span>
+                                    <span class="state-pill"
+                                          th:classappend="${' state-' + #strings.toLowerCase(app.state.name())}"
+                                          th:text="${app.state.displayName}">Active</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="priority"
+                                      th:classappend="${' priority-' + #strings.toLowerCase(app.priority.name())}"
+                                      th:text="${app.priority.displayName}">Medium</span>
+                            </td>
+                            <td class="muted" th:text="${app.updatedDateDisplay}">Aug 26</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">NEXT UP</p>
+                        <h2>Needs attention</h2>
+                    </div>
+                </div>
+
+                <div th:if="${#lists.isEmpty(dashboard.needsAttention)}" class="attention-clear">
+                    <span>✓</span>
+                    <div>
+                        <strong>Nothing stale</strong>
+                        <p>No active application has gone untouched for 7+ days.</p>
+                    </div>
+                </div>
+
+                <div class="attention-list" th:unless="${#lists.isEmpty(dashboard.needsAttention)}">
+                    <a class="attention-item"
+                       th:each="app : ${dashboard.needsAttention}"
+                       th:href="@{/applications/{id}(id=${app.id})}">
+                        <span>
+                            <strong th:text="${app.company}">Company</strong>
+                            <small th:text="${app.role}">Role</small>
+                        </span>
+                        <span class="attention-meta">
+                            <span th:text="${app.status.displayName + ' · ' + app.state.displayName}">Applied · Active</span>
+                            <small th:text="${'Last updated ' + app.updatedDateDisplay}">Last updated Aug 1</small>
+                        </span>
+                    </a>
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Calendar · Job Search</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
+</head>
+<body>
+<div class="app-shell">
+    <aside th:replace="~{fragments :: sidebar('calendar')}"></aside>
+    <header th:replace="~{fragments :: topbar}"></header>
+
+    <main class="main calendar-main">
+        <header class="page-header calendar-page-header">
+            <div>
+                <p class="eyebrow">SCHEDULE</p>
+                <h1>Calendar</h1>
+                <p class="subtle">Every dated lifecycle event, from recruiter outreach to interviews and follow-ups.</p>
+            </div>
+
+            <div class="calendar-nav" aria-label="Calendar month navigation">
+                <a class="calendar-nav-button" th:href="@{/calendar(month=${previousMonth})}" aria-label="Previous month">←</a>
+                <a class="button button-secondary" th:href="@{/calendar(month=${todayMonth})}">Today</a>
+                <a class="calendar-nav-button" th:href="@{/calendar(month=${nextMonth})}" aria-label="Next month">→</a>
+            </div>
+        </header>
+
+        <section class="panel calendar-panel">
+            <div class="calendar-toolbar">
+                <div>
+                    <p class="eyebrow">MONTH</p>
+                    <h2 class="calendar-month-title" th:text="${monthTitle}">August 2026</h2>
+                </div>
+
+                <div class="calendar-legend" aria-label="Event category legend">
+                    <span><i class="legend-dot category-pipeline"></i>Pipeline</span>
+                    <span><i class="legend-dot category-communication"></i>Communication</span>
+                    <span><i class="legend-dot category-assessment"></i>Assessment</span>
+                    <span><i class="legend-dot category-activity"></i>Activity</span>
+                </div>
+            </div>
+
+            <div class="calendar-scroll">
+                <div class="calendar-weekdays" aria-hidden="true">
+                    <span>Mon</span>
+                    <span>Tue</span>
+                    <span>Wed</span>
+                    <span>Thu</span>
+                    <span>Fri</span>
+                    <span>Sat</span>
+                    <span>Sun</span>
+                </div>
+
+                <div class="calendar-grid">
+                    <div th:each="day : ${days}"
+                         class="calendar-day"
+                         th:classappend="${(!day.inSelectedMonth ? ' calendar-day-muted' : '') + (day.today ? ' calendar-day-today' : '')}">
+                        <div class="calendar-day-heading">
+                            <span class="calendar-day-number" th:text="${day.dayNumber}">26</span>
+                            <span th:if="${day.today}" class="calendar-today-label">Today</span>
+                        </div>
+
+                        <div class="calendar-day-events">
+                            <a th:each="entry : ${day.events}"
+                               class="calendar-event"
+                               th:classappend="${' category-' + #strings.toLowerCase(entry.category.name())}"
+                               th:href="|/applications/${entry.applicationId}#event-${entry.eventId}|"
+                               th:title="${entry.company + ' · ' + entry.displayTitle}">
+                                <span class="calendar-event-topline">
+                                    <strong th:text="${entry.company}">Northstar Labs</strong>
+                                    <span th:if="${entry.eventTimeDisplay != null}" th:text="${entry.eventTimeDisplay}">4:30 PM</span>
+                                </span>
+                                <span class="calendar-event-title" th:text="${entry.displayTitle}">Technical Interview</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel calendar-upcoming-panel">
+            <div class="panel-header">
+                <div>
+                    <p class="eyebrow">NEXT 30 DAYS</p>
+                    <h2>Upcoming activity</h2>
+                </div>
+            </div>
+
+            <div th:if="${#lists.isEmpty(upcoming)}" class="calendar-upcoming-empty">
+                <span>○</span>
+                <div>
+                    <strong>Nothing scheduled yet</strong>
+                    <p>Add a future interview, follow-up, assessment, or other activity from an application timeline.</p>
+                </div>
+            </div>
+
+            <div th:unless="${#lists.isEmpty(upcoming)}" class="calendar-upcoming-list">
+                <a th:each="entry : ${upcoming}"
+                   class="calendar-upcoming-item"
+                   th:href="|/applications/${entry.applicationId}#event-${entry.eventId}|">
+                    <div class="calendar-upcoming-date">
+                        <strong th:text="${entry.eventDate.dayOfMonth}">28</strong>
+                        <span th:text="${#strings.substring(entry.eventDate.month.name(), 0, 3)}">AUG</span>
+                    </div>
+                    <span class="calendar-upcoming-category"
+                          th:classappend="${' category-' + #strings.toLowerCase(entry.category.name())}"></span>
+                    <div class="calendar-upcoming-copy">
+                        <strong th:text="${entry.displayTitle}">Technical Interview</strong>
+                        <span th:text="${entry.company + ' · ' + entry.role}">Northstar Labs · Senior Backend Engineer</span>
+                        <small>
+                            <span th:if="${entry.eventTimeDisplay != null}" th:text="${entry.eventTimeDisplay}">2:00 PM</span>
+                            <span th:if="${entry.contactName != null}" th:text="${(entry.eventTimeDisplay != null ? ' · ' : '') + 'with ' + entry.contactName}"> · with Jay</span>
+                        </small>
+                    </div>
+                    <span class="calendar-upcoming-arrow">→</span>
+                </a>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>

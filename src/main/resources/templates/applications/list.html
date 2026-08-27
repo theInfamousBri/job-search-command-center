@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Applications · Job Search</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
+</head>
+<body>
+<div class="app-shell">
+    <aside th:replace="~{fragments :: sidebar('applications')}"></aside>
+    <header th:replace="~{fragments :: topbar}"></header>
+
+    <main class="main">
+        <header class="page-header">
+            <div>
+                <p class="eyebrow">TRACKER</p>
+                <h1>Applications</h1>
+                <p class="subtle">Every role, status, note, and saved posting in one place.</p>
+            </div>
+            <div class="header-actions">
+                <a class="button button-primary" th:href="@{/applications/new}">+ Add application</a>
+            </div>
+        </header>
+
+        <section class="panel">
+            <div class="application-toolbar">
+                <form class="search-large" th:action="@{/applications}" method="get">
+                    <span>⌕</span>
+                    <input type="search" name="q" th:value="${query}" placeholder="Search company, role, location, notes, tech…">
+                    <button type="submit" class="button button-secondary">Search</button>
+                    <a th:if="${query != null and !query.isBlank()}" class="text-link" th:href="@{/applications}">Clear</a>
+                </form>
+
+                <p class="result-count">
+                    <strong th:text="${#lists.size(applications)}">0</strong>
+                    <span th:text="${#lists.size(applications) == 1 ? 'application' : 'applications'}">applications</span>
+                </p>
+            </div>
+
+            <div th:if="${#lists.isEmpty(applications)}" class="empty-state">
+                <div class="empty-icon">⌕</div>
+                <h3 th:text="${query != null and !query.isBlank() ? 'No matching applications' : 'No applications yet'}">No applications yet</h3>
+                <p th:text="${query != null and !query.isBlank()
+                    ? 'Try a different search term.'
+                    : 'Start by tracking the next job you apply to.'}">
+                    Start by tracking the next job you apply to.
+                </p>
+                <a th:if="${query == null or query.isBlank()}" class="button button-primary" th:href="@{/applications/new}">Add application</a>
+            </div>
+
+            <div th:unless="${#lists.isEmpty(applications)}" class="table-wrap">
+                <table class="data-table application-table">
+                    <thead>
+                    <tr>
+                        <th>Company / role</th>
+                        <th>Location</th>
+                        <th>Stage</th>
+                        <th>State</th>
+                        <th>Priority</th>
+                        <th>Applied</th>
+                        <th>Updated</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="app : ${applications}">
+                        <td>
+                            <a class="company-cell" th:href="@{/applications/{id}(id=${app.id})}">
+                                <span class="company-avatar" th:text="${app.initials}">CO</span>
+                                <span>
+                                    <strong th:text="${app.company}">Company</strong>
+                                    <small th:text="${app.role}">Role</small>
+                                </span>
+                            </a>
+                        </td>
+                        <td class="muted" th:text="${app.location == null ? '—' : app.location}">Denver, CO</td>
+                        <td>
+                            <span class="status-pill"
+                                  th:classappend="${' status-' + #strings.toLowerCase(app.status.name())}"
+                                  th:text="${app.status.displayName}">Applied</span>
+                        </td>
+                        <td>
+                            <span class="state-pill"
+                                  th:classappend="${' state-' + #strings.toLowerCase(app.state.name())}"
+                                  th:text="${app.state.displayName}">Active</span>
+                        </td>
+                        <td>
+                            <span class="priority"
+                                  th:classappend="${' priority-' + #strings.toLowerCase(app.priority.name())}"
+                                  th:text="${app.priority.displayName}">Medium</span>
+                        </td>
+                        <td class="muted" th:text="${app.appliedDateDisplay}">Aug 26, 2026</td>
+                        <td class="muted" th:text="${app.updatedDateDisplay}">Aug 26</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>
