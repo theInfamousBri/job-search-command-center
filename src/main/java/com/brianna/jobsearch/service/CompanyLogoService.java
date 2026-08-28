@@ -38,7 +38,7 @@ public class CompanyLogoService {
     private static final int MAX_REDIRECTS = 5;
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(8);
     private static final String USER_AGENT =
-            "Mozilla/5.0 (compatible; Job-Search-Command-Center/1.1.2; +local-app)";
+            "Mozilla/5.0 (compatible; Job-Search-Command-Center/1.2.0; +local-app)";
 
     private static final Pattern MANIFEST_ICON_OBJECT = Pattern.compile(
             "\\{(?=[^{}]*\\\"src\\\"\\s*:)([^{}]*)}", Pattern.DOTALL);

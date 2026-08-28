@@ -1,6 +1,6 @@
 # Job Search Command Center — Next Steps
 
-This file is the post-**1.1.2** roadmap. It consolidates the ideas intentionally deferred while the first usable local version was being built.
+This file is the post-**1.2.0** roadmap. It consolidates the ideas intentionally deferred while the first usable local version was being built.
 
 The order below is directional rather than a promise. Features should continue to be added when they solve a real workflow problem rather than just making the project larger.
 
@@ -202,7 +202,7 @@ Add:
 
 ## Analytics roadmap
 
-Analytics should become more sophisticated only as the dataset grows enough to support meaningful conclusions.
+Version 1.2.0 turns priority, career lane, work arrangement, and source performance into visual decision support with overall-baseline deltas, response-to-interview conversion, field coverage, and sample-size context. Continue making Analytics more sophisticated only when the dataset supports meaningful conclusions.
 
 ### Better timing statistics
 
@@ -210,8 +210,8 @@ Add:
 
 - median alongside average stage timing
 - minimum / maximum
-- sample-size warnings
 - time from one stage to the next, not only from Applied
+- clearer sample-size context on timing metrics
 
 ### Funnel analysis
 
@@ -222,26 +222,29 @@ Add:
 - compare funnels across role types or locations
 - compare before / after resume revisions
 
-### Outcome breakdowns
+### Deeper performance dimensions
 
-Version 1.1.1 adds outcome mix plus performance by priority, career lane, work arrangement, and source. Continue with:
+Extend the v1.2.0 comparison model to:
 
 - company
-- role family normalization
-- location
+- normalized role family
+- location / metro
 - salary band
 - month / quarter
-- statistically safer comparisons when sample sizes are small
+- resume version once attachments / resume tracking exists
+
+Consider stronger statistical safeguards once enough observations exist, rather than adding arbitrary scoring formulas.
 
 ### Search-strategy insights
 
-Possible future insights:
+Possible next insights:
 
-- which sources generate the highest interview rate
 - which companies move fastest
 - average waiting time after interviews
 - where applications most commonly stop progressing
 - application volume vs interview conversion over time
+- changes in response / interview rates over rolling periods
+- whether a strategy signal is improving or degrading over time
 
 ## Import, export, and backup
 

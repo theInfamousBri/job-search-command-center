@@ -5,7 +5,7 @@
 
 **A local-first command center for applications, interview prep, follow-ups, calendar events, imports, and job-search analytics.**
 
-Version **1.1.2**
+Version **1.2.0**
 </div>
 
 ---
@@ -304,10 +304,18 @@ Current metrics include:
 - six-month application / interview activity
 - average time from application to key pipeline stages
 - prep-library confidence and review health
-- response / interview performance by priority
-- response / interview performance by career lane
-- response / interview performance by work arrangement
-- response / interview performance by application source
+- visual response / interview performance by priority
+- visual response / interview performance by career lane
+- visual response / interview performance by work arrangement
+- visual response / interview performance by application source
+- percentage-point deltas against the overall search baseline
+- response-to-interview conversion within each segment
+- field-coverage indicators showing how much of the submitted history is actually tagged
+- sample-size labels (`Stronger sample`, `Directional`, `Small sample`)
+- consistent small-sample drawers that keep 1–2 application categories available without letting them dominate the main comparisons
+- four current search-strategy signal cards that surface the strongest observed segment in each tracked dimension
+
+The v1.2.0 strategy cards deliberately avoid treating one-off wins as conclusions: fewer than three applications is flagged as a small sample, 3–9 is directional, and 10+ is treated as a stronger sample. These are descriptive signals from local history, not predictions.
 
 Analytics become more useful as more application history is entered or imported.
 
@@ -586,7 +594,7 @@ To create a packaged JAR:
 
 ```bash
 mvn clean package
-java -jar target/job-search-dashboard-1.1.2.jar
+java -jar target/job-search-dashboard-1.2.0.jar
 ```
 
 > The repository does not currently include the Maven Wrapper (`mvnw` / `mvnw.cmd`). Adding it is tracked in `NEXT-STEPS.md`.
@@ -675,7 +683,7 @@ git push
 
 ## Current limitations
 
-Version 1.1.2 is intentionally a local, single-user application. It includes a public-safe demo profile and preview-first historical imports, but does **not** currently include:
+Version 1.2.0 is intentionally a local, single-user application. It includes a public-safe demo profile and preview-first historical imports, but does **not** currently include:
 
 - authentication or multi-user support
 - cloud hosting / cloud database
@@ -698,6 +706,6 @@ See [`NEXT-STEPS.md`](NEXT-STEPS.md) for the prioritized product, analytics, aut
 
 ## Version
 
-Current release: **1.1.2**
+Current release: **1.2.0**
 
-Version 1.1.2 adds locally cached company branding plus expandable application materials for archived cover letters and job descriptions, while retaining initials as the no-logo fallback.
+Version 1.2.0 expands Analytics into search-strategy decision support. Priority, career lane, work arrangement, and source performance now include visual rate comparisons, percentage-point deltas against the overall baseline, response-to-interview conversion, data-coverage indicators, and sample-size context so small samples are not presented as strong conclusions.

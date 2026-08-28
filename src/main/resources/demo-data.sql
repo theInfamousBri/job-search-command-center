@@ -104,6 +104,21 @@ UPDATE job_applications SET location = 'Boulder, CO', work_arrangement = 'Hybrid
 UPDATE job_applications SET location = 'Denver, CO', work_arrangement = 'Hybrid', years_experience_required = '5+', career_lane = 'Commerce / Backend Platform', cover_letter = 1 WHERE id = 6;
 UPDATE job_applications SET location = 'United States', work_arrangement = 'Remote', years_experience_required = '4+', career_lane = 'Data Platform / Backend Services', cover_letter = 1, next_step = 'Technical interview scheduled; finish linked prep.' WHERE id = 10;
 
+
+-- v1.2 analytics demo segmentation. These broader labels intentionally create
+-- enough repeated categories for the decision-support visuals to be meaningful.
+UPDATE job_applications SET career_lane = 'Backend / Platform', work_arrangement = 'Hybrid' WHERE id = 1;
+UPDATE job_applications SET career_lane = 'Backend / Platform', work_arrangement = 'Hybrid', priority = 'HIGH' WHERE id = 8;
+UPDATE job_applications SET career_lane = 'Backend / Platform', work_arrangement = 'Hybrid', priority = 'HIGH' WHERE id = 4;
+UPDATE job_applications SET career_lane = 'Backend / Platform', work_arrangement = 'Remote' WHERE id IN (5, 10);
+UPDATE job_applications SET career_lane = 'Backend / Platform', work_arrangement = 'On-site' WHERE id = 12;
+UPDATE job_applications SET career_lane = 'Product / Domain Backend', work_arrangement = 'Remote', priority = 'STRETCH' WHERE id = 2;
+UPDATE job_applications SET career_lane = 'Product / Domain Backend', work_arrangement = 'Hybrid', priority = 'STRETCH' WHERE id = 6;
+UPDATE job_applications SET career_lane = 'Product / Domain Backend', work_arrangement = 'Remote' WHERE id = 7;
+UPDATE job_applications SET career_lane = 'Product / Domain Backend', work_arrangement = 'Hybrid' WHERE id IN (9, 11);
+UPDATE job_applications SET career_lane = 'Developer Platform / Infrastructure', work_arrangement = 'Hybrid' WHERE id = 3;
+UPDATE job_applications SET priority = 'STRETCH' WHERE id = 10;
+
 -- ---------------------------------------------------------------------------
 -- Lifecycle / calendar events
 -- ---------------------------------------------------------------------------

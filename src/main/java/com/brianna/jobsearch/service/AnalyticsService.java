@@ -13,15 +13,19 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AnalyticsService {
 
     private static final DateTimeFormatter MONTH_LABEL = DateTimeFormatter.ofPattern("MMM");
+    private static final int MIN_DIRECTIONAL_SAMPLE = 3;
+    private static final int STRONG_SAMPLE = 10;
 
     private final AnalyticsRepository repository;
 
@@ -44,10 +48,46 @@ public class AnalyticsService {
         List<OutcomeRow> outcomes = buildOutcomes(applied);
         List<MonthlyActivity> monthlyActivity = buildMonthlyActivity();
         List<StageSpeed> stageSpeeds = buildStageSpeeds();
-        List<PerformanceRow> priorities = buildPerformance(repository.priorityPerformance(8), true);
-        List<PerformanceRow> careerLanes = buildPerformance(repository.careerLanePerformance(10), false);
-        List<PerformanceRow> workArrangements = buildPerformance(repository.workArrangementPerformance(10), false);
-        List<PerformanceRow> sources = buildPerformance(repository.sourcePerformance(10), false);
+
+        PerformanceDimension priorityPerformance = buildPerformanceDimension(
+                "priority",
+                "Priority",
+                repository.priorityPerformance(8),
+                applied,
+                responseRate,
+                interviewRate,
+                true);
+        PerformanceDimension careerLanePerformance = buildPerformanceDimension(
+                "career-lane",
+                "Career lane",
+                repository.careerLanePerformance(12),
+                applied,
+                responseRate,
+                interviewRate,
+                false);
+        PerformanceDimension workArrangementPerformance = buildPerformanceDimension(
+                "work-arrangement",
+                "Work arrangement",
+                repository.workArrangementPerformance(10),
+                applied,
+                responseRate,
+                interviewRate,
+                false);
+        PerformanceDimension sourcePerformance = buildPerformanceDimension(
+                "source",
+                "Source",
+                repository.sourcePerformance(12),
+                applied,
+                responseRate,
+                interviewRate,
+                false);
+
+        List<StrategyInsight> strategyInsights = List.of(
+                buildStrategyInsight("PRIORITY SIGNAL", "Priority", priorityPerformance),
+                buildStrategyInsight("CAREER LANE", "Career lane", careerLanePerformance),
+                buildStrategyInsight("WORK ARRANGEMENT", "Work arrangement", workArrangementPerformance),
+                buildStrategyInsight("SOURCE SIGNAL", "Source", sourcePerformance));
+
         PrepSnapshot prep = buildPrepSnapshot();
 
         return new AnalyticsSnapshot(
@@ -61,10 +101,11 @@ public class AnalyticsService {
                 outcomes,
                 monthlyActivity,
                 stageSpeeds,
-                priorities,
-                careerLanes,
-                workArrangements,
-                sources,
+                priorityPerformance,
+                careerLanePerformance,
+                workArrangementPerformance,
+                sourcePerformance,
+                strategyInsights,
                 prep);
     }
 
@@ -87,7 +128,7 @@ public class AnalyticsService {
     }
 
     private List<StateBreakdown> buildStateBreakdown() {
-        List<StateCount> counts = repository.stateCounts();
+        List<StateCount> counts = safeList(repository.stateCounts());
         long total = counts.stream().mapToLong(StateCount::total).sum();
         List<StateBreakdown> result = new ArrayList<>();
 
@@ -100,7 +141,7 @@ public class AnalyticsService {
 
     private List<OutcomeRow> buildOutcomes(long applied) {
         List<OutcomeRow> result = new ArrayList<>();
-        for (OutcomeCount count : repository.outcomeCounts()) {
+        for (OutcomeCount count : safeList(repository.outcomeCounts())) {
             result.add(new OutcomeRow(
                     displayOutcome(count.outcome()),
                     count.outcome(),
@@ -116,8 +157,8 @@ public class AnalyticsService {
         LocalDate start = startMonth.atDay(1);
         LocalDate end = endMonth.atEndOfMonth();
 
-        Map<String, Long> applications = toMonthMap(repository.applicationCountsByMonth(start, end));
-        Map<String, Long> interviews = toMonthMap(repository.interviewCountsByMonth(start, end));
+        Map<String, Long> applications = toMonthMap(safeList(repository.applicationCountsByMonth(start, end)));
+        Map<String, Long> interviews = toMonthMap(safeList(repository.interviewCountsByMonth(start, end)));
 
         long max = 1;
         for (int i = 0; i < 6; i++) {
@@ -164,26 +205,197 @@ public class AnalyticsService {
     }
 
     private StageSpeed stageSpeed(String label, StageTiming timing) {
+        if (timing == null) {
+            return new StageSpeed(label, null, 0);
+        }
         return new StageSpeed(label, timing.averageDays(), timing.sampleSize());
     }
 
-    private List<PerformanceRow> buildPerformance(List<DimensionPerformance> rows, boolean priorityLabels) {
-        List<PerformanceRow> result = new ArrayList<>();
-        for (DimensionPerformance row : rows) {
-            String label = priorityLabels ? displayPriority(row.label()) : row.label();
-            result.add(new PerformanceRow(
-                    label,
+    private PerformanceDimension buildPerformanceDimension(
+            String key,
+            String label,
+            List<DimensionPerformance> rawRows,
+            long applied,
+            double overallResponseRate,
+            double overallInterviewRate,
+            boolean priorityLabels) {
+
+        List<PerformanceRow> rows = new ArrayList<>();
+        long taggedApplications = 0;
+
+        for (DimensionPerformance row : safeList(rawRows)) {
+            String displayLabel = priorityLabels ? displayPriority(row.label()) : row.label();
+            if (displayLabel == null || displayLabel.isBlank()) {
+                continue;
+            }
+
+            boolean explicitlyTagged = !priorityLabels || !"Not set".equals(displayLabel);
+            if (explicitlyTagged) {
+                taggedApplications += row.applications();
+            }
+
+            double rowResponseRate = percent(row.responses(), row.applications());
+            double rowInterviewRate = percent(row.interviewed(), row.applications());
+            double responseToInterviewRate = percent(row.interviewed(), row.responses());
+
+            rows.add(new PerformanceRow(
+                    displayLabel,
                     row.applications(),
                     row.responses(),
-                    percent(row.responses(), row.applications()),
+                    rowResponseRate,
                     row.interviewed(),
-                    percent(row.interviewed(), row.applications())));
+                    rowInterviewRate,
+                    responseToInterviewRate,
+                    percent(row.applications(), applied),
+                    rowResponseRate - overallResponseRate,
+                    rowInterviewRate - overallInterviewRate,
+                    rateBarWidth(rowResponseRate),
+                    rateBarWidth(rowInterviewRate),
+                    sampleStrength(row.applications()),
+                    sampleLabel(row.applications())));
         }
-        return result;
+
+        if (priorityLabels) {
+            rows.sort(Comparator.comparingInt(row -> priorityOrder(row.label())));
+        }
+
+        List<PerformanceRow> signalRows = rows.stream()
+                .filter(row -> !"SMALL".equals(row.sampleStrength()))
+                .toList();
+        List<PerformanceRow> smallSampleRows = rows.stream()
+                .filter(row -> "SMALL".equals(row.sampleStrength()))
+                .toList();
+
+        return new PerformanceDimension(
+                key,
+                label,
+                taggedApplications,
+                percent(taggedApplications, applied),
+                overallResponseRate,
+                overallInterviewRate,
+                List.copyOf(rows),
+                List.copyOf(signalRows),
+                List.copyOf(smallSampleRows));
+    }
+
+    private StrategyInsight buildStrategyInsight(String eyebrow, String dimensionLabel, PerformanceDimension dimension) {
+        if (dimension.rows().isEmpty()) {
+            return new StrategyInsight(
+                    eyebrow,
+                    dimensionLabel,
+                    "No data yet",
+                    "—",
+                    "Add this field to submitted applications to start comparing performance.",
+                    "NO_DATA");
+        }
+
+        List<PerformanceRow> candidates = dimension.rows().stream()
+                .filter(row -> row.applications() >= MIN_DIRECTIONAL_SAMPLE)
+                .filter(row -> !"Not set".equals(row.label()))
+                .filter(row -> !"Skip".equals(row.label()))
+                .toList();
+
+        boolean directional = !candidates.isEmpty();
+        if (!directional) {
+            candidates = dimension.rows().stream()
+                    .filter(row -> !"Not set".equals(row.label()))
+                    .filter(row -> !"Skip".equals(row.label()))
+                    .toList();
+        }
+        if (candidates.isEmpty()) {
+            candidates = dimension.rows();
+        }
+
+        PerformanceRow leader = candidates.stream()
+                .max(Comparator
+                        .comparingDouble(PerformanceRow::interviewRate)
+                        .thenComparingDouble(PerformanceRow::responseRate)
+                        .thenComparingLong(PerformanceRow::applications))
+                .orElse(dimension.rows().get(0));
+
+        String metric;
+        String detail;
+        if (leader.interviewed() > 0) {
+            metric = formatPercent(leader.interviewRate()) + " interview";
+            detail = deltaSentence(leader.interviewDelta(), "interview")
+                    + " · " + formatPercent(leader.responseRate()) + " response"
+                    + " · " + leader.applications() + " apps";
+        } else {
+            metric = formatPercent(leader.responseRate()) + " response";
+            detail = deltaSentence(leader.responseDelta(), "response")
+                    + " · " + leader.applications() + " apps";
+        }
+
+        String confidence = leader.sampleStrength();
+        if (!directional) {
+            String observedMetric = leader.interviewed() > 0
+                    ? formatPercent(leader.interviewRate()) + " interview"
+                    : formatPercent(leader.responseRate()) + " response";
+            metric = "Early signal";
+            detail = observedMetric + " · " + detail + " · very small sample";
+            confidence = "SMALL";
+        }
+
+        return new StrategyInsight(
+                eyebrow,
+                dimensionLabel,
+                leader.label(),
+                metric,
+                detail,
+                confidence);
+    }
+
+    private String deltaSentence(double delta, String metric) {
+        if (Math.abs(delta) < 0.05) {
+            return "At your overall " + metric + " baseline";
+        }
+        return formatSignedPoints(delta) + " vs overall " + metric;
+    }
+
+    private int priorityOrder(String label) {
+        return switch (label) {
+            case "High" -> 0;
+            case "Stretch" -> 1;
+            case "Medium" -> 2;
+            case "Low" -> 3;
+            case "Not set" -> 4;
+            case "Skip" -> 5;
+            default -> 6;
+        };
+    }
+
+    private String sampleStrength(long applications) {
+        if (applications >= STRONG_SAMPLE) {
+            return "STRONG";
+        }
+        if (applications >= MIN_DIRECTIONAL_SAMPLE) {
+            return "DIRECTIONAL";
+        }
+        return "SMALL";
+    }
+
+    private String sampleLabel(long applications) {
+        if (applications >= STRONG_SAMPLE) {
+            return "Stronger sample";
+        }
+        if (applications >= MIN_DIRECTIONAL_SAMPLE) {
+            return "Directional";
+        }
+        return "Small sample";
+    }
+
+    private double rateBarWidth(double rate) {
+        if (rate <= 0) {
+            return 0.0;
+        }
+        return Math.min(100.0, Math.max(3.0, rate));
     }
 
     private PrepSnapshot buildPrepSnapshot() {
         PrepHealth health = repository.prepHealth();
+        if (health == null) {
+            health = new PrepHealth(0, null, 0, 0);
+        }
         long needsReview = repository.countPrepNeedsReview();
         double averageConfidence = health.averageConfidence() == null ? 0.0 : health.averageConfidence();
         double reviewedPercent = percent(health.reviewedItems(), health.totalItems());
@@ -247,6 +459,18 @@ public class AnalyticsService {
         return Math.max(8.0, (value * 100.0) / max);
     }
 
+    private String formatPercent(double value) {
+        return String.format(java.util.Locale.US, "%.1f%%", value);
+    }
+
+    private String formatSignedPoints(double value) {
+        return String.format(java.util.Locale.US, "%+.1f pp", value);
+    }
+
+    private <T> List<T> safeList(List<T> values) {
+        return Objects.requireNonNullElse(values, List.of());
+    }
+
     public record AnalyticsSnapshot(
             long applications,
             double responseRate,
@@ -258,10 +482,11 @@ public class AnalyticsService {
             List<OutcomeRow> outcomes,
             List<MonthlyActivity> monthlyActivity,
             List<StageSpeed> stageSpeeds,
-            List<PerformanceRow> priorities,
-            List<PerformanceRow> careerLanes,
-            List<PerformanceRow> workArrangements,
-            List<PerformanceRow> sources,
+            PerformanceDimension priorityPerformance,
+            PerformanceDimension careerLanePerformance,
+            PerformanceDimension workArrangementPerformance,
+            PerformanceDimension sourcePerformance,
+            List<StrategyInsight> strategyInsights,
             PrepSnapshot prep) {
     }
 
@@ -286,13 +511,42 @@ public class AnalyticsService {
     public record StageSpeed(String label, Double averageDays, long sampleSize) {
     }
 
+    public record PerformanceDimension(
+            String key,
+            String label,
+            long taggedApplications,
+            double coverageRate,
+            double overallResponseRate,
+            double overallInterviewRate,
+            List<PerformanceRow> rows,
+            List<PerformanceRow> signalRows,
+            List<PerformanceRow> smallSampleRows) {
+    }
+
     public record PerformanceRow(
             String label,
             long applications,
             long responses,
             double responseRate,
             long interviewed,
-            double interviewRate) {
+            double interviewRate,
+            double responseToInterviewRate,
+            double applicationShare,
+            double responseDelta,
+            double interviewDelta,
+            double responseBarWidth,
+            double interviewBarWidth,
+            String sampleStrength,
+            String sampleLabel) {
+    }
+
+    public record StrategyInsight(
+            String eyebrow,
+            String dimension,
+            String leader,
+            String metric,
+            String detail,
+            String confidence) {
     }
 
     public record PrepSnapshot(
