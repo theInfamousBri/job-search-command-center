@@ -71,6 +71,21 @@ CREATE INDEX IF NOT EXISTS idx_company_contacts_company_key
 CREATE INDEX IF NOT EXISTS idx_company_contacts_name
     ON company_contacts(name);
 
+
+CREATE TABLE IF NOT EXISTS application_attachments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    application_id INTEGER NOT NULL,
+    attachment_type TEXT NOT NULL DEFAULT 'OTHER',
+    file_name TEXT NOT NULL,
+    mime_type TEXT NOT NULL,
+    file_size INTEGER NOT NULL,
+    file_data BLOB NOT NULL,
+    created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_application_attachments_application_id
+    ON application_attachments(application_id);
+
 CREATE TABLE IF NOT EXISTS application_events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     application_id INTEGER NOT NULL,

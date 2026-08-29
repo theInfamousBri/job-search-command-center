@@ -9,6 +9,7 @@ import com.brianna.jobsearch.model.ApplicationStatus;
 import com.brianna.jobsearch.model.CalendarEntry;
 import com.brianna.jobsearch.model.CalendarFilter;
 import com.brianna.jobsearch.model.JobApplication;
+import com.brianna.jobsearch.repository.ApplicationAttachmentRepository;
 import com.brianna.jobsearch.repository.ApplicationEventRepository;
 import com.brianna.jobsearch.repository.JobApplicationRepository;
 import java.time.LocalDate;
@@ -23,12 +24,15 @@ public class JobApplicationService {
 
     private final JobApplicationRepository repository;
     private final ApplicationEventRepository eventRepository;
+    private final ApplicationAttachmentRepository attachmentRepository;
 
     public JobApplicationService(
             JobApplicationRepository repository,
-            ApplicationEventRepository eventRepository) {
+            ApplicationEventRepository eventRepository,
+            ApplicationAttachmentRepository attachmentRepository) {
         this.repository = repository;
         this.eventRepository = eventRepository;
+        this.attachmentRepository = attachmentRepository;
     }
 
     public List<JobApplication> search(String query) {
@@ -154,6 +158,7 @@ public class JobApplicationService {
 
     @Transactional
     public void delete(long id) {
+        attachmentRepository.deleteByApplicationId(id);
         eventRepository.deleteByApplicationId(id);
         repository.delete(id);
     }
@@ -164,6 +169,12 @@ public class JobApplicationService {
 
     public long staleApplicationCount(int staleDays) {
         return repository.countStale(normalizeStaleDays(staleDays));
+    }
+
+    @Transactional
+    public void markCoverLetterUsedForAttachment(long id) {
+        get(id);
+        repository.markCoverLetterUsed(id);
     }
 
     @Transactional

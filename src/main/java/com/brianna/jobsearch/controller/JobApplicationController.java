@@ -1,6 +1,7 @@
 package com.brianna.jobsearch.controller;
 
 import com.brianna.jobsearch.model.ApplicationEvent;
+import com.brianna.jobsearch.model.ApplicationAttachmentType;
 import com.brianna.jobsearch.model.ApplicationEventType;
 import com.brianna.jobsearch.model.ApplicationPage;
 import com.brianna.jobsearch.model.ApplicationSearchCriteria;
@@ -15,6 +16,7 @@ import com.brianna.jobsearch.model.Priority;
 import com.brianna.jobsearch.model.importing.ApplicationImportPreview;
 import com.brianna.jobsearch.model.importing.ApplicationImportResult;
 import com.brianna.jobsearch.model.importing.ImportDecision;
+import com.brianna.jobsearch.service.ApplicationAttachmentService;
 import com.brianna.jobsearch.service.ApplicationImportService;
 import com.brianna.jobsearch.service.CompanyLogoService;
 import com.brianna.jobsearch.service.CompanyManagementService;
@@ -22,6 +24,7 @@ import com.brianna.jobsearch.service.JobApplicationService;
 import com.brianna.jobsearch.service.PrepService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
@@ -29,6 +32,8 @@ import java.util.Map;
 import java.util.Objects;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.CacheControl;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -50,6 +55,7 @@ public class JobApplicationController {
     private final JobApplicationService service;
     private final PrepService prepService;
     private final ApplicationImportService importService;
+    private final ApplicationAttachmentService attachmentService;
     private final CompanyLogoService companyLogoService;
     private final CompanyManagementService companyManagementService;
 
@@ -57,11 +63,13 @@ public class JobApplicationController {
             JobApplicationService service,
             PrepService prepService,
             ApplicationImportService importService,
+            ApplicationAttachmentService attachmentService,
             CompanyLogoService companyLogoService,
             CompanyManagementService companyManagementService) {
         this.service = service;
         this.prepService = prepService;
         this.importService = importService;
+        this.attachmentService = attachmentService;
         this.companyLogoService = companyLogoService;
         this.companyManagementService = companyManagementService;
     }
@@ -296,6 +304,8 @@ public class JobApplicationController {
         model.addAttribute("events", service.eventsForApplication(id));
         model.addAttribute("applicationPrepItems", prepService.forApplication(id));
         model.addAttribute("linkablePrepItems", prepService.linkableReusableForApplication(id));
+        model.addAttribute("attachments", attachmentService.forApplication(id));
+        model.addAttribute("attachmentTypes", ApplicationAttachmentType.values());
 
         if (editEvent != null) {
             model.addAttribute("eventForm", service.getEvent(id, editEvent));
@@ -308,6 +318,67 @@ public class JobApplicationController {
         }
 
         return "applications/detail";
+    }
+
+    @PostMapping("/applications/{id}/attachments")
+    public String uploadAttachment(
+            @PathVariable long id,
+            @RequestParam String attachmentType,
+            @RequestParam("file") MultipartFile file,
+            RedirectAttributes redirectAttributes) {
+        service.get(id);
+        try {
+            var attachment = attachmentService.upload(id, attachmentType, file);
+            if (attachment.attachmentType() == ApplicationAttachmentType.COVER_LETTER) {
+                service.markCoverLetterUsedForAttachment(id);
+            }
+            redirectAttributes.addFlashAttribute(
+                    "attachmentSuccess",
+                    attachment.attachmentType().getDisplayName() + " attached: " + attachment.fileName());
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("attachmentError", ex.getMessage());
+        }
+        return "redirect:/applications/" + id + "#application-materials";
+    }
+
+    @GetMapping("/applications/{id}/attachments/{attachmentId}")
+    public ResponseEntity<byte[]> downloadAttachment(
+            @PathVariable long id,
+            @PathVariable long attachmentId) {
+        service.get(id);
+        var content = attachmentService.download(id, attachmentId);
+        MediaType mediaType;
+        try {
+            mediaType = MediaType.parseMediaType(content.metadata().mimeType());
+        } catch (IllegalArgumentException ex) {
+            mediaType = MediaType.APPLICATION_OCTET_STREAM;
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(mediaType);
+        headers.setContentLength(content.data().length);
+        headers.setContentDisposition(ContentDisposition.attachment()
+                .filename(content.metadata().fileName(), StandardCharsets.UTF_8)
+                .build());
+        headers.setCacheControl(CacheControl.noStore().getHeaderValue());
+        headers.set("X-Content-Type-Options", "nosniff");
+        return ResponseEntity.ok().headers(headers).body(content.data());
+    }
+
+    @PostMapping("/applications/{id}/attachments/{attachmentId}/delete")
+    public String deleteAttachment(
+            @PathVariable long id,
+            @PathVariable long attachmentId,
+            RedirectAttributes redirectAttributes) {
+        service.get(id);
+        try {
+            var attachment = attachmentService.metadata(id, attachmentId);
+            attachmentService.delete(id, attachmentId);
+            redirectAttributes.addFlashAttribute("attachmentSuccess", "Removed attachment: " + attachment.fileName());
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("attachmentError", ex.getMessage());
+        }
+        return "redirect:/applications/" + id + "#application-materials";
     }
 
     @GetMapping("/applications/{id}/logo")

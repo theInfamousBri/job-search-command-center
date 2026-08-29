@@ -5,12 +5,13 @@
 DELETE FROM prep_item_links;
 DELETE FROM prep_items;
 DELETE FROM application_events;
+DELETE FROM application_attachments;
 DELETE FROM company_contacts;
 DELETE FROM company_notes;
 DELETE FROM company_logos;
 DELETE FROM job_applications;
 DELETE FROM sqlite_sequence
-WHERE name IN ('job_applications', 'application_events', 'prep_items', 'company_contacts');
+WHERE name IN ('job_applications', 'application_events', 'application_attachments', 'prep_items', 'company_contacts');
 
 -- ---------------------------------------------------------------------------
 -- Applications

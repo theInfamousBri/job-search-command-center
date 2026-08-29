@@ -111,8 +111,9 @@ The **Application Materials** panel currently stores:
 - cover-letter usage (`Yes`, `No`, or `Not tracked`)
 - the full cover-letter text when available
 - a saved copy of the job description
+- application-specific file attachments categorized as `Resume`, `Cover letter`, or `Other`
 
-Cover letters and job descriptions open as inline expandable panels. Saving cover-letter text automatically marks the application as having used a cover letter, while historical rows can still record that a cover letter was used even when the original text is unavailable.
+Cover letters and job descriptions open as inline expandable panels. File attachments are stored as SQLite BLOBs so the exact resume / cover-letter version stays inside the same local database backup; each file is limited to 10 MB and downloads preserve the original filename. Saving cover-letter text or attaching a file categorized as `Cover letter` marks the application as having used a cover letter, while historical rows can still record usage even when the original text is unavailable.
 
 ### Company logos
 
@@ -721,7 +722,6 @@ The application is intentionally a local, single-user application. It includes a
 - import-batch history / one-click import undo
 - export / backup UI
 - contacts / recruiter CRM
-- general resume / file attachments beyond archived cover-letter text and job descriptions
 - dark mode
 
 Those and other ideas are tracked in [`NEXT-STEPS.md`](NEXT-STEPS.md).

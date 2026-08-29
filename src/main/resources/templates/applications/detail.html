@@ -421,6 +421,83 @@
                             </div>
                         </div>
                     </details>
+
+                    <details class="material-item attachment-material-item"
+                             th:attr="open=${attachmentSuccess != null or attachmentError != null} ? 'open' : null">
+                        <summary class="material-summary">
+                            <span class="material-summary-main">
+                                <span class="material-icon material-icon-files">FILE</span>
+                                <span>
+                                    <strong>Attached files</strong>
+                                    <small th:if="${#lists.isEmpty(attachments)}">No files attached yet</small>
+                                    <small th:unless="${#lists.isEmpty(attachments)}"
+                                           th:text="${attachments.size() == 1 ? '1 file · stored locally in SQLite' : attachments.size() + ' files · stored locally in SQLite'}">2 files · stored locally in SQLite</small>
+                                </span>
+                            </span>
+                            <span class="material-toggle">Manage <span aria-hidden="true">⌄</span></span>
+                        </summary>
+                        <div class="material-body attachment-material-body">
+                            <div th:if="${attachmentSuccess != null}" class="inline-alert inline-alert-success" th:text="${attachmentSuccess}">Attachment saved.</div>
+                            <div th:if="${attachmentError != null}" class="inline-alert inline-alert-error" th:text="${attachmentError}">Attachment error.</div>
+
+                            <div class="attachment-intro">
+                                <div>
+                                    <strong>Keep the exact files you submitted</strong>
+                                    <p>Resume versions, original cover-letter files, and other application-specific documents stay inside your local database backup.</p>
+                                </div>
+                                <span>10 MB max per file</span>
+                            </div>
+
+                            <form class="attachment-upload-form" method="post" enctype="multipart/form-data"
+                                  th:action="@{/applications/{id}/attachments(id=${jobApplication.id})}">
+                                <label class="attachment-type-field">
+                                    <span>File type</span>
+                                    <select name="attachmentType" required>
+                                        <option th:each="fileType : ${attachmentTypes}"
+                                                th:value="${fileType.name()}"
+                                                th:text="${fileType.displayName}">Resume</option>
+                                    </select>
+                                </label>
+                                <div class="attachment-file-picker">
+                                    <input id="application-attachment-upload" type="file" name="file" required
+                                           onchange="this.parentElement.querySelector('.file-name').textContent = this.files.length ? this.files[0].name : 'No file selected'">
+                                    <label for="application-attachment-upload">Choose file</label>
+                                    <span class="file-name">No file selected</span>
+                                </div>
+                                <button class="button button-primary" type="submit">Attach file</button>
+                            </form>
+
+                            <div th:if="${#lists.isEmpty(attachments)}" class="attachment-empty">
+                                <span class="attachment-empty-icon">+</span>
+                                <div>
+                                    <strong>No file attachments yet</strong>
+                                    <p>Add the exact resume or cover letter you submitted so you never have to reconstruct which version went with this application.</p>
+                                </div>
+                            </div>
+
+                            <div th:unless="${#lists.isEmpty(attachments)}" class="attachment-file-list">
+                                <article class="attachment-file-row" th:each="fileRow : ${attachments}">
+                                    <span class="attachment-file-icon" th:text="${fileRow.attachmentType.iconLabel}">CV</span>
+                                    <div class="attachment-file-copy">
+                                        <div class="attachment-file-heading">
+                                            <strong th:text="${fileRow.fileName}">resume-v4.pdf</strong>
+                                            <span class="attachment-type-chip" th:text="${fileRow.attachmentType.displayName}">Resume</span>
+                                        </div>
+                                        <small th:text="${fileRow.fileSizeDisplay() + ' · added ' + #temporals.format(fileRow.createdAt, 'MMM d, yyyy')}">184.2 KB · added Aug 29, 2026</small>
+                                    </div>
+                                    <div class="attachment-file-actions">
+                                        <a class="button button-secondary button-small"
+                                           th:href="@{/applications/{id}/attachments/{attachmentId}(id=${jobApplication.id},attachmentId=${fileRow.id})}">Download</a>
+                                        <form method="post"
+                                              th:action="@{/applications/{id}/attachments/{attachmentId}/delete(id=${jobApplication.id},attachmentId=${fileRow.id})}"
+                                              onsubmit="return confirm('Remove this attachment?');">
+                                            <button class="button button-quiet button-small" type="submit">Remove</button>
+                                        </form>
+                                    </div>
+                                </article>
+                            </div>
+                        </div>
+                    </details>
                 </div>
             </section>
         </div>

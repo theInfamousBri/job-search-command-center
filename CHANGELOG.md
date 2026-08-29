@@ -32,6 +32,10 @@ Data quality and organization foundation.
 - Company people survive company rename/alias merges by following the normalized company identity.
 - Company detail pages were visually reworked into a workspace: applications, people, and notes stay prominent while branding/identity maintenance is collapsed under **Manage company**.
 - Profile-photo uploads are validated as PNG, JPEG, GIF, or WebP and limited to 1 MB; initials remain the fallback.
+- Application detail pages now support generalized **SQLite-backed file attachments** for exact resume versions, original cover-letter files, and other application-specific documents.
+- Attachment downloads preserve the original filename while file bytes remain local to the database; metadata lists do not load BLOB content until a download is requested.
+- Attachment uploads are limited to 10 MB per file and are removed automatically when their parent application is deleted.
+- Adding a file as **Cover letter** marks the existing cover-letter-used flag without touching the application activity timestamp; deleting the file does not rewrite historical usage.
 
 ### Changed
 
@@ -51,6 +55,7 @@ Data quality and organization foundation.
 - New indexes are created only after startup migration adds the new columns, keeping upgrades from older SQLite databases backward-safe.
 - Adds a `company_notes` table keyed by normalized company identity for reusable company-level notes.
 - Adds a `company_contacts` table for company-level people records and optional profile-photo BLOBs.
+- Adds an `application_attachments` table with application linkage, material type, original filename/MIME metadata, and locally stored BLOB content.
 
 ## 1.2.0
 

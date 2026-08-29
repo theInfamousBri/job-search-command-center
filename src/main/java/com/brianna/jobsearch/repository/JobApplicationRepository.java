@@ -390,6 +390,12 @@ public class JobApplicationRepository {
                 id);
     }
 
+    public void markCoverLetterUsed(long id) {
+        jdbcTemplate.update(
+                "UPDATE job_applications SET cover_letter = 1 WHERE id = ? AND (cover_letter IS NULL OR cover_letter = 0)",
+                id);
+    }
+
     public void delete(long id) {
         jdbcTemplate.update("DELETE FROM job_applications WHERE id = ?", id);
     }
