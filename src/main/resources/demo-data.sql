@@ -119,6 +119,36 @@ UPDATE job_applications SET career_lane = 'Product / Domain Backend', work_arran
 UPDATE job_applications SET career_lane = 'Developer Platform / Infrastructure', work_arrangement = 'Hybrid' WHERE id = 3;
 UPDATE job_applications SET priority = 'STRETCH' WHERE id = 10;
 
+
+-- v1.3 normalized career taxonomy. The previous career_lane values remain in place
+-- as legacy/original tags so the normalization workflow can demonstrate preservation.
+UPDATE job_applications SET role_family = 'BACKEND_PLATFORM', industry_domain = 'ENTERPRISE_SAAS', career_focus = 'Platform reliability, APIs' WHERE id = 1;
+UPDATE job_applications SET role_family = 'BACKEND_PLATFORM', industry_domain = 'FINTECH_PAYMENTS', career_focus = 'Payment orchestration, distributed systems' WHERE id = 2;
+UPDATE job_applications SET role_family = 'CLOUD_INFRASTRUCTURE', industry_domain = 'DEVELOPER_TOOLS', career_focus = 'Internal developer platform' WHERE id = 3;
+UPDATE job_applications SET role_family = 'BACKEND_PLATFORM', industry_domain = 'ENTERPRISE_SAAS', career_focus = 'Java services' WHERE id = 4;
+UPDATE job_applications SET role_family = 'BACKEND_PLATFORM', industry_domain = 'HEALTHCARE', career_focus = 'Integrations, patient workflows' WHERE id = 5;
+UPDATE job_applications SET role_family = 'PRODUCT_ENGINEERING', industry_domain = 'ECOMMERCE', career_focus = 'Order and fulfillment systems' WHERE id = 6;
+UPDATE job_applications SET role_family = 'BACKEND_PLATFORM', industry_domain = 'FINANCIAL_SERVICES', career_focus = 'Financial planning integrations' WHERE id = 7;
+UPDATE job_applications SET role_family = 'BACKEND_PLATFORM', industry_domain = 'ENTERPRISE_SAAS', career_focus = 'Shared Java platform services' WHERE id = 8;
+UPDATE job_applications SET role_family = 'BACKEND_PLATFORM', industry_domain = 'AUTOMOTIVE', career_focus = 'Fleet telemetry, APIs' WHERE id = 9;
+UPDATE job_applications SET role_family = 'BACKEND_PLATFORM', industry_domain = 'DEVELOPER_TOOLS', career_focus = 'High-throughput data services' WHERE id = 10;
+-- Leave two demo records untagged so Data Quality visibly demonstrates missing-data workflows.
+
+-- Detailed legacy tags remain intentionally richer than the normalized fields so
+-- the Normalization Center can demonstrate review-before-write mapping.
+UPDATE job_applications SET career_lane = 'Backend / Enterprise Platform / Trust & Telemetry' WHERE id = 1;
+UPDATE job_applications SET career_lane = 'Backend / Debit Processing / Payments Platform' WHERE id = 2;
+UPDATE job_applications SET career_lane = 'Cloud Observability / Backend Infrastructure' WHERE id = 3;
+UPDATE job_applications SET career_lane = 'Java Backend / Operational SaaS / Platform' WHERE id = 4;
+UPDATE job_applications SET career_lane = 'Backend / Healthcare Platform / API & Integration' WHERE id = 5;
+UPDATE job_applications SET career_lane = 'Backend / E-Commerce Platform / Distributed Systems' WHERE id = 6;
+UPDATE job_applications SET career_lane = 'Backend / Financial Services & Retirement Platform' WHERE id = 7;
+UPDATE job_applications SET career_lane = 'Backend / Open Source Distributed Systems Platform' WHERE id = 8;
+UPDATE job_applications SET career_lane = 'Automotive / Backend Commerce Platform' WHERE id = 9;
+UPDATE job_applications SET career_lane = 'Backend / Data Platform / Distributed Systems' WHERE id = 10;
+UPDATE job_applications SET career_lane = 'Full-Stack / Social Commerce / Creator Marketplace' WHERE id = 11;
+UPDATE job_applications SET career_lane = 'Java Backend / Operational SaaS / Waste Management Platform' WHERE id = 12;
+
 -- ---------------------------------------------------------------------------
 -- Lifecycle / calendar events
 -- ---------------------------------------------------------------------------

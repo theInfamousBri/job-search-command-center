@@ -11,6 +11,9 @@ public class ApplicationSearchCriteria {
     private final String workArrangement;
     private final String source;
     private final String careerLane;
+    private final CareerRoleFamily roleFamily;
+    private final IndustryDomain industryDomain;
+    private final DataQualityField missing;
     private final LocalDate appliedFrom;
     private final LocalDate appliedTo;
     private final ApplicationSort sort;
@@ -25,6 +28,9 @@ public class ApplicationSearchCriteria {
             String workArrangement,
             String source,
             String careerLane,
+            CareerRoleFamily roleFamily,
+            IndustryDomain industryDomain,
+            DataQualityField missing,
             LocalDate appliedFrom,
             LocalDate appliedTo,
             ApplicationSort sort,
@@ -37,6 +43,9 @@ public class ApplicationSearchCriteria {
         this.workArrangement = normalize(workArrangement);
         this.source = normalize(source);
         this.careerLane = normalize(careerLane);
+        this.roleFamily = roleFamily;
+        this.industryDomain = industryDomain;
+        this.missing = missing;
         this.appliedFrom = appliedFrom;
         this.appliedTo = appliedTo;
         this.sort = sort == null ? ApplicationSort.UPDATED_DESC : sort;
@@ -51,6 +60,7 @@ public class ApplicationSearchCriteria {
     public boolean hasFilters() {
         return query != null || status != null || state != null || priority != null
                 || workArrangement != null || source != null || careerLane != null
+                || roleFamily != null || industryDomain != null || missing != null
                 || appliedFrom != null || appliedTo != null;
     }
 
@@ -61,6 +71,9 @@ public class ApplicationSearchCriteria {
     public String getWorkArrangement() { return workArrangement; }
     public String getSource() { return source; }
     public String getCareerLane() { return careerLane; }
+    public CareerRoleFamily getRoleFamily() { return roleFamily; }
+    public IndustryDomain getIndustryDomain() { return industryDomain; }
+    public DataQualityField getMissing() { return missing; }
     public LocalDate getAppliedFrom() { return appliedFrom; }
     public LocalDate getAppliedTo() { return appliedTo; }
     public ApplicationSort getSort() { return sort; }

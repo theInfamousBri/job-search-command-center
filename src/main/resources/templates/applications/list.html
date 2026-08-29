@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Applications · Job Search</title>
-    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="stylesheet" th:href="@{/css/app.css?v=1.3.0}">
     <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
 </head>
 <body>
@@ -30,6 +30,11 @@
 
         <section class="panel application-index-panel">
             <form class="application-filter-form" th:action="@{/applications}" method="get">
+                <input th:if="${filters.missing != null}" type="hidden" name="missing" th:value="${filters.missing.name()}">
+                <div class="data-quality-filter-banner" th:if="${filters.missing != null}">
+                    <span>Showing applications missing <strong th:text="${filters.missing.displayName}">Career Lane</strong></span>
+                    <a th:href="@{/data-quality}">Back to Data Quality →</a>
+                </div>
                 <div class="application-search-row">
                     <label class="search-large application-filter-search">
                         <span>⌕</span>
@@ -97,12 +102,22 @@
                     </label>
                     <label>
                         <span>Career lane</span>
-                        <select name="careerLane" class="filter-control">
+                        <select name="roleFamily" class="filter-control">
                             <option value="">All career lanes</option>
-                            <option th:each="option : ${careerLanes}"
-                                    th:value="${option}"
-                                    th:text="${option}"
-                                    th:selected="${filters.careerLane == option}">Backend / Platform</option>
+                            <option th:each="option : ${roleFamilies}"
+                                    th:value="${option.name()}"
+                                    th:text="${option.displayName}"
+                                    th:selected="${filters.roleFamily == option}">Backend / Platform</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span>Industry / domain</span>
+                        <select name="industryDomain" class="filter-control">
+                            <option value="">All domains</option>
+                            <option th:each="option : ${industryDomains}"
+                                    th:value="${option.name()}"
+                                    th:text="${option.displayName}"
+                                    th:selected="${filters.industryDomain == option}">Fintech &amp; Payments</option>
                         </select>
                     </label>
                     <label>
@@ -204,19 +219,19 @@
             <nav class="pagination" th:if="${applicationPage.totalPages > 1}" aria-label="Application pages">
                 <a class="pagination-button"
                    th:classappend="${!applicationPage.hasPrevious ? ' disabled' : ''}"
-                   th:href="@{/applications(q=${filters.query},status=${filters.status},state=${filters.state},priority=${filters.priority},workArrangement=${filters.workArrangement},source=${filters.source},careerLane=${filters.careerLane},appliedFrom=${filters.appliedFrom},appliedTo=${filters.appliedTo},sort=${filters.sort},size=${applicationPage.size},page=${applicationPage.pageNumber - 1})}"><span>←</span> Previous</a>
+                   th:href="@{/applications(q=${filters.query},status=${filters.status},state=${filters.state},priority=${filters.priority},workArrangement=${filters.workArrangement},source=${filters.source},careerLane=${filters.careerLane},roleFamily=${filters.roleFamily},industryDomain=${filters.industryDomain},missing=${filters.missing},appliedFrom=${filters.appliedFrom},appliedTo=${filters.appliedTo},sort=${filters.sort},size=${applicationPage.size},page=${applicationPage.pageNumber - 1})}"><span>←</span> Previous</a>
 
                 <div class="pagination-pages">
                     <a th:each="pageIndex : ${applicationPage.visiblePages}"
                        class="pagination-page"
                        th:classappend="${pageIndex == applicationPage.page ? ' active' : ''}"
                        th:text="${pageIndex + 1}"
-                       th:href="@{/applications(q=${filters.query},status=${filters.status},state=${filters.state},priority=${filters.priority},workArrangement=${filters.workArrangement},source=${filters.source},careerLane=${filters.careerLane},appliedFrom=${filters.appliedFrom},appliedTo=${filters.appliedTo},sort=${filters.sort},size=${applicationPage.size},page=${pageIndex + 1})}">1</a>
+                       th:href="@{/applications(q=${filters.query},status=${filters.status},state=${filters.state},priority=${filters.priority},workArrangement=${filters.workArrangement},source=${filters.source},careerLane=${filters.careerLane},roleFamily=${filters.roleFamily},industryDomain=${filters.industryDomain},missing=${filters.missing},appliedFrom=${filters.appliedFrom},appliedTo=${filters.appliedTo},sort=${filters.sort},size=${applicationPage.size},page=${pageIndex + 1})}">1</a>
                 </div>
 
                 <a class="pagination-button"
                    th:classappend="${!applicationPage.hasNext ? ' disabled' : ''}"
-                   th:href="@{/applications(q=${filters.query},status=${filters.status},state=${filters.state},priority=${filters.priority},workArrangement=${filters.workArrangement},source=${filters.source},careerLane=${filters.careerLane},appliedFrom=${filters.appliedFrom},appliedTo=${filters.appliedTo},sort=${filters.sort},size=${applicationPage.size},page=${applicationPage.pageNumber + 1})}">Next <span>→</span></a>
+                   th:href="@{/applications(q=${filters.query},status=${filters.status},state=${filters.state},priority=${filters.priority},workArrangement=${filters.workArrangement},source=${filters.source},careerLane=${filters.careerLane},roleFamily=${filters.roleFamily},industryDomain=${filters.industryDomain},missing=${filters.missing},appliedFrom=${filters.appliedFrom},appliedTo=${filters.appliedTo},sort=${filters.sort},size=${applicationPage.size},page=${applicationPage.pageNumber + 1})}">Next <span>→</span></a>
             </nav>
         </section>
     </main>

@@ -5,7 +5,7 @@
 
 **A local-first command center for applications, interview prep, follow-ups, calendar events, imports, and job-search analytics.**
 
-Version **1.2.0**
+Version **1.3.0-SNAPSHOT**
 </div>
 
 ---
@@ -19,13 +19,14 @@ It is intentionally **local-first**. The application runs on your computer, uses
 The project began as an application tracker and has grown into a small productivity system with:
 
 - application tracking and search
-- richer role metadata for work arrangement, experience requirements, career lane, follow-ups, and archived cover-letter content
+- richer role metadata for work arrangement, experience requirements, structured career taxonomy, follow-ups, and archived cover-letter content
 - optional company-domain branding with locally cached logos and initials fallback
 - pipeline-stage and current-state tracking
 - chronological application lifecycles
 - interview / assessment / follow-up calendar events
 - reusable and application-specific interview prep
 - confidence-based review scheduling
+- data-quality coverage and missing-field cleanup links
 - job-search funnel and timing analytics
 - preview-first Excel / CSV import for historical application data
 - conservative duplicate detection and merge controls
@@ -594,7 +595,7 @@ To create a packaged JAR:
 
 ```bash
 mvn clean package
-java -jar target/job-search-dashboard-1.2.0.jar
+java -jar target/job-search-dashboard-1.3.0-SNAPSHOT.jar
 ```
 
 > The repository does not currently include the Maven Wrapper (`mvnw` / `mvnw.cmd`). Adding it is tracked in `NEXT-STEPS.md`.
@@ -683,7 +684,7 @@ git push
 
 ## Current limitations
 
-Version 1.2.0 is intentionally a local, single-user application. It includes a public-safe demo profile and preview-first historical imports, but does **not** currently include:
+The application is intentionally a local, single-user application. It includes a public-safe demo profile and preview-first historical imports, but does **not** currently include:
 
 - authentication or multi-user support
 - cloud hosting / cloud database
@@ -704,8 +705,14 @@ Those and other ideas are tracked in [`NEXT-STEPS.md`](NEXT-STEPS.md).
 
 See [`NEXT-STEPS.md`](NEXT-STEPS.md) for the prioritized product, analytics, automation, UX, and engineering backlog.
 
+## v1.3 development preview
+
+The v1.3 development line now includes the Data Quality workspace, structured career taxonomy, and a review-before-write Normalization Center. Existing free-form Career Lane values are preserved while bulk mapping can assign a broad Role Family, Industry / Domain, and optional Focus without changing lifecycle timestamps. Source and Work Arrangement labels can also be normalized in bulk, and Career Lane analytics continue to use the normalized Role Family field.
+
+The taxonomy is intentionally broad: role families describe the kind of engineering work, industry/domain captures business context, and detailed concepts such as AI, distributed systems, fraud, payments modernization, IAM, or recommendation systems belong in Focus. The enum set was expanded against the historical tracker before bulk normalization begins.
+
 ## Version
 
-Current release: **1.2.0**
+Current development version: **1.3.0-SNAPSHOT**
 
-Version 1.2.0 expands Analytics into search-strategy decision support. Priority, career lane, work arrangement, and source performance now include visual rate comparisons, percentage-point deltas against the overall baseline, response-to-interview conversion, data-coverage indicators, and sample-size context so small samples are not presented as strong conclusions.
+The 1.3.0 development line builds on v1.2 search-strategy analytics with Data Quality, structured career taxonomy, and bulk normalization workflows. Career Lane analytics use the normalized Role Family field; existing free-form Career Lane tags remain preserved as source context even after bulk mapping.

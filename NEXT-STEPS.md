@@ -1,8 +1,29 @@
 # Job Search Command Center — Next Steps
 
-This file is the post-**1.2.0** roadmap. It consolidates the ideas intentionally deferred while the first usable local version was being built.
+This file tracks the **1.3.0 in-progress roadmap** plus later ideas intentionally deferred while the local-first command center grows.
 
 The order below is directional rather than a promise. Features should continue to be added when they solve a real workflow problem rather than just making the project larger.
+
+## v1.3.0 — Data Quality & Organization
+
+### Foundation completed in the first v1.3 chunk
+
+- [x] Data Quality dashboard with field coverage and missing counts.
+- [x] Click-through from missing counts to filtered Applications.
+- [x] Split Career Lane into normalized **Role Family**, **Industry / Domain**, and optional **Focus**.
+- [x] Preserve the previous free-form Career Lane as an original/legacy tag for later mapping.
+- [x] Point Career Lane analytics at the normalized role-family field.
+- [x] Expand Role Family and Industry / Domain enums against the historical Career Lane dataset before bulk normalization.
+
+### Remaining v1.3 work
+
+- [x] Normalization Center for preserved Career Lane strings, Source labels, and Work Arrangements.
+- [x] Bulk cleanup / bulk assignment so historical taxonomy and label data can be normalized without editing applications one at a time.
+- [x] Review-before-write keyword suggestions for broad Career Lane / Industry mappings, while preserving the original career tag and lifecycle timestamps.
+- [ ] Company alias normalization and centralized Company Branding manager with company grouping, domain propagation, logo refresh/upload/remove, and initials fallback.
+- [ ] Generalized application attachments stored locally, beginning with original cover-letter files and exact resume versions.
+
+The next implementation chunk should focus on **company-level organization / branding**, followed by **SQLite-backed application attachments**.
 
 ## Near-term product priorities
 

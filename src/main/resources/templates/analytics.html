@@ -370,10 +370,11 @@
                         <p class="analytics-panel-subtitle">Role families with the strongest response and interview signals, while keeping volume visible.</p>
                     </div>
                     <div class="performance-coverage-group">
-                        <span class="coverage-attention"
-                              th:if="${analytics.careerLanePerformance.coverageRate < 50}">
-                            Needs more tagging
-                        </span>
+                        <a class="coverage-attention"
+                           th:if="${analytics.careerLanePerformance.coverageRate < 50}"
+                           th:href="@{/applications(missing='ROLE_FAMILY')}">
+                            Needs more tagging →
+                        </a>
                         <span class="performance-coverage"
                               th:text="|${analytics.careerLanePerformance.taggedApplications}/${analytics.applications} tagged · ${#numbers.formatDecimal(analytics.careerLanePerformance.coverageRate, 1, 0)}%|">120/163 tagged · 74%</span>
                     </div>

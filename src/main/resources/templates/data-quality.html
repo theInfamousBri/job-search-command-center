@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Data Quality · Job Search</title>
+    <link rel="stylesheet" th:href="@{/css/app.css?v=1.3.0}">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
+</head>
+<body>
+<div class="app-shell">
+    <aside th:replace="~{fragments :: sidebar('data-quality')}"></aside>
+    <header th:replace="~{fragments :: topbar}"></header>
+
+    <main class="main">
+        <header class="page-header data-quality-page-header">
+            <div>
+                <p class="eyebrow">DATA QUALITY</p>
+                <h1>Make the dataset more useful</h1>
+                <p class="subtle">See what is missing before normalizing older applications or drawing conclusions from Analytics.</p>
+            </div>
+        </header>
+
+        <section class="data-quality-hero panel">
+            <div class="data-quality-score-ring"
+                 th:style="|--coverage:${#numbers.formatDecimal(dataQuality.overallCoverage, 1, 0)}%|">
+                <div>
+                    <strong th:text="|${#numbers.formatDecimal(dataQuality.overallCoverage, 1, 0)}%|">63%</strong>
+                    <span>complete</span>
+                </div>
+            </div>
+            <div class="data-quality-hero-copy">
+                <p class="eyebrow">COVERAGE SNAPSHOT</p>
+                <h2 th:text="|${dataQuality.applications} applications · ${#lists.size(dataQuality.metrics)} tracked fields|">163 applications · 6 tracked fields</h2>
+                <p>This score is intentionally simple: it measures whether the fields that power organization and strategy analysis are populated. It does not judge the content itself yet.</p>
+                <div class="data-quality-legend">
+                    <span><i class="quality-dot quality-strong"></i>80%+ strong</span>
+                    <span><i class="quality-dot quality-partial"></i>50–79% partial</span>
+                    <span><i class="quality-dot quality-needs-work"></i>&lt;50% needs attention</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="data-quality-section">
+            <div class="section-heading data-quality-heading">
+                <div>
+                    <p class="eyebrow">COMPLETENESS</p>
+                    <h2>Where cleanup will help most</h2>
+                </div>
+                <p>Click a missing count to jump straight to those applications.</p>
+            </div>
+
+            <div class="data-quality-grid">
+                <article class="data-quality-card" th:each="metric : ${dataQuality.metrics}"
+                         th:classappend="${' quality-' + #strings.toLowerCase(metric.strength)}">
+                    <div class="data-quality-card-top">
+                        <div>
+                            <span class="quality-status" th:text="${metric.strengthLabel}">Needs attention</span>
+                            <h3 th:text="${metric.label}">Career Lane</h3>
+                        </div>
+                        <strong class="quality-rate" th:text="|${#numbers.formatDecimal(metric.coverageRate, 1, 0)}%|">10%</strong>
+                    </div>
+
+                    <p th:text="${metric.description}">Broad role family used for strategy analytics.</p>
+
+                    <div class="quality-progress" aria-hidden="true">
+                        <span th:style="|width:${metric.coverageRate}%|"></span>
+                    </div>
+
+                    <div class="quality-counts">
+                        <span><strong th:text="${metric.tagged}">16</strong> tagged</span>
+                        <a th:if="${metric.missing > 0}"
+                           th:href="@{/applications(missing=${metric.field.name()})}">
+                            <strong th:text="${metric.missing}">147</strong> missing →
+                        </a>
+                        <span th:if="${metric.missing == 0}" class="quality-complete">Complete ✓</span>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section class="panel taxonomy-foundation-card">
+            <div class="taxonomy-foundation-copy">
+                <p class="eyebrow">CAREER TAXONOMY</p>
+                <h2>Broad categories first, specifics second</h2>
+                <p>v1.3 separates the old all-in-one Career Lane text into a broad role family, an industry/domain, and an optional focus. Existing detailed tags stay preserved while the Normalization Center maps them in bulk.</p>
+                <div class="taxonomy-foundation-actions">
+                    <a class="button button-primary" th:href="@{/data-quality/normalize}">Open Normalization Center →</a>
+                </div>
+            </div>
+            <div class="taxonomy-example">
+                <div>
+                    <span>Career lane</span>
+                    <strong>Backend / Platform</strong>
+                </div>
+                <div>
+                    <span>Industry / domain</span>
+                    <strong>Fintech &amp; Payments</strong>
+                </div>
+                <div>
+                    <span>Focus</span>
+                    <strong>Debit processing · distributed systems</strong>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>

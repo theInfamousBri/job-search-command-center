@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Normalization Center · Job Search</title>
+    <link rel="stylesheet" th:href="@{/css/app.css?v=1.3.0}">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
+</head>
+<body>
+<div class="app-shell">
+    <aside th:replace="~{fragments :: sidebar('data-quality')}"></aside>
+    <header th:replace="~{fragments :: topbar}"></header>
+
+    <main class="main">
+        <header class="page-header normalization-page-header">
+            <div>
+                <p class="eyebrow">DATA QUALITY · NORMALIZATION</p>
+                <h1>Turn old labels into useful structure</h1>
+                <p class="subtle">Map preserved career tags in bulk, clean repeated labels, and improve Analytics without rewriting application history.</p>
+            </div>
+            <div class="header-actions">
+                <a class="button button-secondary" th:href="@{/data-quality}">← Data Quality</a>
+            </div>
+        </header>
+
+        <div th:if="${normalizationSuccess}" class="flash-message flash-success" th:text="${normalizationSuccess}">Normalization complete.</div>
+        <div th:if="${normalizationError}" class="flash-message flash-error" th:text="${normalizationError}">Normalization error.</div>
+
+        <section class="normalization-summary-grid">
+            <article class="normalization-summary-card">
+                <span>Applications</span>
+                <strong th:text="${normalization.applications}">163</strong>
+                <small>Total records in the local database</small>
+            </article>
+            <article class="normalization-summary-card">
+                <span>Original career tags</span>
+                <strong th:text="${normalization.legacyCareerTagged}">120</strong>
+                <small>Applications with preserved legacy detail</small>
+            </article>
+            <article class="normalization-summary-card" th:classappend="${normalization.careerApplicationsNeedingMapping > 0} ? ' needs-work' : ' complete'">
+                <span>Need career mapping</span>
+                <strong th:text="${normalization.careerApplicationsNeedingMapping}">98</strong>
+                <small>Missing Career Lane or Industry / Domain</small>
+            </article>
+            <article class="normalization-summary-card">
+                <span>Cleanup rule</span>
+                <strong>Safe</strong>
+                <small>Normalization does not change lifecycle timestamps</small>
+            </article>
+        </section>
+
+        <nav class="normalization-jump-nav" aria-label="Normalization sections">
+            <a href="#career-taxonomy">Career taxonomy</a>
+            <a href="#source-normalization">Sources</a>
+            <a href="#work-normalization">Work arrangements</a>
+        </nav>
+
+        <section id="career-taxonomy" class="panel normalization-section">
+            <div class="normalization-section-heading">
+                <div>
+                    <p class="eyebrow">CAREER TAXONOMY</p>
+                    <h2>Map preserved career tags</h2>
+                    <p>Group older detailed labels into a broad Career Lane and Industry / Domain. The original tag stays untouched for reference.</p>
+                </div>
+                <span class="normalization-count-chip"
+                      th:text="|${#lists.size(normalization.careerGroups)} groups shown|">24 groups shown</span>
+            </div>
+
+            <form class="normalization-filter-bar" method="get" th:action="@{/data-quality/normalize}">
+                <label class="normalization-search">
+                    <span>⌕</span>
+                    <input type="search" name="q" th:value="${normalization.query}" placeholder="Search original career tags…">
+                </label>
+                <select name="careerStatus" aria-label="Career mapping status">
+                    <option value="UNMAPPED" th:selected="${normalization.careerStatus == 'UNMAPPED'}">Needs mapping</option>
+                    <option value="ALL" th:selected="${normalization.careerStatus == 'ALL'}">All original tags</option>
+                    <option value="MAPPED" th:selected="${normalization.careerStatus == 'MAPPED'}">Fully mapped</option>
+                </select>
+                <button class="button button-secondary" type="submit">Filter</button>
+                <a th:if="${!#strings.isEmpty(normalization.query) || normalization.careerStatus != 'UNMAPPED'}"
+                   class="normalization-clear" th:href="@{/data-quality/normalize}">Reset</a>
+            </form>
+
+            <form class="normalization-bulk-form" method="post" th:action="@{/data-quality/normalize/career}" data-normalization-form>
+                <div class="normalization-action-bar">
+                    <div class="normalization-map-fields">
+                        <label>
+                            <span>Career Lane</span>
+                            <select name="roleFamily">
+                                <option value="">Leave unchanged</option>
+                                <option th:each="option : ${roleFamilies}"
+                                        th:value="${option.name()}"
+                                        th:text="${option.displayName}">Backend / Platform</option>
+                            </select>
+                        </label>
+                        <label>
+                            <span>Industry / Domain</span>
+                            <select name="industryDomain">
+                                <option value="">Leave unchanged</option>
+                                <option th:each="option : ${industryDomains}"
+                                        th:value="${option.name()}"
+                                        th:text="${option.displayName}">Fintech &amp; Payments</option>
+                            </select>
+                        </label>
+                        <label class="normalization-focus-field">
+                            <span>Focus <em>optional</em></span>
+                            <input type="text" name="focus" maxlength="300" placeholder="Payments, distributed systems, IAM…">
+                        </label>
+                    </div>
+                    <div class="normalization-action-row">
+                        <label class="normalization-overwrite-option">
+                            <input type="checkbox" name="overwriteExisting" value="true">
+                            <span>Overwrite fields already mapped</span>
+                        </label>
+                        <div class="normalization-action-buttons">
+                            <button class="button button-secondary" type="submit"
+                                    th:formaction="@{/data-quality/normalize/career/suggestions}">Apply selected suggestions</button>
+                            <button class="button button-primary" type="submit">Apply chosen mapping</button>
+                        </div>
+                    </div>
+                    <p class="normalization-safety-note">“Apply selected suggestions” uses the visible keyword suggestions per tag and only fills blank Career Lane / Domain fields. “Apply chosen mapping” uses the selections above for every checked tag. Existing values are preserved unless overwrite is checked.</p>
+                </div>
+
+                <div class="normalization-list-toolbar" th:if="${!#lists.isEmpty(normalization.careerGroups)}">
+                    <label class="normalization-select-all">
+                        <input type="checkbox" data-select-all>
+                        <span>Select all shown</span>
+                    </label>
+                    <span>Suggestions are keyword-based starting points — review before applying.</span>
+                </div>
+
+                <div class="normalization-empty" th:if="${#lists.isEmpty(normalization.careerGroups)}">
+                    <strong>No career-tag groups match this view.</strong>
+                    <span th:if="${normalization.careerStatus == 'UNMAPPED'}">Everything shown by your filter is already mapped.</span>
+                    <span th:unless="${normalization.careerStatus == 'UNMAPPED'}">Try clearing the search or changing the mapping-status filter.</span>
+                </div>
+
+                <div class="normalization-group-list" th:unless="${#lists.isEmpty(normalization.careerGroups)}">
+                    <label class="normalization-group-card" th:each="group : ${normalization.careerGroups}"
+                           th:classappend="${group.isFullyMapped()} ? ' mapped' : ''">
+                        <input class="normalization-row-checkbox" type="checkbox" name="legacyTag" th:value="${group.legacyTag}">
+                        <span class="normalization-checkmark" aria-hidden="true"></span>
+
+                        <span class="normalization-group-main">
+                            <span class="normalization-group-title" th:text="${group.legacyTag}">Backend / Payments / Digital Wallet Platform</span>
+                            <span class="normalization-group-meta">
+                                <strong th:text="|${group.applications} app${group.applications == 1 ? '' : 's'}|">2 apps</strong>
+                                <span>·</span>
+                                <span th:if="${group.unmappedApplications > 0}"
+                                      th:text="|${group.unmappedApplications} still need mapping|">2 still need mapping</span>
+                                <span th:if="${group.unmappedApplications == 0}" class="normalization-mapped-label">Fully mapped ✓</span>
+                            </span>
+                        </span>
+
+                        <span class="normalization-group-suggestion" th:if="${group.hasSuggestion()}">
+                            <small>Suggested</small>
+                            <span th:if="${group.suggestedRoleFamily != null}" th:text="${group.suggestedRoleFamily.displayName}">Backend / Platform</span>
+                            <i th:if="${group.suggestedRoleFamily != null && group.suggestedIndustryDomain != null}">·</i>
+                            <span th:if="${group.suggestedIndustryDomain != null}" th:text="${group.suggestedIndustryDomain.displayName}">Fintech &amp; Payments</span>
+                        </span>
+                        <span class="normalization-group-suggestion muted" th:unless="${group.hasSuggestion()}">
+                            <small>Suggested</small>
+                            <span>Review manually</span>
+                        </span>
+
+                        <span class="normalization-existing-map"
+                              th:if="${!#strings.isEmpty(group.existingRoleFamilies) || !#strings.isEmpty(group.existingIndustryDomains)}">
+                            <small>Already present</small>
+                            <span th:if="${!#strings.isEmpty(group.existingRoleFamilies)}" th:text="${group.existingRoleFamilies}">Backend / Platform</span>
+                            <i th:if="${!#strings.isEmpty(group.existingRoleFamilies) && !#strings.isEmpty(group.existingIndustryDomains)}">·</i>
+                            <span th:if="${!#strings.isEmpty(group.existingIndustryDomains)}" th:text="${group.existingIndustryDomains}">Healthcare</span>
+                        </span>
+                    </label>
+                </div>
+            </form>
+        </section>
+
+        <section id="source-normalization" class="panel normalization-section compact-normalization-section">
+            <div class="normalization-section-heading">
+                <div>
+                    <p class="eyebrow">SOURCE LABELS</p>
+                    <h2>Merge spelling and casing variants</h2>
+                    <p>This pass canonicalizes labels only. It does not reinterpret Greenhouse/Ashby as a different acquisition channel.</p>
+                </div>
+                <span class="normalization-count-chip" th:text="|${#lists.size(normalization.sourceGroups)} distinct labels|">8 distinct labels</span>
+            </div>
+
+            <form class="normalization-bulk-form" method="post" th:action="@{/data-quality/normalize/source}" data-normalization-form>
+                <div class="normalization-text-action-bar">
+                    <label>
+                        <span>Canonical source label</span>
+                        <input name="targetSource" list="source-label-suggestions" placeholder="LinkedIn">
+                    </label>
+                    <button class="button button-primary" type="submit">Normalize selected</button>
+                </div>
+                <datalist id="source-label-suggestions">
+                    <option value="LinkedIn"></option>
+                    <option value="Company Site"></option>
+                    <option value="Recruiter"></option>
+                    <option value="Referral"></option>
+                    <option value="Indeed"></option>
+                    <option value="Handshake"></option>
+                    <option value="Wellfound"></option>
+                    <option value="Greenhouse"></option>
+                    <option value="Ashby"></option>
+                </datalist>
+
+                <div class="normalization-list-toolbar">
+                    <label class="normalization-select-all"><input type="checkbox" data-select-all><span>Select all shown</span></label>
+                    <span>Choose only labels you want merged into the same canonical value.</span>
+                </div>
+
+                <div class="normalization-simple-grid">
+                    <label class="normalization-simple-card" th:each="group : ${normalization.sourceGroups}">
+                        <input type="checkbox" name="sourceValue" th:value="${group.value}">
+                        <span>
+                            <strong th:text="${group.value}">linkedin</strong>
+                            <small th:text="|${group.applications} app${group.applications == 1 ? '' : 's'}|">21 apps</small>
+                        </span>
+                        <span class="normalization-suggestion-chip" th:if="${group.hasDifferentSuggestion()}"
+                              th:text="|Suggested: ${group.suggestedValue}|">Suggested: LinkedIn</span>
+                    </label>
+                </div>
+            </form>
+        </section>
+
+        <section id="work-normalization" class="panel normalization-section compact-normalization-section">
+            <div class="normalization-section-heading">
+                <div>
+                    <p class="eyebrow">WORK ARRANGEMENT</p>
+                    <h2>Collapse equivalent work-type labels</h2>
+                    <p>Use broad values when you want cleaner Remote / Hybrid / On-Site analytics. The change applies only to the selected labels.</p>
+                </div>
+                <span class="normalization-count-chip" th:text="|${#lists.size(normalization.workArrangementGroups)} distinct labels|">5 distinct labels</span>
+            </div>
+
+            <form class="normalization-bulk-form" method="post" th:action="@{/data-quality/normalize/work-arrangement}" data-normalization-form>
+                <div class="normalization-text-action-bar">
+                    <label>
+                        <span>Canonical work arrangement</span>
+                        <input name="targetWorkArrangement" list="work-label-suggestions" placeholder="Hybrid">
+                    </label>
+                    <button class="button button-primary" type="submit">Normalize selected</button>
+                </div>
+                <datalist id="work-label-suggestions">
+                    <option value="Remote"></option>
+                    <option value="Hybrid"></option>
+                    <option value="On-Site"></option>
+                    <option value="Flexible / Mixed"></option>
+                </datalist>
+
+                <div class="normalization-list-toolbar">
+                    <label class="normalization-select-all"><input type="checkbox" data-select-all><span>Select all shown</span></label>
+                    <span>For example, “Onsite” + “On Site” + “On-site” can all become “On-Site”.</span>
+                </div>
+
+                <div class="normalization-simple-grid">
+                    <label class="normalization-simple-card" th:each="group : ${normalization.workArrangementGroups}">
+                        <input type="checkbox" name="workValue" th:value="${group.value}">
+                        <span>
+                            <strong th:text="${group.value}">Hybrid / Remote flexible</strong>
+                            <small th:text="|${group.applications} app${group.applications == 1 ? '' : 's'}|">1 app</small>
+                        </span>
+                        <span class="normalization-suggestion-chip" th:if="${group.hasDifferentSuggestion()}"
+                              th:text="|Suggested: ${group.suggestedValue}|">Suggested: Hybrid</span>
+                    </label>
+                </div>
+            </form>
+        </section>
+
+        <p class="normalization-footer-note">Normalization changes classification fields only. It intentionally leaves <code>updated_at</code>, lifecycle history, applied dates, notes, and the preserved original career tag unchanged.</p>
+    </main>
+</div>
+
+<script>
+    document.querySelectorAll('[data-normalization-form]').forEach(function (form) {
+        var selectAll = form.querySelector('[data-select-all]');
+        if (!selectAll) return;
+        selectAll.addEventListener('change', function () {
+            form.querySelectorAll('input[type="checkbox"][name]').forEach(function (box) {
+                if (box !== selectAll && box.name !== 'overwriteExisting') {
+                    box.checked = selectAll.checked;
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>

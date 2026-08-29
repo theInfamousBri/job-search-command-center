@@ -5,6 +5,9 @@ import com.brianna.jobsearch.model.ApplicationSearchCriteria;
 import com.brianna.jobsearch.model.ApplicationSort;
 import com.brianna.jobsearch.model.ApplicationState;
 import com.brianna.jobsearch.model.ApplicationStatus;
+import com.brianna.jobsearch.model.CareerRoleFamily;
+import com.brianna.jobsearch.model.DataQualityField;
+import com.brianna.jobsearch.model.IndustryDomain;
 import com.brianna.jobsearch.model.JobApplication;
 import com.brianna.jobsearch.model.Priority;
 import java.sql.PreparedStatement;
@@ -35,6 +38,11 @@ public class JobApplicationRepository {
         application.setWorkArrangement(rs.getString("work_arrangement"));
         application.setYearsExperienceRequired(rs.getString("years_experience_required"));
         application.setCareerLane(rs.getString("career_lane"));
+        String roleFamily = rs.getString("role_family");
+        application.setRoleFamily(roleFamily == null || roleFamily.isBlank() ? null : CareerRoleFamily.valueOf(roleFamily));
+        String industryDomain = rs.getString("industry_domain");
+        application.setIndustryDomain(industryDomain == null || industryDomain.isBlank() ? null : IndustryDomain.valueOf(industryDomain));
+        application.setCareerFocus(rs.getString("career_focus"));
         application.setStatus(ApplicationStatus.valueOf(rs.getString("status")));
         String state = rs.getString("state");
         application.setState(state == null || state.isBlank() ? ApplicationState.ACTIVE : ApplicationState.valueOf(state));
@@ -85,6 +93,9 @@ public class JobApplicationRepository {
                    OR LOWER(COALESCE(work_arrangement, '')) LIKE LOWER(?)
                    OR LOWER(COALESCE(years_experience_required, '')) LIKE LOWER(?)
                    OR LOWER(COALESCE(career_lane, '')) LIKE LOWER(?)
+                   OR LOWER(COALESCE(role_family, '')) LIKE LOWER(?)
+                   OR LOWER(COALESCE(industry_domain, '')) LIKE LOWER(?)
+                   OR LOWER(COALESCE(career_focus, '')) LIKE LOWER(?)
                    OR LOWER(COALESCE(source, '')) LIKE LOWER(?)
                    OR LOWER(COALESCE(state, '')) LIKE LOWER(?)
                    OR LOWER(COALESCE(next_step, '')) LIKE LOWER(?)
@@ -92,7 +103,7 @@ public class JobApplicationRepository {
                    OR LOWER(COALESCE(notes, '')) LIKE LOWER(?)
                    OR LOWER(COALESCE(job_description, '')) LIKE LOWER(?)
                 ORDER BY updated_at DESC
-                """, rowMapper, like, like, like, like, like, like, like, like, like, like, like, like, like);
+                """, rowMapper, like, like, like, like, like, like, like, like, like, like, like, like, like, like, like, like);
     }
 
     public ApplicationPage findPage(ApplicationSearchCriteria criteria) {
@@ -110,6 +121,9 @@ public class JobApplicationRepository {
                          OR LOWER(COALESCE(work_arrangement, '')) LIKE LOWER(?)
                          OR LOWER(COALESCE(years_experience_required, '')) LIKE LOWER(?)
                          OR LOWER(COALESCE(career_lane, '')) LIKE LOWER(?)
+                         OR LOWER(COALESCE(role_family, '')) LIKE LOWER(?)
+                         OR LOWER(COALESCE(industry_domain, '')) LIKE LOWER(?)
+                         OR LOWER(COALESCE(career_focus, '')) LIKE LOWER(?)
                          OR LOWER(COALESCE(source, '')) LIKE LOWER(?)
                          OR LOWER(COALESCE(next_step, '')) LIKE LOWER(?)
                          OR LOWER(COALESCE(cover_letter_text, '')) LIKE LOWER(?)
@@ -117,7 +131,7 @@ public class JobApplicationRepository {
                          OR LOWER(COALESCE(job_description, '')) LIKE LOWER(?)
                      )
                     """);
-            for (int i = 0; i < 12; i++) {
+            for (int i = 0; i < 15; i++) {
                 params.add(like);
             }
         }
@@ -136,6 +150,15 @@ public class JobApplicationRepository {
         addExactTextFilter(where, params, "work_arrangement", criteria.getWorkArrangement());
         addExactTextFilter(where, params, "source", criteria.getSource());
         addExactTextFilter(where, params, "career_lane", criteria.getCareerLane());
+        if (criteria.getRoleFamily() != null) {
+            where.append(" AND role_family = ?");
+            params.add(criteria.getRoleFamily().name());
+        }
+        if (criteria.getIndustryDomain() != null) {
+            where.append(" AND industry_domain = ?");
+            params.add(criteria.getIndustryDomain().name());
+        }
+        addMissingFilter(where, criteria.getMissing());
         if (criteria.getAppliedFrom() != null) {
             where.append(" AND applied_date >= ?");
             params.add(criteria.getAppliedFrom().toString());
@@ -200,6 +223,20 @@ public class JobApplicationRepository {
         params.add(value.trim());
     }
 
+    private void addMissingFilter(StringBuilder where, DataQualityField field) {
+        if (field == null) {
+            return;
+        }
+        where.append(switch (field) {
+            case ROLE_FAMILY -> " AND (role_family IS NULL OR TRIM(role_family) = '')";
+            case INDUSTRY_DOMAIN -> " AND (industry_domain IS NULL OR TRIM(industry_domain) = '')";
+            case SOURCE -> " AND (source IS NULL OR TRIM(source) = '')";
+            case WORK_ARRANGEMENT -> " AND (work_arrangement IS NULL OR TRIM(work_arrangement) = '')";
+            case PRIORITY -> " AND (priority IS NULL OR TRIM(priority) = '' OR priority = 'UNSPECIFIED')";
+            case COMPANY_DOMAIN -> " AND (company_domain IS NULL OR TRIM(company_domain) = '')";
+        });
+    }
+
     private String orderBy(ApplicationSort sort) {
         ApplicationSort safeSort = sort == null ? ApplicationSort.UPDATED_DESC : sort;
         return switch (safeSort) {
@@ -235,16 +272,16 @@ public class JobApplicationRepository {
             PreparedStatement statement = connection.prepareStatement("""
                     INSERT INTO job_applications (
                         company, company_domain, role, location, work_arrangement, years_experience_required,
-                        career_lane, status, state, priority, source, job_url, salary,
+                        career_lane, role_family, industry_domain, career_focus, status, state, priority, source, job_url, salary,
                         applied_date, next_step, cover_letter, cover_letter_text, notes, job_description,
                         import_source, created_at, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """, Statement.RETURN_GENERATED_KEYS);
 
             bindApplication(statement, application);
-            statement.setString(20, blankToNull(importSource));
-            statement.setString(21, createdAt);
-            statement.setString(22, updatedAt);
+            statement.setString(23, blankToNull(importSource));
+            statement.setString(24, createdAt);
+            statement.setString(25, updatedAt);
             return statement;
         }, keyHolder);
 
@@ -263,22 +300,25 @@ public class JobApplicationRepository {
         statement.setString(5, blankToNull(application.getWorkArrangement()));
         statement.setString(6, blankToNull(application.getYearsExperienceRequired()));
         statement.setString(7, blankToNull(application.getCareerLane()));
-        statement.setString(8, application.getStatus().name());
-        statement.setString(9, application.getState().name());
-        statement.setString(10, application.getPriority().name());
-        statement.setString(11, blankToNull(application.getSource()));
-        statement.setString(12, blankToNull(application.getJobUrl()));
-        statement.setString(13, blankToNull(application.getSalary()));
-        statement.setString(14, application.getAppliedDate() == null ? null : application.getAppliedDate().toString());
-        statement.setString(15, blankToNull(application.getNextStep()));
+        statement.setString(8, application.getRoleFamily() == null ? null : application.getRoleFamily().name());
+        statement.setString(9, application.getIndustryDomain() == null ? null : application.getIndustryDomain().name());
+        statement.setString(10, blankToNull(application.getCareerFocus()));
+        statement.setString(11, application.getStatus().name());
+        statement.setString(12, application.getState().name());
+        statement.setString(13, application.getPriority().name());
+        statement.setString(14, blankToNull(application.getSource()));
+        statement.setString(15, blankToNull(application.getJobUrl()));
+        statement.setString(16, blankToNull(application.getSalary()));
+        statement.setString(17, application.getAppliedDate() == null ? null : application.getAppliedDate().toString());
+        statement.setString(18, blankToNull(application.getNextStep()));
         if (application.getCoverLetter() == null) {
-            statement.setObject(16, null);
+            statement.setObject(19, null);
         } else {
-            statement.setInt(16, application.getCoverLetter() ? 1 : 0);
+            statement.setInt(19, application.getCoverLetter() ? 1 : 0);
         }
-        statement.setString(17, blankToNull(application.getCoverLetterText()));
-        statement.setString(18, blankToNull(application.getNotes()));
-        statement.setString(19, blankToNull(application.getJobDescription()));
+        statement.setString(20, blankToNull(application.getCoverLetterText()));
+        statement.setString(21, blankToNull(application.getNotes()));
+        statement.setString(22, blankToNull(application.getJobDescription()));
     }
 
     public void update(JobApplication application) {
@@ -299,6 +339,9 @@ public class JobApplicationRepository {
                     work_arrangement = ?,
                     years_experience_required = ?,
                     career_lane = ?,
+                    role_family = ?,
+                    industry_domain = ?,
+                    career_focus = ?,
                     status = ?,
                     state = ?,
                     priority = ?,
@@ -321,6 +364,9 @@ public class JobApplicationRepository {
                 blankToNull(application.getWorkArrangement()),
                 blankToNull(application.getYearsExperienceRequired()),
                 blankToNull(application.getCareerLane()),
+                application.getRoleFamily() == null ? null : application.getRoleFamily().name(),
+                application.getIndustryDomain() == null ? null : application.getIndustryDomain().name(),
+                blankToNull(application.getCareerFocus()),
                 application.getStatus().name(),
                 application.getState().name(),
                 application.getPriority().name(),

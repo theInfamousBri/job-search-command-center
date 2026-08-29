@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="${editing ? 'Edit Application · Job Search' : 'Add Application · Job Search'}">Application · Job Search</title>
-    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="stylesheet" th:href="@{/css/app.css?v=1.3.0}">
     <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
 </head>
 <body>
@@ -118,10 +118,39 @@
                         <input type="text" th:field="*{yearsExperienceRequired}" placeholder="3+, 3–5, 5+…">
                     </label>
 
-                    <label class="field field-full">
-                        <span>Career lane</span>
-                        <input type="text" th:field="*{careerLane}" placeholder="Backend / Payments Platform, AI / Developer Productivity…">
+                    <label class="field">
+                        <span>Career lane / role family</span>
+                        <select th:field="*{roleFamily}">
+                            <option value="">Not tagged</option>
+                            <option th:each="family : ${roleFamilies}"
+                                    th:value="${family}"
+                                    th:text="${family.displayName}">Backend / Platform</option>
+                        </select>
+                        <small class="field-help">Keep this broad enough to compare similar roles in Analytics.</small>
                     </label>
+
+                    <label class="field">
+                        <span>Industry / domain</span>
+                        <select th:field="*{industryDomain}">
+                            <option value="">Not tagged</option>
+                            <option th:each="domain : ${industryDomains}"
+                                    th:value="${domain}"
+                                    th:text="${domain.displayName}">Fintech &amp; Payments</option>
+                        </select>
+                    </label>
+
+                    <label class="field field-full">
+                        <span>Focus <em class="optional">Optional</em></span>
+                        <input type="text" th:field="*{careerFocus}" placeholder="Debit processing, distributed systems, developer productivity…">
+                        <small class="field-help">Use this for the details that are useful to remember but too specific to be an analytics category.</small>
+                    </label>
+
+                    <input type="hidden" th:field="*{careerLane}">
+                    <div class="legacy-taxonomy-note field-full" th:if="${jobApplication.careerLane != null and !#strings.isEmpty(jobApplication.careerLane)}">
+                        <span>Original career tag</span>
+                        <strong th:text="${jobApplication.careerLane}">Backend / Payments Platform</strong>
+                        <small>Preserved from your existing tracker. We will use this later in the normalization workflow instead of throwing it away.</small>
+                    </div>
 
                     <label class="field field-full">
                         <span>Job posting URL</span>

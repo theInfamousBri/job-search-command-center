@@ -24,6 +24,9 @@ public class JobApplication {
     private String workArrangement;
     private String yearsExperienceRequired;
     private String careerLane;
+    private CareerRoleFamily roleFamily;
+    private IndustryDomain industryDomain;
+    private String careerFocus;
     private ApplicationStatus status = ApplicationStatus.APPLIED;
     private ApplicationState state = ApplicationState.ACTIVE;
     private Priority priority = Priority.MEDIUM;
@@ -140,6 +143,15 @@ public class JobApplication {
 
     public String getCareerLane() { return careerLane; }
     public void setCareerLane(String careerLane) { this.careerLane = careerLane; }
+
+    public CareerRoleFamily getRoleFamily() { return roleFamily; }
+    public void setRoleFamily(CareerRoleFamily roleFamily) { this.roleFamily = roleFamily; }
+
+    public IndustryDomain getIndustryDomain() { return industryDomain; }
+    public void setIndustryDomain(IndustryDomain industryDomain) { this.industryDomain = industryDomain; }
+
+    public String getCareerFocus() { return careerFocus; }
+    public void setCareerFocus(String careerFocus) { this.careerFocus = careerFocus; }
 
     public ApplicationStatus getStatus() { return status; }
     public void setStatus(ApplicationStatus status) { this.status = status; }

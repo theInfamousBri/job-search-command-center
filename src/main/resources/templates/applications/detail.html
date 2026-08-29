@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="${jobApplication.company + ' · ' + jobApplication.role}">Application · Job Search</title>
-    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="stylesheet" th:href="@{/css/app.css?v=1.3.0}">
     <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
 </head>
 <body>
@@ -347,7 +347,10 @@
                     <div><dt>Role</dt><dd th:text="${jobApplication.role}">Senior Software Engineer</dd></div>
                     <div><dt>Work arrangement</dt><dd th:text="${jobApplication.workArrangement == null ? '—' : jobApplication.workArrangement}">Hybrid</dd></div>
                     <div><dt>Experience required</dt><dd th:text="${jobApplication.yearsExperienceRequired == null ? '—' : jobApplication.yearsExperienceRequired}">3+</dd></div>
-                    <div><dt>Career lane</dt><dd th:text="${jobApplication.careerLane == null ? '—' : jobApplication.careerLane}">Backend / Payments</dd></div>
+                    <div><dt>Career lane</dt><dd th:text="${jobApplication.roleFamily == null ? '—' : jobApplication.roleFamily.displayName}">Backend / Platform</dd></div>
+                    <div><dt>Industry / domain</dt><dd th:text="${jobApplication.industryDomain == null ? '—' : jobApplication.industryDomain.displayName}">Fintech &amp; Payments</dd></div>
+                    <div><dt>Focus</dt><dd th:text="${jobApplication.careerFocus == null ? '—' : jobApplication.careerFocus}">Distributed systems</dd></div>
+                    <div th:if="${jobApplication.careerLane != null and !#strings.isEmpty(jobApplication.careerLane)}"><dt>Original career tag</dt><dd th:text="${jobApplication.careerLane}">Backend / Payments</dd></div>
                     <div><dt>Pipeline stage</dt><dd th:text="${jobApplication.status.displayName}">Technical Interview</dd></div>
                     <div><dt>Current state</dt><dd th:text="${jobApplication.state.displayName}">Awaiting Feedback</dd></div>
                     <div><dt>Last updated</dt><dd th:text="${jobApplication.updatedDateTimeDisplay}">Aug 26, 2026</dd></div>

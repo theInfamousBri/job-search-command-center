@@ -41,6 +41,9 @@ public class DatabaseConfig {
             addColumnIfMissing(jdbcTemplate, applicationColumns, "work_arrangement", "TEXT");
             addColumnIfMissing(jdbcTemplate, applicationColumns, "years_experience_required", "TEXT");
             addColumnIfMissing(jdbcTemplate, applicationColumns, "career_lane", "TEXT");
+            addColumnIfMissing(jdbcTemplate, applicationColumns, "role_family", "TEXT");
+            addColumnIfMissing(jdbcTemplate, applicationColumns, "industry_domain", "TEXT");
+            addColumnIfMissing(jdbcTemplate, applicationColumns, "career_focus", "TEXT");
             addColumnIfMissing(jdbcTemplate, applicationColumns, "next_step", "TEXT");
             addColumnIfMissing(jdbcTemplate, applicationColumns, "cover_letter", "INTEGER");
             addColumnIfMissing(jdbcTemplate, applicationColumns, "cover_letter_text", "TEXT");
@@ -77,6 +80,8 @@ public class DatabaseConfig {
             jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_job_applications_state ON job_applications(state)");
             jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_job_applications_company_domain ON job_applications(company_domain)");
             jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_job_applications_career_lane ON job_applications(career_lane)");
+            jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_job_applications_role_family ON job_applications(role_family)");
+            jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_job_applications_industry_domain ON job_applications(industry_domain)");
             jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_job_applications_work_arrangement ON job_applications(work_arrangement)");
 
             jdbcTemplate.execute("""

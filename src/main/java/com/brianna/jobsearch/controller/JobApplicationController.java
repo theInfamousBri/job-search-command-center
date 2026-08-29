@@ -7,6 +7,9 @@ import com.brianna.jobsearch.model.ApplicationSearchCriteria;
 import com.brianna.jobsearch.model.ApplicationSort;
 import com.brianna.jobsearch.model.ApplicationState;
 import com.brianna.jobsearch.model.ApplicationStatus;
+import com.brianna.jobsearch.model.CareerRoleFamily;
+import com.brianna.jobsearch.model.DataQualityField;
+import com.brianna.jobsearch.model.IndustryDomain;
 import com.brianna.jobsearch.model.JobApplication;
 import com.brianna.jobsearch.model.Priority;
 import com.brianna.jobsearch.model.importing.ApplicationImportPreview;
@@ -79,6 +82,16 @@ public class JobApplicationController {
         return ApplicationEventType.values();
     }
 
+    @ModelAttribute("roleFamilies")
+    public CareerRoleFamily[] roleFamilies() {
+        return CareerRoleFamily.values();
+    }
+
+    @ModelAttribute("industryDomains")
+    public IndustryDomain[] industryDomains() {
+        return IndustryDomain.values();
+    }
+
     @ModelAttribute("importDecisions")
     public ImportDecision[] importDecisions() {
         return ImportDecision.values();
@@ -93,6 +106,9 @@ public class JobApplicationController {
             @RequestParam(required = false) String workArrangement,
             @RequestParam(required = false) String source,
             @RequestParam(required = false) String careerLane,
+            @RequestParam(required = false) CareerRoleFamily roleFamily,
+            @RequestParam(required = false) IndustryDomain industryDomain,
+            @RequestParam(required = false) DataQualityField missing,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate appliedFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate appliedTo,
             @RequestParam(required = false) ApplicationSort sort,
@@ -101,7 +117,7 @@ public class JobApplicationController {
             Model model) {
 
         ApplicationSearchCriteria filters = new ApplicationSearchCriteria(
-                q, status, state, priority, workArrangement, source, careerLane,
+                q, status, state, priority, workArrangement, source, careerLane, roleFamily, industryDomain, missing,
                 appliedFrom, appliedTo, sort, Math.max(0, page - 1), size);
         ApplicationPage result = service.search(filters);
 

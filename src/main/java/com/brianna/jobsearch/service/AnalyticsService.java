@@ -3,6 +3,7 @@ package com.brianna.jobsearch.service;
 import com.brianna.jobsearch.model.ApplicationState;
 import com.brianna.jobsearch.model.Priority;
 import com.brianna.jobsearch.repository.AnalyticsRepository;
+import com.brianna.jobsearch.model.CareerRoleFamily;
 import com.brianna.jobsearch.repository.AnalyticsRepository.DimensionPerformance;
 import com.brianna.jobsearch.repository.AnalyticsRepository.MonthCount;
 import com.brianna.jobsearch.repository.AnalyticsRepository.OutcomeCount;
@@ -224,7 +225,7 @@ public class AnalyticsService {
         long taggedApplications = 0;
 
         for (DimensionPerformance row : safeList(rawRows)) {
-            String displayLabel = priorityLabels ? displayPriority(row.label()) : row.label();
+            String displayLabel = priorityLabels ? displayPriority(row.label()) : ("career-lane".equals(key) ? CareerRoleFamily.displayNameFor(row.label()) : row.label());
             if (displayLabel == null || displayLabel.isBlank()) {
                 continue;
             }

@@ -172,7 +172,7 @@ public class AnalyticsRepository {
     }
 
     public List<DimensionPerformance> careerLanePerformance(int limit) {
-        return dimensionPerformance("TRIM(ja.career_lane)", "ja.career_lane IS NOT NULL AND TRIM(ja.career_lane) <> ''", limit);
+        return dimensionPerformance("TRIM(ja.role_family)", "ja.role_family IS NOT NULL AND TRIM(ja.role_family) <> ''", limit);
     }
 
     public List<DimensionPerformance> workArrangementPerformance(int limit) {

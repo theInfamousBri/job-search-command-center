@@ -1,5 +1,38 @@
 # Changelog
 
+## 1.3.0 (in progress)
+
+Data quality and organization foundation.
+
+### Added
+
+- New **Data Quality** workspace with coverage metrics for Career Lane, Industry / Domain, Source, Work Arrangement, Priority, and Company Domain.
+- Clickable missing-data counts that open the Applications tracker filtered to records that need that field.
+- Structured career taxonomy fields: broad `Career Lane / Role Family`, `Industry / Domain`, and optional `Focus`.
+- Broad role-family and industry/domain enums so new data is normalized at entry time instead of creating one-off analytics categories.
+- Expanded the taxonomy from real historical application tags with first-class Forward Deployed / Customer Engineering and Robotics / Embedded / Autonomy role families, plus Aerospace & Defense, Manufacturing & Industrial, Robotics & Autonomy, Logistics & Supply Chain, Travel & Hospitality, Climate & Sustainability, and Legal & Compliance domains. Existing enum identifiers remain stable for persisted SQLite values.
+- Data-quality coverage states (`Strong coverage`, `Partial coverage`, and `Needs attention`) plus an overall completeness snapshot.
+- Career Lane and Industry / Domain filters in the Applications tracker.
+- New **Normalization Center** under Data Quality for review-before-write cleanup of historical Career Lane, Source, and Work Arrangement values.
+- Bulk career-taxonomy mapping from preserved original tags into normalized Career Lane / Role Family, Industry / Domain, and optional Focus fields.
+- Keyword-based career mapping suggestions that can be reviewed and applied in bulk without overwriting existing normalized fields.
+- Bulk label normalization for Source and Work Arrangement values, including suggested canonical casing / broad work-type labels.
+
+### Changed
+
+- v1.2 Career Lane analytics now use the normalized role-family field rather than the older free-form Career Lane string.
+- The Analytics `Needs more tagging` cue now links directly to applications missing a normalized Career Lane.
+- Existing free-form Career Lane values are preserved as an **Original career tag** and shown during editing instead of being discarded.
+- All application pages now cache-bust `app.css` with the v1.3 development version so UI changes are not hidden by a stale browser stylesheet.
+- Normalization updates classification fields directly without changing `updated_at`, applied dates, or lifecycle events, so cleanup does not make historical applications look newly active.
+- Demo data now keeps richer legacy Career Lane strings alongside normalized fields so the Normalization Center can be exercised safely.
+
+### Data / migration
+
+- Adds nullable `role_family`, `industry_domain`, and `career_focus` columns to `job_applications`.
+- Existing `career_lane` data is intentionally left untouched so the upcoming normalization workflow can map it without losing detail.
+- New indexes are created only after startup migration adds the new columns, keeping upgrades from older SQLite databases backward-safe.
+
 ## 1.2.0
 
 Analytics expansion focused on search-strategy decision support.
