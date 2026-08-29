@@ -45,6 +45,32 @@ CREATE TABLE IF NOT EXISTS company_logos (
     updated_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS company_notes (
+    company_key TEXT PRIMARY KEY,
+    notes TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS company_contacts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    company_key TEXT NOT NULL,
+    name TEXT NOT NULL,
+    role TEXT,
+    relationship_type TEXT NOT NULL DEFAULT 'OTHER',
+    email TEXT,
+    linkedin_url TEXT,
+    notes TEXT,
+    photo_mime_type TEXT,
+    photo_data BLOB,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_company_contacts_company_key
+    ON company_contacts(company_key);
+CREATE INDEX IF NOT EXISTS idx_company_contacts_name
+    ON company_contacts(name);
+
 CREATE TABLE IF NOT EXISTS application_events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     application_id INTEGER NOT NULL,

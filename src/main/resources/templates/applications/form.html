@@ -43,6 +43,7 @@
                         <span>Company domain</span>
                         <input type="text" th:field="*{companyDomain}" placeholder="northstarlabs.com">
                         <small class="field-help">Optional. Used to fetch and cache a company logo locally.</small>
+                        <small class="field-help domain-suggestion-note" data-domain-suggestion-note>Filled from your Company Directory.</small>
                     </label>
 
                     <label class="field">
@@ -216,5 +217,39 @@
         </form>
     </main>
 </div>
+<script>
+    (() => {
+        const companyInput = document.getElementById('company');
+        const domainInput = document.getElementById('companyDomain');
+        const note = document.querySelector('[data-domain-suggestion-note]');
+        if (!companyInput || !domainInput) return;
+
+        let requestNumber = 0;
+        const suggestDomain = async () => {
+            const company = companyInput.value.trim();
+            if (!company || domainInput.value.trim()) return;
+            const currentRequest = ++requestNumber;
+            try {
+                const response = await fetch('/companies/domain-suggestion?company=' + encodeURIComponent(company), {
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (currentRequest !== requestNumber || response.status === 204 || !response.ok) return;
+                const data = await response.json();
+                if (data.domain && !domainInput.value.trim()) {
+                    domainInput.value = data.domain;
+                    if (note) note.classList.add('visible');
+                }
+            } catch (_) {
+                // Domain suggestions are convenience only; the form remains fully usable offline.
+            }
+        };
+
+        companyInput.addEventListener('blur', suggestDomain);
+        companyInput.addEventListener('change', suggestDomain);
+        domainInput.addEventListener('input', () => {
+            if (note) note.classList.remove('visible');
+        });
+    })();
+</script>
 </body>
 </html>

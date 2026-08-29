@@ -17,6 +17,7 @@ import com.brianna.jobsearch.model.importing.ApplicationImportResult;
 import com.brianna.jobsearch.model.importing.ImportDecision;
 import com.brianna.jobsearch.service.ApplicationImportService;
 import com.brianna.jobsearch.service.CompanyLogoService;
+import com.brianna.jobsearch.service.CompanyManagementService;
 import com.brianna.jobsearch.service.JobApplicationService;
 import com.brianna.jobsearch.service.PrepService;
 import jakarta.servlet.http.HttpSession;
@@ -50,16 +51,19 @@ public class JobApplicationController {
     private final PrepService prepService;
     private final ApplicationImportService importService;
     private final CompanyLogoService companyLogoService;
+    private final CompanyManagementService companyManagementService;
 
     public JobApplicationController(
             JobApplicationService service,
             PrepService prepService,
             ApplicationImportService importService,
-            CompanyLogoService companyLogoService) {
+            CompanyLogoService companyLogoService,
+            CompanyManagementService companyManagementService) {
         this.service = service;
         this.prepService = prepService;
         this.importService = importService;
         this.companyLogoService = companyLogoService;
+        this.companyManagementService = companyManagementService;
     }
 
     @ModelAttribute("statuses")
@@ -288,6 +292,7 @@ public class JobApplicationController {
         JobApplication application = service.get(id);
         model.addAttribute("jobApplication", application);
         model.addAttribute("logoCached", companyLogoService.hasLogo(application.getCompanyDomain()));
+        model.addAttribute("companyGroupKey", CompanyManagementService.normalizeCompanyKey(application.getCompany()));
         model.addAttribute("events", service.eventsForApplication(id));
         model.addAttribute("applicationPrepItems", prepService.forApplication(id));
         model.addAttribute("linkablePrepItems", prepService.linkableReusableForApplication(id));

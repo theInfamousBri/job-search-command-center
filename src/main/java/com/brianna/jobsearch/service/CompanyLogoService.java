@@ -38,7 +38,7 @@ public class CompanyLogoService {
     private static final int MAX_REDIRECTS = 5;
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(8);
     private static final String USER_AGENT =
-            "Mozilla/5.0 (compatible; Job-Search-Command-Center/1.2.0; +local-app)";
+            "Mozilla/5.0 (compatible; Job-Search-Command-Center/1.3.0; +local-app)";
 
     private static final Pattern MANIFEST_ICON_OBJECT = Pattern.compile(
             "\\{(?=[^{}]*\\\"src\\\"\\s*:)([^{}]*)}", Pattern.DOTALL);
@@ -593,25 +593,17 @@ public class CompanyLogoService {
     }
 
     private String normalizeImageMimeType(String supplied, byte[] data) {
-        String mime = supplied == null ? "" : supplied.split(";", 2)[0].trim().toLowerCase(Locale.ROOT);
-        if (List.of(
-                "image/png",
-                "image/jpeg",
-                "image/webp",
-                "image/gif",
-                "image/x-icon",
-                "image/vnd.microsoft.icon",
-                "image/svg+xml").contains(mime)) {
-            return mime;
-        }
-
+        // Do not trust Content-Type by itself. Some sites return an HTML/error body
+        // with an image/* header, which would otherwise create a cached broken image.
+        if (data == null || data.length == 0) return null;
         if (startsWith(data, new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47})) return "image/png";
         if (startsWith(data, new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF})) return "image/jpeg";
         if (data.length >= 12
                 && new String(data, 0, 4, StandardCharsets.US_ASCII).equals("RIFF")
                 && new String(data, 8, 4, StandardCharsets.US_ASCII).equals("WEBP")) return "image/webp";
         if (startsWith(data, "GIF8".getBytes(StandardCharsets.US_ASCII))) return "image/gif";
-        if (startsWith(data, new byte[]{0x00, 0x00, 0x01, 0x00})) return "image/x-icon";
+        if (startsWith(data, new byte[]{0x00, 0x00, 0x01, 0x00})
+                || startsWith(data, new byte[]{0x00, 0x00, 0x02, 0x00})) return "image/x-icon";
         if (looksLikeSvg(data)) return "image/svg+xml";
         return null;
     }

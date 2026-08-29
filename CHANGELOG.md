@@ -17,6 +17,21 @@ Data quality and organization foundation.
 - Bulk career-taxonomy mapping from preserved original tags into normalized Career Lane / Role Family, Industry / Domain, and optional Focus fields.
 - Keyword-based career mapping suggestions that can be reviewed and applied in bulk without overwriting existing normalized fields.
 - Bulk label normalization for Source and Work Arrangement values, including suggested canonical casing / broad work-type labels.
+- New **Companies** workspace that groups applications by normalized company identity and centralizes domain/logo maintenance.
+- Company-level domain propagation so one domain update can apply to every matching application.
+- Centralized logo fetch/refresh, manual upload, removal, and initials fallback using the existing domain-keyed SQLite logo cache.
+- Company-name alias cleanup, including automatic punctuation/legal-suffix grouping plus explicit multi-group merge into a chosen canonical name.
+- Clickable company detail pages with grouped application history and persistent company-level notes.
+- Company-domain suggestions on application create/edit forms when the entered company already has a single known shared domain.
+- Company detail rendering now avoids Thymeleaf's reserved `application` web-variable name.
+- Company Directory cards are compact browse-first entries; branding/domain/logo/rename controls now live on the company detail page.
+- Company Directory adds 20/40/80-item pagination while preserving search and cleanup filters.
+- Broken-logo fallback now keeps initials visible, and downloaded logo bytes are signature-validated before caching.
+- Company pages now include a **People at this company** directory for recruiters, hiring managers, interviewers, referrals, team members, and networking contacts.
+- Company people records support name, role/title, relationship type, email, LinkedIn reference URL, notes, and an optional locally stored profile photo.
+- Company people survive company rename/alias merges by following the normalized company identity.
+- Company detail pages were visually reworked into a workspace: applications, people, and notes stay prominent while branding/identity maintenance is collapsed under **Manage company**.
+- Profile-photo uploads are validated as PNG, JPEG, GIF, or WebP and limited to 1 MB; initials remain the fallback.
 
 ### Changed
 
@@ -26,12 +41,16 @@ Data quality and organization foundation.
 - All application pages now cache-bust `app.css` with the v1.3 development version so UI changes are not hidden by a stale browser stylesheet.
 - Normalization updates classification fields directly without changing `updated_at`, applied dates, or lifecycle events, so cleanup does not make historical applications look newly active.
 - Demo data now keeps richer legacy Career Lane strings alongside normalized fields so the Normalization Center can be exercised safely.
+- Company branding/name cleanup updates intentionally preserve application `updated_at`, so organization work does not make historical applications look newly active.
+- Application-list logos again fill their avatar containers while Company Directory cards keep the intentionally inset logo treatment.
 
 ### Data / migration
 
 - Adds nullable `role_family`, `industry_domain`, and `career_focus` columns to `job_applications`.
 - Existing `career_lane` data is intentionally left untouched so the upcoming normalization workflow can map it without losing detail.
 - New indexes are created only after startup migration adds the new columns, keeping upgrades from older SQLite databases backward-safe.
+- Adds a `company_notes` table keyed by normalized company identity for reusable company-level notes.
+- Adds a `company_contacts` table for company-level people records and optional profile-photo BLOBs.
 
 ## 1.2.0
 

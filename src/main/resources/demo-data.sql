@@ -5,10 +5,12 @@
 DELETE FROM prep_item_links;
 DELETE FROM prep_items;
 DELETE FROM application_events;
+DELETE FROM company_contacts;
+DELETE FROM company_notes;
 DELETE FROM company_logos;
 DELETE FROM job_applications;
 DELETE FROM sqlite_sequence
-WHERE name IN ('job_applications', 'application_events', 'prep_items');
+WHERE name IN ('job_applications', 'application_events', 'prep_items', 'company_contacts');
 
 -- ---------------------------------------------------------------------------
 -- Applications
@@ -283,3 +285,18 @@ INSERT INTO prep_item_links (prep_item_id, application_id, created_at) VALUES
 (2, 2, strftime('%Y-%m-%dT13:00:00','now','localtime','-6 days')),
 (9, 2, strftime('%Y-%m-%dT13:05:00','now','localtime','-6 days')),
 (10, 10, strftime('%Y-%m-%dT13:10:00','now','localtime','-5 days'));
+
+-- v1.3 company workspace demo contacts. Synthetic only.
+INSERT INTO company_contacts (
+    company_key, name, role, relationship_type, email, linkedin_url, notes, created_at, updated_at
+) VALUES
+('atlas payments', 'Maya Chen', 'Senior Technical Recruiter', 'RECRUITER', 'maya.chen@example.com',
+ 'https://www.linkedin.com/in/example-maya-chen', 'Primary recruiting contact for the final-round process.',
+ strftime('%Y-%m-%dT10:00:00','now','localtime','-17 days'), strftime('%Y-%m-%dT10:00:00','now','localtime','-2 days')),
+('atlas payments', 'Jordan Reyes', 'Engineering Manager · Payments Platform', 'HIRING_MANAGER', NULL,
+ 'https://www.linkedin.com/in/example-jordan-reyes', 'Discussed platform ownership, incident response, and team growth.',
+ strftime('%Y-%m-%dT10:00:00','now','localtime','-12 days'), strftime('%Y-%m-%dT10:00:00','now','localtime','-1 day')),
+('northstar labs', 'Alex Morgan', 'Staff Backend Engineer', 'INTERVIEWER', NULL, NULL,
+ 'Technical interviewer. Focused on idempotency and service reliability.',
+ strftime('%Y-%m-%dT10:00:00','now','localtime','-5 days'), strftime('%Y-%m-%dT10:00:00','now','localtime','-1 day'));
+

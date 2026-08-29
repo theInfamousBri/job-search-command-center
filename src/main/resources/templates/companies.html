@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Companies · Job Search</title>
+    <link rel="stylesheet" th:href="@{/css/app.css?v=1.3.0-company-people}">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
+</head>
+<body>
+<div class="app-shell">
+    <aside th:replace="~{fragments :: sidebar('companies')}"></aside>
+    <header th:replace="~{fragments :: topbar}"></header>
+
+    <main class="main">
+        <header class="page-header company-page-header">
+            <div>
+                <p class="eyebrow">ORGANIZATION · COMPANIES</p>
+                <h1>Company directory</h1>
+                <p class="subtle">Browse every company in your search history. Open a company to manage its domain, logo, notes, aliases, and applications.</p>
+            </div>
+            <div class="header-actions">
+                <a class="button button-secondary" th:href="@{/data-quality}">Data Quality</a>
+            </div>
+        </header>
+
+        <div th:if="${companySuccess}" class="flash-message flash-success" th:text="${companySuccess}">Company updated.</div>
+        <div th:if="${companyWarning}" class="flash-message company-warning" th:text="${companyWarning}">Logo warning.</div>
+        <div th:if="${companyError}" class="flash-message flash-error" th:text="${companyError}">Company error.</div>
+
+        <section class="company-summary-grid">
+            <article class="company-summary-card">
+                <span>Companies</span>
+                <strong th:text="${companies.companies}">120</strong>
+                <small th:text="|Grouped from ${companies.applications} applications|">Grouped from 171 applications</small>
+            </article>
+            <article class="company-summary-card">
+                <span>Domains set</span>
+                <strong th:text="|${companies.companiesWithDomain}/${companies.companies}|">75/120</strong>
+                <small>Recognized for future applications</small>
+            </article>
+            <article class="company-summary-card">
+                <span>Logos cached</span>
+                <strong th:text="|${companies.companiesWithLogo}/${companies.companies}|">62/120</strong>
+                <small>Stored locally in SQLite</small>
+            </article>
+            <article class="company-summary-card" th:classappend="${companies.companiesNeedingAttention > 0} ? ' needs-work' : ' complete'">
+                <span>Needs attention</span>
+                <strong th:text="${companies.companiesNeedingAttention}">18</strong>
+                <small>Missing domain/logo, aliases, or conflicts</small>
+            </article>
+        </section>
+
+        <section class="panel company-workspace company-directory-workspace">
+            <div class="company-workspace-heading">
+                <div>
+                    <p class="eyebrow">COMPANY DIRECTORY</p>
+                    <h2>Browse &amp; organize</h2>
+                    <p>Branding maintenance now lives on each company page, keeping this directory focused on finding the company you need.</p>
+                </div>
+                <span class="normalization-count-chip"
+                      th:text="${companies.matchingCompanies == 0 ? '0 matches' : companies.fromItem + '–' + companies.toItem + ' of ' + companies.matchingCompanies}">1–20 of 120</span>
+            </div>
+
+            <form class="company-filter-bar company-directory-filter" method="get" th:action="@{/companies}">
+                <label class="normalization-search">
+                    <span>⌕</span>
+                    <input type="search" name="q" th:value="${companies.query}" placeholder="Search company, alias, or domain…">
+                </label>
+                <select name="status" aria-label="Company cleanup status">
+                    <option value="ALL" th:selected="${companies.status == 'ALL'}">All companies</option>
+                    <option value="MISSING_DOMAIN" th:selected="${companies.status == 'MISSING_DOMAIN'}">Missing domain</option>
+                    <option value="MISSING_LOGO" th:selected="${companies.status == 'MISSING_LOGO'}">Missing logo</option>
+                    <option value="ALIASES" th:selected="${companies.status == 'ALIASES'}">Name aliases</option>
+                    <option value="DOMAIN_CONFLICT" th:selected="${companies.status == 'DOMAIN_CONFLICT'}">Domain conflicts</option>
+                </select>
+                <select name="size" aria-label="Companies per page">
+                    <option value="20" th:selected="${companies.pageSize == 20}">20 per page</option>
+                    <option value="40" th:selected="${companies.pageSize == 40}">40 per page</option>
+                    <option value="80" th:selected="${companies.pageSize == 80}">80 per page</option>
+                </select>
+                <button class="button button-secondary" type="submit">Apply</button>
+                <a th:if="${!#strings.isEmpty(companies.query) || companies.status != 'ALL' || companies.pageSize != 20}"
+                   class="normalization-clear" th:href="@{/companies}">Reset</a>
+            </form>
+
+            <details class="company-merge-tools">
+                <summary>
+                    <span>
+                        <strong>Merge company-name aliases</strong>
+                        <small>Use this when two separate groups are really the same company.</small>
+                    </span>
+                    <span class="material-toggle">Manage <span>⌄</span></span>
+                </summary>
+                <form id="company-merge-form" method="post" th:action="@{/companies/merge}" class="company-merge-bar">
+                    <div>
+                        <strong>Select companies below</strong>
+                        <span>Choose two or more groups, then enter the canonical display name.</span>
+                    </div>
+                    <label>
+                        <span>Canonical company name</span>
+                        <input type="text" name="canonicalName" maxlength="160" placeholder="Charles Schwab" required>
+                    </label>
+                    <button class="button button-secondary" type="submit">Merge selected</button>
+                </form>
+            </details>
+
+            <div class="company-list-toolbar" th:if="${!#lists.isEmpty(companies.groups)}">
+                <label class="normalization-select-all">
+                    <input type="checkbox" data-company-select-all>
+                    <span>Select page for alias merge</span>
+                </label>
+                <span>Automatic grouping already ignores punctuation and common legal suffixes such as Inc. / LLC.</span>
+            </div>
+
+            <div class="normalization-empty" th:if="${#lists.isEmpty(companies.groups)}">
+                <strong>No companies match this view.</strong>
+                <span>Try clearing the search or selecting a different cleanup filter.</span>
+            </div>
+
+            <div class="company-grid company-directory-grid" th:unless="${#lists.isEmpty(companies.groups)}">
+                <article class="company-card company-directory-card" th:each="companyGroup : ${companies.groups}"
+                         th:classappend="${companyGroup.needsAttention()} ? ' needs-attention' : ''">
+                    <label class="company-merge-check company-directory-check" title="Select for alias merge">
+                        <input type="checkbox" name="groupKey" th:value="${companyGroup.key}"
+                               form="company-merge-form" data-company-checkbox>
+                        <span aria-hidden="true"></span>
+                    </label>
+
+                    <a class="company-directory-main" th:href="@{/companies/{key}(key=${companyGroup.key})}">
+                        <span class="company-avatar company-directory-avatar">
+                            <strong class="company-avatar-initials" th:text="${companyGroup.initials()}">MC</strong>
+                            <img th:if="${companyGroup.logoCached && companyGroup.hasSingleDomain()}"
+                                 class="company-card-logo"
+                                 th:src="@{/companies/logo(domain=${companyGroup.domain})}"
+                                 th:alt="|${companyGroup.displayName} logo|"
+                                 onerror="this.style.display='none'">
+                        </span>
+
+                        <span class="company-directory-copy">
+                            <span class="company-title-row">
+                                <strong class="company-directory-name" th:text="${companyGroup.displayName}">Mastercard</strong>
+                                <span class="company-status-chip logo-ready" th:if="${companyGroup.logoCached}">Logo cached</span>
+                                <span class="company-status-chip warning" th:if="${companyGroup.hasDomainConflict()}">Domain conflict</span>
+                                <span class="company-status-chip muted" th:if="${#lists.isEmpty(companyGroup.domains)}">No domain</span>
+                            </span>
+                            <small>
+                                <span th:text="|${companyGroup.applications} application${companyGroup.applications == 1 ? '' : 's'}|">3 applications</span>
+                                <span th:if="${companyGroup.openApplications > 0}" th:text="| · ${companyGroup.openApplications} open|"> · 1 open</span>
+                            </small>
+                            <span class="company-directory-domain" th:if="${companyGroup.hasSingleDomain()}" th:text="${companyGroup.domain}">mastercard.com</span>
+                            <span class="company-directory-domain warning" th:if="${companyGroup.hasDomainConflict()}" th:text="${#strings.listJoin(companyGroup.domains, ' · ')}">a.com · b.com</span>
+                            <span class="company-directory-domain muted" th:if="${#lists.isEmpty(companyGroup.domains)}">Domain not set</span>
+                            <span class="company-directory-aliases" th:if="${companyGroup.aliases.size() > 1}"
+                                  th:text="|${companyGroup.aliases.size()} grouped names|">2 grouped names</span>
+                        </span>
+
+                        <span class="company-directory-arrow">→</span>
+                    </a>
+                </article>
+            </div>
+
+            <nav class="pagination company-pagination" th:if="${companies.matchingCompanies > 0}" aria-label="Company pages">
+                <a class="pagination-button"
+                   th:classappend="${!companies.hasPrevious()} ? ' disabled' : ''"
+                   th:href="@{/companies(q=${companies.query},status=${companies.status},size=${companies.pageSize},page=${companies.previousPage()})}">← Previous</a>
+                <span class="company-page-indicator" th:text="|Page ${companies.page} of ${companies.totalPages}|">Page 1 of 6</span>
+                <a class="pagination-button"
+                   th:classappend="${!companies.hasNext()} ? ' disabled' : ''"
+                   th:href="@{/companies(q=${companies.query},status=${companies.status},size=${companies.pageSize},page=${companies.nextPage()})}">Next →</a>
+            </nav>
+        </section>
+
+        <p class="company-footer-note">Company cleanup intentionally preserves each application's <code>updated_at</code>. Logos remain domain-keyed and stored in <code>jobsearch.db</code>.</p>
+    </main>
+</div>
+<script>
+    (() => {
+        const toggle = document.querySelector('[data-company-select-all]');
+        if (!toggle) return;
+        toggle.addEventListener('change', () => {
+            document.querySelectorAll('[data-company-checkbox]').forEach(box => box.checked = toggle.checked);
+        });
+    })();
+</script>
+</body>
+</html>

@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="|${company.group.displayName} · Companies · Job Search|">Company · Job Search</title>
+    <link rel="stylesheet" th:href="@{/css/app.css?v=1.3.0-company-people}">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
+</head>
+<body>
+<div class="app-shell">
+    <aside th:replace="~{fragments :: sidebar('companies')}"></aside>
+    <header th:replace="~{fragments :: topbar}"></header>
+
+    <main class="main company-detail-page">
+        <header class="page-header company-detail-header company-detail-hero">
+            <div>
+                <a class="back-link" th:href="@{/companies}">← Company directory</a>
+                <div class="company-detail-identity">
+                    <span class="company-detail-logo company-detail-logo-hero">
+                        <strong th:text="${company.group.initials()}">CO</strong>
+                        <img th:if="${company.group.logoCached && company.group.hasSingleDomain()}"
+                             th:src="@{/companies/logo(domain=${company.group.domain})}"
+                             th:alt="|${company.group.displayName} logo|"
+                             onerror="this.style.display='none'">
+                    </span>
+                    <div>
+                        <p class="eyebrow">COMPANY WORKSPACE</p>
+                        <h1 th:text="${company.group.displayName}">Company</h1>
+                        <div class="company-detail-meta">
+                            <span th:text="|${company.group.applications} application${company.group.applications == 1 ? '' : 's'}|">3 applications</span>
+                            <span th:if="${company.group.openApplications > 0}" th:text="|${company.group.openApplications} open|">1 open</span>
+                            <span th:if="${company.group.hasSingleDomain()}" th:text="${company.group.domain}">company.com</span>
+                            <span th:if="${company.group.hasDomainConflict()}" class="company-meta-warning">Domain conflict</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div th:if="${companySuccess}" class="flash-message flash-success" th:text="${companySuccess}">Company saved.</div>
+        <div th:if="${companyWarning}" class="flash-message company-warning" th:text="${companyWarning}">Logo warning.</div>
+        <div th:if="${companyError}" class="flash-message flash-error" th:text="${companyError}">Company error.</div>
+
+        <section class="company-summary-grid company-workspace-summary">
+            <article class="company-summary-card">
+                <span>Applications</span>
+                <strong th:text="${company.group.applications}">3</strong>
+                <small>Tracked roles at this company</small>
+            </article>
+            <article class="company-summary-card">
+                <span>Open</span>
+                <strong th:text="${company.group.openApplications}">1</strong>
+                <small>Applications still in play</small>
+            </article>
+            <article class="company-summary-card">
+                <span>People</span>
+                <strong th:text="${#lists.size(company.contacts)}">2</strong>
+                <small>Recruiters, interviewers, and contacts</small>
+            </article>
+            <article class="company-summary-card">
+                <span>Latest application</span>
+                <strong class="company-summary-text"
+                        th:text="${company.group.latestAppliedDate == null ? '—' : #temporals.format(company.group.latestAppliedDate, 'MMM d, yyyy')}">Aug 28, 2026</strong>
+                <small>Most recently applied role</small>
+            </article>
+        </section>
+
+        <div class="company-workspace-grid">
+            <div class="company-workspace-main">
+                <section class="panel company-workspace-panel">
+                    <div class="panel-header company-section-heading">
+                        <div>
+                            <p class="eyebrow">APPLICATION HISTORY</p>
+                            <h2>Roles at this company</h2>
+                            <p class="panel-subtitle">Every application grouped under this company identity.</p>
+                        </div>
+                    </div>
+
+                    <div class="company-applications-list" th:unless="${#lists.isEmpty(company.applications)}">
+                        <a class="company-application-row"
+                           th:each="appRow : ${company.applications}"
+                           th:href="@{/applications/{id}(id=${appRow.id})}">
+                            <span class="company-application-copy">
+                                <strong th:text="${appRow.role}">Senior Software Engineer</strong>
+                                <small>
+                                    <span th:if="${appRow.location != null}" th:text="${appRow.location}">Denver, CO</span>
+                                    <span th:if="${appRow.appliedDate != null}"
+                                          th:text="| · Applied ${#temporals.format(appRow.appliedDate, 'MMM d, yyyy')}|"> · Applied Aug 28, 2026</span>
+                                </small>
+                            </span>
+                            <span class="company-application-status">
+                                <span class="status-pill"
+                                      th:classappend="${' status-' + #strings.toLowerCase(appRow.status.name())}"
+                                      th:text="${appRow.status.displayName}">Applied</span>
+                                <span class="state-pill"
+                                      th:classappend="${' state-' + #strings.toLowerCase(appRow.state.name())}"
+                                      th:text="${appRow.state.displayName}">Active</span>
+                            </span>
+                        </a>
+                    </div>
+                </section>
+
+                <section class="panel company-workspace-panel company-people-panel">
+                    <div class="panel-header company-section-heading company-people-heading">
+                        <div>
+                            <p class="eyebrow">PEOPLE</p>
+                            <h2>People at <span th:text="${company.group.displayName}">this company</span></h2>
+                            <p class="panel-subtitle">Keep recruiters, hiring managers, interviewers, referrals, and networking contacts together.</p>
+                        </div>
+
+                        <details class="company-add-person">
+                            <summary class="button button-primary">+ Add person</summary>
+                            <div class="company-contact-editor company-contact-add-editor">
+                                <form method="post" enctype="multipart/form-data"
+                                      th:action="@{/companies/{key}/people(key=${company.group.key})}">
+                                    <div class="company-contact-form-grid">
+                                        <label class="company-field company-field-wide">
+                                            <span>Name</span>
+                                            <input type="text" name="name" maxlength="160" placeholder="Alicia Smith" required>
+                                        </label>
+                                        <label class="company-field">
+                                            <span>Relationship</span>
+                                            <select name="relationshipType">
+                                                <option th:each="relationship : ${contactRelationships}"
+                                                        th:value="${relationship.name()}"
+                                                        th:text="${relationship.displayName}">Recruiter</option>
+                                            </select>
+                                        </label>
+                                        <label class="company-field company-field-wide">
+                                            <span>Role / title</span>
+                                            <input type="text" name="role" maxlength="200" placeholder="Senior Technical Recruiter">
+                                        </label>
+                                        <label class="company-field">
+                                            <span>Email</span>
+                                            <input type="email" name="email" maxlength="320" placeholder="name@company.com">
+                                        </label>
+                                        <label class="company-field company-field-wide">
+                                            <span>LinkedIn</span>
+                                            <input type="text" name="linkedinUrl" maxlength="500" placeholder="linkedin.com/in/...">
+                                        </label>
+                                        <label class="company-field company-field-full">
+                                            <span>Notes</span>
+                                            <textarea name="notes" maxlength="10000" placeholder="How you met, interview context, useful follow-up details…"></textarea>
+                                        </label>
+                                        <div class="company-field company-field-full">
+                                            <span>Profile photo <em>optional</em></span>
+                                            <div class="company-file-picker">
+                                                <input id="new-contact-photo" type="file" name="photo" accept="image/png,image/jpeg,image/gif,image/webp"
+                                                       onchange="this.parentElement.querySelector('.file-name').textContent = this.files.length ? this.files[0].name : 'PNG, JPEG, GIF, or WebP · 1 MB max'">
+                                                <label for="new-contact-photo">Choose photo</label>
+                                                <span class="file-name">PNG, JPEG, GIF, or WebP · 1 MB max</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="company-contact-form-actions">
+                                        <button class="button button-primary" type="submit">Add person</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </details>
+                    </div>
+
+                    <div class="company-contact-empty" th:if="${#lists.isEmpty(company.contacts)}">
+                        <span class="company-empty-avatar" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" focusable="false">
+                                <circle cx="12" cy="8" r="3.25"></circle>
+                                <path d="M5.75 19c.45-3.55 2.7-5.5 6.25-5.5s5.8 1.95 6.25 5.5"></path>
+                            </svg>
+                        </span>
+                        <div>
+                            <strong>No people saved yet</strong>
+                            <p>Add recruiters, interviewers, hiring managers, referrals, or anyone you may want to remember later.</p>
+                        </div>
+                    </div>
+
+                    <div class="company-contact-grid" th:unless="${#lists.isEmpty(company.contacts)}">
+                        <article class="company-contact-card" th:each="person : ${company.contacts}">
+                            <div class="company-contact-card-main">
+                                <span class="company-contact-avatar">
+                                    <strong th:text="${person.initials()}">AS</strong>
+                                    <img th:if="${person.hasPhoto}"
+                                         th:src="@{/companies/people/{id}/photo(id=${person.id})}"
+                                         th:alt="|${person.name} profile photo|"
+                                         onerror="this.style.display='none'">
+                                </span>
+                                <div class="company-contact-copy">
+                                    <div class="company-contact-name-row">
+                                        <strong th:text="${person.name}">Alicia Smith</strong>
+                                        <span class="company-contact-type" th:text="${person.relationship.displayName}">Recruiter</span>
+                                    </div>
+                                    <span class="company-contact-role" th:if="${person.role != null}" th:text="${person.role}">Technical Recruiter</span>
+                                    <div class="company-contact-links" th:if="${person.email != null || person.linkedinUrl != null}">
+                                        <a th:if="${person.email != null}" th:href="|mailto:${person.email}|" th:text="${person.email}">email@company.com</a>
+                                        <a th:if="${person.linkedinUrl != null}" th:href="${person.linkedinUrl}" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a>
+                                    </div>
+                                    <p class="company-contact-note" th:if="${person.notes != null}" th:text="${person.notes}">Useful notes.</p>
+                                </div>
+                                <details class="company-contact-edit">
+                                    <summary>Edit</summary>
+                                    <div class="company-contact-editor">
+                                        <form method="post" enctype="multipart/form-data"
+                                              th:action="@{/companies/{key}/people/{id}(key=${company.group.key},id=${person.id})}">
+                                            <div class="company-contact-form-grid">
+                                                <label class="company-field company-field-wide">
+                                                    <span>Name</span>
+                                                    <input type="text" name="name" maxlength="160" th:value="${person.name}" required>
+                                                </label>
+                                                <label class="company-field">
+                                                    <span>Relationship</span>
+                                                    <select name="relationshipType">
+                                                        <option th:each="relationship : ${contactRelationships}"
+                                                                th:value="${relationship.name()}"
+                                                                th:text="${relationship.displayName}"
+                                                                th:selected="${relationship == person.relationship}">Recruiter</option>
+                                                    </select>
+                                                </label>
+                                                <label class="company-field company-field-wide">
+                                                    <span>Role / title</span>
+                                                    <input type="text" name="role" maxlength="200" th:value="${person.role}">
+                                                </label>
+                                                <label class="company-field">
+                                                    <span>Email</span>
+                                                    <input type="email" name="email" maxlength="320" th:value="${person.email}">
+                                                </label>
+                                                <label class="company-field company-field-wide">
+                                                    <span>LinkedIn</span>
+                                                    <input type="text" name="linkedinUrl" maxlength="500" th:value="${person.linkedinUrl}">
+                                                </label>
+                                                <label class="company-field company-field-full">
+                                                    <span>Notes</span>
+                                                    <textarea name="notes" maxlength="10000" th:text="${person.notes}"></textarea>
+                                                </label>
+                                                <div class="company-field company-field-full">
+                                                    <span>Profile photo <em>optional</em></span>
+                                                    <div class="company-file-picker">
+                                                        <input th:id="|contact-photo-${person.id}|" type="file" name="photo" accept="image/png,image/jpeg,image/gif,image/webp"
+                                                               onchange="this.parentElement.querySelector('.file-name').textContent = this.files.length ? this.files[0].name : 'Choose a replacement photo'">
+                                                        <label th:for="|contact-photo-${person.id}|">Choose photo</label>
+                                                        <span class="file-name" th:text="${person.hasPhoto ? 'Photo saved · choose a replacement' : 'PNG, JPEG, GIF, or WebP · 1 MB max'}">Choose a replacement photo</span>
+                                                    </div>
+                                                    <label class="company-photo-remove" th:if="${person.hasPhoto}">
+                                                        <input type="checkbox" name="removePhoto" value="true">
+                                                        <span>Remove current photo</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="company-contact-form-actions">
+                                                <button class="button button-primary" type="submit">Save changes</button>
+                                            </div>
+                                        </form>
+                                        <form class="company-contact-delete" method="post"
+                                              th:action="@{/companies/{key}/people/{id}/delete(key=${company.group.key},id=${person.id})}">
+                                            <button class="button button-danger" type="submit">Remove person</button>
+                                        </form>
+                                    </div>
+                                </details>
+                            </div>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="panel company-workspace-panel company-notes-panel">
+                    <div class="panel-header company-section-heading">
+                        <div>
+                            <p class="eyebrow">COMPANY NOTES</p>
+                            <h2>What to remember</h2>
+                            <p class="panel-subtitle">Research, culture, team context, interview impressions, or anything useful across multiple applications.</p>
+                        </div>
+                    </div>
+
+                    <form class="company-notes-form company-notes-form-polished" method="post"
+                          th:action="@{/companies/{key}/notes(key=${company.group.key})}">
+                        <textarea name="notes" maxlength="20000"
+                                  placeholder="Company research, culture notes, team context, interview impressions, things to remember next time…"
+                                  th:text="${company.notes}"></textarea>
+                        <div class="company-notes-actions">
+                            <span>Stored locally with this company.</span>
+                            <button class="button button-primary" type="submit">Save company notes</button>
+                        </div>
+                    </form>
+                </section>
+            </div>
+
+            <aside class="company-workspace-sidebar">
+                <details class="panel company-settings-panel" th:attr="open=${company.group.hasDomainConflict() ? 'open' : null}">
+                    <summary class="company-settings-summary">
+                        <div>
+                            <p class="eyebrow">BRANDING &amp; IDENTITY</p>
+                            <strong>Manage company</strong>
+                            <small>
+                                <span th:if="${company.group.hasSingleDomain()}" th:text="${company.group.domain}">company.com</span>
+                                <span th:unless="${company.group.hasSingleDomain()}" th:text="${company.group.hasDomainConflict() ? 'Resolve domain conflict' : 'Domain not set'}">Domain not set</span>
+                                <span> · </span>
+                                <span th:text="${company.group.logoCached ? 'logo cached' : 'initials fallback'}">logo cached</span>
+                            </small>
+                        </div>
+                        <span class="material-toggle">Manage <span>⌄</span></span>
+                    </summary>
+
+                    <div class="company-settings-body">
+                        <div class="company-brand-preview company-brand-preview-polished">
+                            <span class="company-detail-logo company-detail-logo-small">
+                                <strong th:text="${company.group.initials()}">CO</strong>
+                                <img th:if="${company.group.logoCached && company.group.hasSingleDomain()}"
+                                     th:src="@{/companies/logo(domain=${company.group.domain})}"
+                                     th:alt="|${company.group.displayName} logo|"
+                                     onerror="this.style.display='none'">
+                            </span>
+                            <div>
+                                <strong th:text="${company.group.displayName}">Company</strong>
+                                <span th:if="${company.group.logoCached}" class="company-status-chip logo-ready">Logo cached</span>
+                                <span th:unless="${company.group.logoCached}" class="company-status-chip muted">Using initials</span>
+                            </div>
+                        </div>
+
+                        <form class="company-settings-form" method="post" th:action="@{/companies/domain}">
+                            <input type="hidden" name="groupKey" th:value="${company.group.key}">
+                            <input type="hidden" name="returnTo" value="detail">
+                            <label class="company-field">
+                                <span>Company domain</span>
+                                <input type="text" name="domain" th:value="${company.group.hasSingleDomain() ? company.group.domain : ''}"
+                                       placeholder="company.com" required>
+                            </label>
+                            <label class="company-setting-checkbox">
+                                <input type="checkbox" name="fetchLogo" value="true" checked>
+                                <span>Fetch / refresh logo after saving</span>
+                            </label>
+                            <button class="button button-primary" type="submit">Save shared domain</button>
+                        </form>
+
+                        <div class="company-conflict-callout" th:if="${company.group.hasDomainConflict()}">
+                            <strong>Domain conflict</strong>
+                            <span th:text="|Applications currently use: ${#strings.listJoin(company.group.domains, ' · ')}|">a.com · b.com</span>
+                            <small>Saving a domain above resolves it across this company.</small>
+                        </div>
+
+                        <div class="company-settings-subsection">
+                            <span class="company-settings-label">Logo</span>
+                            <div class="company-logo-actions company-logo-actions-polished">
+                                <form method="post" th:action="@{/companies/logo/fetch}">
+                                    <input type="hidden" name="groupKey" th:value="${company.group.key}">
+                                    <input type="hidden" name="returnTo" value="detail">
+                                    <button class="button button-secondary" type="submit" th:disabled="${!company.group.hasSingleDomain()}"
+                                            th:text="${company.group.logoCached ? 'Refresh logo' : 'Fetch logo'}">Fetch logo</button>
+                                </form>
+                                <form class="company-logo-upload-form" method="post" enctype="multipart/form-data" th:action="@{/companies/logo/upload}">
+                                    <input type="hidden" name="groupKey" th:value="${company.group.key}">
+                                    <input type="hidden" name="returnTo" value="detail">
+                                    <div class="company-file-picker company-logo-file-picker">
+                                        <input id="company-logo-upload" type="file" name="logo"
+                                               accept="image/png,image/jpeg,image/webp,image/gif,image/x-icon,image/vnd.microsoft.icon,image/svg+xml" required
+                                               th:disabled="${!company.group.hasSingleDomain()}"
+                                               onchange="this.parentElement.querySelector('.file-name').textContent = this.files.length ? this.files[0].name : 'No file selected'">
+                                        <label for="company-logo-upload">Choose logo</label>
+                                        <span class="file-name">No file selected</span>
+                                    </div>
+                                    <button class="button button-secondary" type="submit" th:disabled="${!company.group.hasSingleDomain()}">Upload</button>
+                                </form>
+                                <form th:if="${company.group.logoCached}" method="post" th:action="@{/companies/logo/delete}">
+                                    <input type="hidden" name="groupKey" th:value="${company.group.key}">
+                                    <input type="hidden" name="returnTo" value="detail">
+                                    <button class="button button-danger" type="submit">Remove logo</button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="company-settings-subsection">
+                            <span class="company-settings-label">Identity</span>
+                            <form class="company-settings-form" method="post" th:action="@{/companies/rename}">
+                                <input type="hidden" name="groupKey" th:value="${company.group.key}">
+                                <input type="hidden" name="returnTo" value="detail">
+                                <label class="company-field">
+                                    <span>Canonical company name</span>
+                                    <input type="text" name="canonicalName" maxlength="160" th:value="${company.group.displayName}" required>
+                                </label>
+                                <button class="button button-secondary" type="submit">Rename company</button>
+                            </form>
+                            <dl class="company-detail-facts company-alias-facts">
+                                <div>
+                                    <dt>Grouped aliases</dt>
+                                    <dd th:text="${#strings.listJoin(company.group.aliases, ' · ')}">Company · Company Inc.</dd>
+                                </div>
+                            </dl>
+                        </div>
+                    </div>
+                </details>
+
+                <section class="panel company-sidebar-help">
+                    <p class="eyebrow">ABOUT PEOPLE</p>
+                    <h3>Keep context close to the company</h3>
+                    <p>Profile photos are optional and stored locally. LinkedIn links are saved as references only; the app does not scrape LinkedIn profiles or photos.</p>
+                </section>
+            </aside>
+        </div>
+    </main>
+</div>
+</body>
+</html>

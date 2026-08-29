@@ -20,7 +20,7 @@ The project began as an application tracker and has grown into a small productiv
 
 - application tracking and search
 - richer role metadata for work arrangement, experience requirements, structured career taxonomy, follow-ups, and archived cover-letter content
-- optional company-domain branding with locally cached logos and initials fallback
+- centralized company management with shared domains, locally cached logos, initials fallback, and company-name alias cleanup
 - pipeline-stage and current-state tracking
 - chronological application lifecycles
 - interview / assessment / follow-up calendar events
@@ -77,6 +77,30 @@ For larger histories, the application list also supports:
 - sorting by recent update, oldest update, applied date, or company
 - 25 / 50 / 100-row page sizes
 - server-side pagination so large histories remain fast and scannable
+
+### Company management
+
+The v1.3 development line adds a centralized **Companies** workspace so branding and company identity can be maintained once instead of application-by-application.
+
+It can:
+
+- group applications by normalized company name
+- ignore punctuation and common legal suffix differences such as `Inc.` / `LLC` when grouping
+- propagate one company domain across every application in a group
+- fetch, refresh, upload, or remove one shared domain-keyed logo
+- keep initials as the fallback when no logo is available
+- show application/open-role counts and the latest application date per company
+- merge separate company-name groups into a chosen canonical display name
+- browse a compact, paginated company directory with search and cleanup filters
+- open a company detail page with every application grouped under that company
+- manage the shared domain, logo, canonical name, and aliases from the company detail page
+- store company-level notes for research, culture context, recruiter history, and cross-application reminders
+- suggest a known shared domain automatically when that company name is entered on an application form
+- preserve application `updated_at` while performing company cleanup
+- keep a company-level people directory for recruiters, hiring managers, interviewers, referrals, team members, and networking contacts
+- store contact email / LinkedIn references, notes, and an optional local profile photo with initials fallback
+
+Company-logo bytes remain stored locally in SQLite. Setting a domain or renaming a company from this workspace is treated as organization metadata rather than lifecycle activity. Company notes and people records are also local SQLite data and follow the normalized company identity when aliases are renamed or merged. Profile photos are optional and stored locally; LinkedIn URLs are references only and the app does not scrape LinkedIn profiles or photos.
 
 ### Application materials
 
@@ -442,6 +466,7 @@ The main data tables are:
 | --- | --- |
 | `job_applications` | one row per tracked role, including richer role metadata, application materials, and import source |
 | `company_logos` | locally cached company-logo image data keyed by normalized domain |
+| `company_notes` | reusable company-level notes keyed by normalized company identity |
 | `application_events` | lifecycle / calendar events |
 | `prep_items` | reusable and role-specific prep material |
 | `prep_item_links` | many-to-many links between reusable prep and applications |
@@ -707,7 +732,7 @@ See [`NEXT-STEPS.md`](NEXT-STEPS.md) for the prioritized product, analytics, aut
 
 ## v1.3 development preview
 
-The v1.3 development line now includes the Data Quality workspace, structured career taxonomy, and a review-before-write Normalization Center. Existing free-form Career Lane values are preserved while bulk mapping can assign a broad Role Family, Industry / Domain, and optional Focus without changing lifecycle timestamps. Source and Work Arrangement labels can also be normalized in bulk, and Career Lane analytics continue to use the normalized Role Family field.
+The v1.3 development line now includes the Data Quality workspace, structured career taxonomy, a review-before-write Normalization Center, and centralized Company Management. Existing free-form Career Lane values are preserved while bulk mapping can assign a broad Role Family, Industry / Domain, and optional Focus without changing lifecycle timestamps. Source and Work Arrangement labels can also be normalized in bulk, Career Lane analytics continue to use the normalized Role Family field, and company domains/logos can now be maintained once across grouped applications. Company pages have also become working spaces with grouped application history, reusable company notes, and a company-level people directory with optional locally stored profile photos.
 
 The taxonomy is intentionally broad: role families describe the kind of engineering work, industry/domain captures business context, and detailed concepts such as AI, distributed systems, fraud, payments modernization, IAM, or recommendation systems belong in Focus. The enum set was expanded against the historical tracker before bulk normalization begins.
 
@@ -715,4 +740,4 @@ The taxonomy is intentionally broad: role families describe the kind of engineer
 
 Current development version: **1.3.0-SNAPSHOT**
 
-The 1.3.0 development line builds on v1.2 search-strategy analytics with Data Quality, structured career taxonomy, and bulk normalization workflows. Career Lane analytics use the normalized Role Family field; existing free-form Career Lane tags remain preserved as source context even after bulk mapping.
+The 1.3.0 development line builds on v1.2 search-strategy analytics with Data Quality, structured career taxonomy, bulk normalization workflows, centralized company organization/branding, and company-level people tracking. Career Lane analytics use the normalized Role Family field; existing free-form Career Lane tags remain preserved as source context even after bulk mapping.

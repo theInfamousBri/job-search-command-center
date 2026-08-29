@@ -20,10 +20,12 @@ The order below is directional rather than a promise. Features should continue t
 - [x] Normalization Center for preserved Career Lane strings, Source labels, and Work Arrangements.
 - [x] Bulk cleanup / bulk assignment so historical taxonomy and label data can be normalized without editing applications one at a time.
 - [x] Review-before-write keyword suggestions for broad Career Lane / Industry mappings, while preserving the original career tag and lifecycle timestamps.
-- [ ] Company alias normalization and centralized Company Branding manager with company grouping, domain propagation, logo refresh/upload/remove, and initials fallback.
+- [x] Company alias normalization and centralized Company Branding manager with company grouping, domain propagation, logo refresh/upload/remove, and initials fallback.
+- [x] Company detail pages with grouped application history, persistent company notes, and known-domain suggestions during application entry.
+- [x] Company workspace polish with a company-level people directory, contact CRUD, LinkedIn/email references, optional local profile photos, and preservation across company rename/merge.
 - [ ] Generalized application attachments stored locally, beginning with original cover-letter files and exact resume versions.
 
-The next implementation chunk should focus on **company-level organization / branding**, followed by **SQLite-backed application attachments**.
+The next implementation chunk should focus on **SQLite-backed application attachments**, beginning with original cover-letter files and exact resume versions.
 
 ## Near-term product priorities
 
@@ -56,28 +58,17 @@ The 1.1.1 stale-review queue now handles old active applications. Continue makin
 - direct buttons for `Open prep` or context-aware follow-up creation
 - configurable attention rules
 
-### 3. Contacts / people CRM
+### 3. People CRM expansion
 
-Create reusable people records for:
+v1.3 now stores reusable people records inside each company workspace for recruiters, hiring managers, interviewers, referrals, team members, and networking contacts. Remaining expansion ideas:
 
-- recruiters
-- hiring managers
-- interviewers
-- referrals
-- networking contacts
-
-Potential fields:
-
-- name
-- company
-- title / relationship
-- email
-- LinkedIn URL
-- notes
+- global People directory across all companies
 - first / last contact dates
-- linked applications
+- direct links between people and specific applications
+- lifecycle events referencing a saved person instead of only free-form `contact_name` text
+- follow-up reminders and communication history
 
-Application lifecycle events could reference a person record instead of relying only on free-form `contact_name` text.
+LinkedIn URLs are saved only as references; the app should not depend on scraping LinkedIn profile pages or profile photos.
 
 ### 4. Application detail tabs
 
@@ -118,17 +109,16 @@ Prefer a reusable attachment table or equivalent model rather than adding one fi
 
 ### Company pages
 
-Group multiple applications under one company and surface:
+Implemented in the v1.3 development line: company detail pages now surface grouped application history, reusable company notes, and the shared branding/identity controls. The directory is browse-first and paginated. Remaining expansion ideas:
 
-- past / active roles
-- contacts
-- company research
+- global People directory and application-to-person linking
+- richer structured company research beyond the current notes field
 - cumulative interview history
-- outcomes
+- company-level outcomes / analytics
 
 ### Company branding management
 
-Build on the v1.1.2 domain-based logo cache with company-level tooling so branding does not have to be maintained one application at a time:
+Implemented in the v1.3 development line: company-level tooling now builds on the v1.1.2 domain-based logo cache so branding does not have to be maintained one application at a time:
 
 - propagate a company domain to every application with the same normalized company name
 - reuse the same cached logo automatically across those matching applications

@@ -29,6 +29,9 @@
                         <p class="eyebrow" th:text="${jobApplication.company}">NORTHSTAR LABS</p>
                         <h1 th:text="${jobApplication.role}">Senior Software Engineer</h1>
                         <p class="subtle" th:text="${jobApplication.locationDisplay}">Denver, CO</p>
+                        <a class="company-link-inline"
+                           th:if="${companyGroupKey != null && !#strings.isEmpty(companyGroupKey)}"
+                           th:href="@{/companies/{key}(key=${companyGroupKey})}">View company →</a>
                     </div>
                 </div>
             </div>
