@@ -72,6 +72,38 @@ CREATE INDEX IF NOT EXISTS idx_company_contacts_name
     ON company_contacts(name);
 
 
+
+CREATE TABLE IF NOT EXISTS material_files (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    material_type TEXT NOT NULL DEFAULT 'RESUME',
+    display_name TEXT NOT NULL,
+    file_name TEXT NOT NULL,
+    mime_type TEXT NOT NULL,
+    file_size INTEGER NOT NULL,
+    sha256 TEXT NOT NULL UNIQUE,
+    file_data BLOB NOT NULL,
+    notes TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_material_files_type
+    ON material_files(material_type);
+CREATE INDEX IF NOT EXISTS idx_material_files_display_name
+    ON material_files(display_name);
+
+CREATE TABLE IF NOT EXISTS application_material_links (
+    application_id INTEGER NOT NULL,
+    material_id INTEGER NOT NULL,
+    created_at TEXT NOT NULL,
+    PRIMARY KEY (application_id, material_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_application_material_links_application
+    ON application_material_links(application_id);
+CREATE INDEX IF NOT EXISTS idx_application_material_links_material
+    ON application_material_links(material_id);
+
 CREATE TABLE IF NOT EXISTS application_attachments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     application_id INTEGER NOT NULL,

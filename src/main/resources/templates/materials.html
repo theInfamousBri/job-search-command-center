@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Materials · Job Search</title>
+    <link rel="stylesheet" th:href="@{/css/app.css?v=1.4.1-materials-polish-2}">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
+</head>
+<body>
+<div class="app-shell">
+    <aside th:replace="~{fragments :: sidebar('materials')}"></aside>
+    <header th:replace="~{fragments :: topbar}"></header>
+
+    <main class="main materials-library-page">
+        <header class="page-header materials-page-header">
+            <div>
+                <p class="eyebrow">APPLICATION MATERIALS · REUSABLE FILES</p>
+                <h1>Materials Library</h1>
+                <p class="subtle">Store a resume once, then link that exact version to every application where you used it.</p>
+            </div>
+            <a class="button button-secondary" th:href="@{/applications}">View applications</a>
+        </header>
+
+        <div th:if="${materialSuccess}" class="flash-message flash-success" th:text="${materialSuccess}">Material saved.</div>
+        <div th:if="${materialNotice}" class="flash-message material-notice" th:text="${materialNotice}">Already stored.</div>
+        <div th:if="${materialError}" class="flash-message flash-error" th:text="${materialError}">Material error.</div>
+
+        <section class="material-library-summary">
+            <article class="material-summary-card">
+                <span>Library files</span>
+                <strong th:text="${materialSummary.materials}">3</strong>
+                <small>Unique BLOBs stored in SQLite</small>
+            </article>
+            <article class="material-summary-card">
+                <span>Resume versions</span>
+                <strong th:text="${materialSummary.resumes}">2</strong>
+                <small>Reusable across applications</small>
+            </article>
+            <article class="material-summary-card">
+                <span>Application links</span>
+                <strong th:text="${materialSummary.applicationLinks}">12</strong>
+                <small>References, not duplicate files</small>
+            </article>
+            <article class="material-summary-card storage-card">
+                <span>Duplicate storage avoided</span>
+                <strong th:text="${materialSummary.avoidedSizeDisplay()}">1.4 MB</strong>
+                <small th:text="|${materialSummary.storedSizeDisplay()} physically stored|">420 KB physically stored</small>
+            </article>
+        </section>
+
+        <section class="materials-library-layout">
+            <div class="materials-library-main">
+                <section class="panel materials-browser">
+                    <div class="materials-browser-heading">
+                        <div>
+                            <p class="eyebrow">YOUR MATERIALS</p>
+                            <h2>Reusable files</h2>
+                            <p>SHA-256 duplicate detection prevents the exact same file from being stored twice.</p>
+                        </div>
+                        <form class="materials-search" method="get" th:action="@{/materials}">
+                            <span aria-hidden="true">⌕</span>
+                            <input type="search" name="q" th:value="${materialQuery}" placeholder="Search materials…">
+                            <button class="button button-secondary button-small" type="submit">Search</button>
+                            <a th:if="${!#strings.isEmpty(materialQuery)}" class="normalization-clear" th:href="@{/materials}">Clear</a>
+                        </form>
+                    </div>
+
+                    <div th:if="${#lists.isEmpty(materials)}" class="materials-empty-state">
+                        <span class="materials-empty-icon">CV</span>
+                        <div>
+                            <strong th:text="${#strings.isEmpty(materialQuery) ? 'Your library is ready' : 'No materials match that search'}">Your library is ready</strong>
+                            <p th:text="${#strings.isEmpty(materialQuery) ? 'Upload the resume versions you actually use, then link them to applications instead of storing another copy each time.' : 'Try a different title, filename, or note.'}">Upload a resume.</p>
+                        </div>
+                    </div>
+
+                    <div th:unless="${#lists.isEmpty(materials)}" class="material-library-list">
+                        <article class="material-library-card" th:each="materialRow : ${materials}" th:id="|material-${materialRow.id}|">
+                            <div class="material-library-card-main">
+                                <span class="material-library-file-icon" th:text="${materialRow.materialType.iconLabel}">CV</span>
+                                <div class="material-library-copy">
+                                    <div class="material-library-title-row">
+                                        <strong th:text="${materialRow.displayName}">Backend / Platform Resume · Aug 2026</strong>
+                                        <span class="attachment-type-chip" th:text="${materialRow.materialType.displayName}">Resume</span>
+                                    </div>
+                                    <small th:text="|${materialRow.fileName} · ${materialRow.fileSizeDisplay()} · ${materialRow.usageDisplay()}|">resume.pdf · 180 KB · Used by 12 applications</small>
+                                    <p th:if="${materialRow.notes != null}" th:text="${materialRow.notes}">Primary backend resume.</p>
+                                </div>
+                                <div class="material-library-actions">
+                                    <a class="button button-secondary button-small" th:href="@{/materials/{id}/download(id=${materialRow.id})}">Download</a>
+                                </div>
+                            </div>
+
+                            <details th:if="${materialRow.linkedApplicationCount > 0}" class="material-linked-apps-panel">
+                                <summary>
+                                    <span class="material-linked-apps-label">Linked applications</span>
+                                    <strong th:text="${materialRow.linkedApplicationCount}">5</strong>
+                                    <span class="material-linked-apps-toggle">View <span aria-hidden="true">⌄</span></span>
+                                </summary>
+                                <div class="material-linked-apps">
+                                    <a th:each="appRef : ${linkedApplications[materialRow.id]}"
+                                       th:href="@{/applications/{id}(id=${appRef.applicationId})}"
+                                       th:text="${appRef.label()}">Atlas Payments · Software Engineer III</a>
+                                </div>
+                            </details>
+
+                            <details class="material-library-manage">
+                                <summary>
+                                    <span>Edit label &amp; notes</span>
+                                    <span class="material-toggle">Manage <span aria-hidden="true">⌄</span></span>
+                                </summary>
+                                <div class="material-library-manage-body">
+                                    <form method="post" th:action="@{/materials/{id}(id=${materialRow.id})}" class="material-edit-form">
+                                        <label class="field">
+                                            <span>Library name</span>
+                                            <input type="text" name="displayName" maxlength="160" th:value="${materialRow.displayName}" required>
+                                        </label>
+                                        <label class="field">
+                                            <span>Notes <em class="optional">Optional</em></span>
+                                            <textarea name="notes" rows="3" maxlength="2000" th:text="${materialRow.notes}" placeholder="What makes this version different?"></textarea>
+                                        </label>
+                                        <div class="material-edit-actions">
+                                            <button class="button button-primary button-small" type="submit">Save details</button>
+                                        </div>
+                                    </form>
+                                    <div class="material-delete-zone">
+                                        <div>
+                                            <strong>Delete from library</strong>
+                                            <span th:if="${materialRow.linkedApplicationCount > 0}"
+                                                  th:text="${materialRow.linkedApplicationCount == 1 ? 'Linked to 1 application · unlink before deleting.' : 'Linked to ' + materialRow.linkedApplicationCount + ' applications · unlink before deleting.'}">Linked applications must be removed first.</span>
+                                            <span th:if="${materialRow.linkedApplicationCount == 0}">Permanently removes the stored file from SQLite.</span>
+                                        </div>
+                                        <form method="post" th:action="@{/materials/{id}/delete(id=${materialRow.id})}"
+                                              onsubmit="return confirm('Delete this material from the library?');">
+                                            <button class="button button-danger button-small" type="submit"
+                                                    th:disabled="${materialRow.linkedApplicationCount > 0}"
+                                                    th:title="${materialRow.linkedApplicationCount > 0 ? 'Unlink this material from its applications first.' : 'Delete this stored file'}">Delete material</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </details>
+                        </article>
+                    </div>
+                </section>
+            </div>
+
+            <aside class="panel material-upload-panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">ADD TO LIBRARY</p>
+                        <h2>Upload a reusable file</h2>
+                    </div>
+                </div>
+                <p class="material-upload-help">Give resume versions human-friendly names such as <strong>Backend / Platform · Aug 2026</strong>. The original filename is preserved for downloads.</p>
+                <form class="material-library-upload-form" method="post" enctype="multipart/form-data" th:action="@{/materials}">
+                    <label class="field">
+                        <span>Material type</span>
+                        <select name="materialType" required>
+                            <option th:each="type : ${materialTypes}" th:value="${type.name()}" th:text="${type.displayName}">Resume</option>
+                        </select>
+                    </label>
+                    <label class="field">
+                        <span>Library name <em class="optional">Optional</em></span>
+                        <input type="text" name="displayName" maxlength="160" placeholder="Backend / Platform · Aug 2026">
+                    </label>
+                    <label class="field">
+                        <span>Notes <em class="optional">Optional</em></span>
+                        <textarea name="notes" rows="4" maxlength="2000" placeholder="Java-heavy version, emphasizes platform work…"></textarea>
+                    </label>
+                    <div class="material-library-file-picker">
+                        <input id="material-library-upload" type="file" name="file" required
+                               onchange="this.parentElement.querySelector('.file-name').textContent = this.files.length ? this.files[0].name : 'No file selected'">
+                        <label for="material-library-upload">Choose file</label>
+                        <span class="file-name">No file selected</span>
+                    </div>
+                    <small class="material-upload-limit">10 MB max · exact duplicates reuse the existing stored copy</small>
+                    <button class="button button-primary" type="submit">Add to library</button>
+                </form>
+            </aside>
+        </section>
+    </main>
+</div>
+</body>
+</html>

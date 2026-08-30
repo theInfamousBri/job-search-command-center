@@ -106,14 +106,17 @@ Company-logo bytes remain stored locally in SQLite. Setting a domain or renaming
 
 Long-form material is archived with the application but stays collapsed by default on the detail page so it does not dominate the working view.
 
-The **Application Materials** panel currently stores:
+The **Application Materials** panel currently stores and references:
 
 - cover-letter usage (`Yes`, `No`, or `Not tracked`)
 - the full cover-letter text when available
 - a saved copy of the job description
-- application-specific file attachments categorized as `Resume`, `Cover letter`, or `Other`
+- reusable files from the **Materials Library**, especially exact resume versions
+- application-specific cover-letter files and one-off supporting documents
 
-Cover letters and job descriptions open as inline expandable panels. File attachments are stored as SQLite BLOBs so the exact resume / cover-letter version stays inside the same local database backup; each file is limited to 10 MB and downloads preserve the original filename. Saving cover-letter text or attaching a file categorized as `Cover letter` marks the application as having used a cover letter, while historical rows can still record usage even when the original text is unavailable.
+Reusable material is stored once in `material_files` and linked to any number of applications through `application_material_links`. Exact duplicate uploads are detected with SHA-256, so submitting the same resume to many jobs creates lightweight references instead of duplicate BLOBs. The original filename is preserved for downloads, while a separate library name and optional notes make versions easier to recognize.
+
+Application-specific files remain in `application_attachments`. Both shared materials and attachments are limited to 10 MB per file, and metadata views avoid loading BLOB content until an actual download. Existing v1.3 Resume attachments are migrated automatically into the shared library without changing application activity timestamps.
 
 ### Company logos
 
@@ -469,12 +472,14 @@ The main data tables are:
 | `company_logos` | locally cached company-logo image data keyed by normalized domain |
 | `company_notes` | reusable company-level notes keyed by normalized company identity |
 | `company_contacts` | company-level people records, including optional locally stored profile photos |
-| `application_attachments` | application-specific Resume / Cover letter / Other files stored as SQLite BLOBs |
+| `material_files` | reusable resume/material file BLOBs, deduplicated by SHA-256 |
+| `application_material_links` | many-to-many links between reusable materials and applications |
+| `application_attachments` | application-specific Cover letter / Other files stored as SQLite BLOBs |
 | `application_events` | lifecycle / calendar events |
 | `prep_items` | reusable and role-specific prep material |
 | `prep_item_links` | many-to-many links between reusable prep and applications |
 
-The schema is created from `src/main/resources/schema.sql`. A small startup migration runner handles columns and tables introduced after the earliest project versions, including the richer v1.1 application fields, v1.1.2 company/material columns, and v1.3 taxonomy/company/people/attachment storage.
+The schema is created from `src/main/resources/schema.sql`. A small startup migration runner handles columns and tables introduced after the earliest project versions, including the richer v1.1 application fields, v1.1.2 company/material columns, v1.3 taxonomy/company/people/attachment storage, and the v1.4 shared-material migration.
 
 ## Project structure
 
@@ -489,6 +494,7 @@ src/main/java/com/brianna/jobsearch/
 │   ├── CalendarController.java
 │   ├── DashboardController.java
 │   ├── JobApplicationController.java
+│   ├── MaterialLibraryController.java
 │   ├── CompanyManagementController.java
 │   ├── DataQualityController.java
 │   ├── NormalizationController.java
@@ -496,6 +502,8 @@ src/main/java/com/brianna/jobsearch/
 ├── model/
 │   ├── ApplicationAttachment.java
 │   ├── ApplicationAttachmentType.java
+│   ├── MaterialFile.java
+│   ├── MaterialType.java
 │   ├── CompanyContact.java
 │   └── importing/
 │       ├── ApplicationImportPreview.java
@@ -505,12 +513,14 @@ src/main/java/com/brianna/jobsearch/
 │       └── ImportDecision.java
 ├── repository/
 │   ├── ApplicationAttachmentRepository.java
+│   ├── MaterialRepository.java
 │   ├── CompanyManagementRepository.java
 │   ├── CompanyLogoRepository.java
 │   └── ...
 ├── service/
 │   ├── AnalyticsService.java
 │   ├── ApplicationAttachmentService.java
+│   ├── MaterialService.java
 │   ├── ApplicationImportService.java
 │   ├── CompanyLogoService.java
 │   ├── CompanyManagementService.java
@@ -534,6 +544,7 @@ src/main/resources/
 │   ├── analytics.html
 │   ├── calendar.html
 │   ├── dashboard.html
+│   ├── materials.html
 │   └── fragments.html
 ├── application.properties
 ├── application-demo.properties
@@ -541,10 +552,14 @@ src/main/resources/
 └── schema.sql
 
 src/test/java/com/brianna/jobsearch/
+├── config/
+│   └── DatabaseMigrationTest.java
 ├── model/
-│   └── ApplicationAttachmentTest.java
+├── repository/
+│   └── MaterialRepositoryTest.java
 └── service/
-    └── ApplicationImportServiceTest.java
+    ├── MaterialServiceTest.java
+    └── ...
 ```
 
 ## Getting started
@@ -554,7 +569,7 @@ src/test/java/com/brianna/jobsearch/
 You need:
 
 - **Java 21**
-- **IntelliJ IDEA** with Maven support, or a local Maven installation
+- **IntelliJ IDEA** with Maven support, or any terminal that can run the included Maven Wrapper
 
 No Node/npm tooling is required.
 
@@ -606,6 +621,7 @@ The generated dataset includes:
 - past and upcoming calendar activity
 - multiple application sources for source-performance analytics
 - normalized career taxonomy plus synthetic company contacts for v1.3 organization workflows
+- two synthetic reusable resume versions linked across several applications to demonstrate shared-material storage
 - reusable technical prep, STAR stories, company research, and review-due items
 
 Because the demo profile uses a separate database and port, it is safe to use for README screenshots without exposing the contents of your personal job search.
@@ -764,6 +780,12 @@ Those and other ideas are tracked in [`NEXT-STEPS.md`](NEXT-STEPS.md).
 ## Roadmap
 
 See [`NEXT-STEPS.md`](NEXT-STEPS.md) for the prioritized product, analytics, automation, UX, and engineering backlog.
+
+## What’s new in active v1.4 development
+
+The first v1.4 product chunk adds a **Materials Library** for reusable resume versions. A resume is now stored once in SQLite and linked to every application where it was submitted. SHA-256 duplicate detection prevents byte-identical files from being stored again, and the library shows how many application references reuse each physical file. Existing v1.3 Resume attachments migrate into this model automatically while cover letters and other application-specific files stay attached directly to their application.
+
+The v1.4 engineering baseline also adds Maven Wrapper support, JaCoCo coverage reporting, GitHub Actions CI, branded 404/500 pages, and a growing set of data-safety regression/migration tests.
 
 ## What’s new in v1.3
 

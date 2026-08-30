@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="${jobApplication.company + ' · ' + jobApplication.role}">Application · Job Search</title>
-    <link rel="stylesheet" th:href="@{/css/app.css?v=1.3.0-release}">
+    <link rel="stylesheet" th:href="@{/css/app.css?v=1.4.1-materials-polish}">
     <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
 </head>
 <body>
@@ -422,6 +422,95 @@
                         </div>
                     </details>
 
+                    <details class="material-item shared-material-item"
+                             th:attr="open=${materialSuccess != null or materialError != null} ? 'open' : null">
+                        <summary class="material-summary">
+                            <span class="material-summary-main">
+                                <span class="material-icon material-icon-shared">CV</span>
+                                <span>
+                                    <strong>Reusable materials</strong>
+                                    <small th:if="${#lists.isEmpty(sharedMaterials)}">No library materials linked yet</small>
+                                    <small th:unless="${#lists.isEmpty(sharedMaterials)}"
+                                           th:text="${sharedMaterials.size() == 1 ? '1 library file linked · stored once' : sharedMaterials.size() + ' library files linked · stored once'}">1 library file linked · stored once</small>
+                                </span>
+                            </span>
+                            <span class="material-toggle">Manage <span aria-hidden="true">⌄</span></span>
+                        </summary>
+                        <div class="material-body shared-material-body">
+                            <div th:if="${materialSuccess != null}" class="inline-alert inline-alert-success" th:text="${materialSuccess}">Material linked.</div>
+                            <div th:if="${materialError != null}" class="inline-alert inline-alert-error" th:text="${materialError}">Material error.</div>
+
+                            <div class="shared-material-intro">
+                                <div>
+                                    <strong>Store once, reference everywhere</strong>
+                                    <p>Resume versions live in the Materials Library as one BLOB, even when the same version is submitted to many applications.</p>
+                                </div>
+                                <a class="button button-secondary button-small" th:href="@{/materials}">Open library</a>
+                            </div>
+
+                            <div th:if="${#lists.isEmpty(sharedMaterials)}" class="attachment-empty shared-material-empty">
+                                <span class="attachment-empty-icon">CV</span>
+                                <div>
+                                    <strong>No reusable material linked</strong>
+                                    <p>Link an existing resume below or upload a new version. Future applications can reuse the same stored file.</p>
+                                </div>
+                            </div>
+
+                            <div th:unless="${#lists.isEmpty(sharedMaterials)}" class="attachment-file-list shared-material-list">
+                                <article class="attachment-file-row shared-material-row" th:each="materialRow : ${sharedMaterials}">
+                                    <span class="attachment-file-icon" th:text="${materialRow.materialType.iconLabel}">CV</span>
+                                    <div class="attachment-file-copy">
+                                        <div class="attachment-file-heading">
+                                            <strong th:text="${materialRow.displayName}">Backend / Platform · Aug 2026</strong>
+                                            <span class="attachment-type-chip" th:text="${materialRow.materialType.displayName}">Resume</span>
+                                        </div>
+                                        <small th:text="|${materialRow.fileName} · ${materialRow.fileSizeDisplay()} · ${materialRow.usageDisplay()}|">resume.pdf · 182 KB · Used by 8 applications</small>
+                                    </div>
+                                    <div class="attachment-file-actions">
+                                        <a class="button button-secondary button-small" th:href="@{/materials/{id}/download(id=${materialRow.id})}">Download</a>
+                                        <form method="post" th:action="@{/applications/{applicationId}/materials/{materialId}/unlink(applicationId=${jobApplication.id},materialId=${materialRow.id})}"
+                                              onsubmit="return confirm('Unlink this material from this application? The file will stay in your Materials Library.');">
+                                            <button class="button button-quiet button-small" type="submit">Unlink</button>
+                                        </form>
+                                    </div>
+                                </article>
+                            </div>
+
+                            <div class="shared-material-actions-grid">
+                                <form th:if="${!#lists.isEmpty(linkableMaterials)}" class="shared-material-link-form" method="post"
+                                      th:attr="data-base-action=@{/applications/{id}/materials(id=${jobApplication.id})}"
+                                      onsubmit="this.action = this.dataset.baseAction + '/' + this.querySelector('[name=materialId]').value + '/link';">
+                                    <label class="field">
+                                        <span>Link existing library file</span>
+                                        <select name="materialId" required>
+                                            <option value="" selected disabled>Choose material…</option>
+                                            <option th:each="materialOption : ${linkableMaterials}"
+                                                    th:value="${materialOption.id}"
+                                                    th:text="|${materialOption.displayName} · ${materialOption.materialType.displayName}|">Backend Resume · Resume</option>
+                                        </select>
+                                    </label>
+                                    <button class="button button-secondary" type="submit">Link existing</button>
+                                </form>
+
+                                <form class="shared-material-upload-form" method="post" enctype="multipart/form-data"
+                                      th:action="@{/applications/{id}/materials(id=${jobApplication.id})}">
+                                    <input type="hidden" name="materialType" value="RESUME">
+                                    <label class="field">
+                                        <span>Upload new resume version <em class="optional">Optional label</em></span>
+                                        <input type="text" name="displayName" maxlength="160" placeholder="Backend / Platform · Aug 2026">
+                                    </label>
+                                    <div class="attachment-file-picker">
+                                        <input th:id="|shared-material-upload-${jobApplication.id}|" type="file" name="file" required
+                                               onchange="this.parentElement.querySelector('.file-name').textContent = this.files.length ? this.files[0].name : 'No file selected'">
+                                        <label th:for="|shared-material-upload-${jobApplication.id}|">Choose resume</label>
+                                        <span class="file-name">No file selected</span>
+                                    </div>
+                                    <button class="button button-primary" type="submit">Upload &amp; link</button>
+                                </form>
+                            </div>
+                        </div>
+                    </details>
+
                     <details class="material-item attachment-material-item"
                              th:attr="open=${attachmentSuccess != null or attachmentError != null} ? 'open' : null">
                         <summary class="material-summary">
@@ -442,8 +531,8 @@
 
                             <div class="attachment-intro">
                                 <div>
-                                    <strong>Keep the exact files you submitted</strong>
-                                    <p>Resume versions, original cover-letter files, and other application-specific documents stay inside your local database backup.</p>
+                                    <strong>Keep application-specific files</strong>
+                                    <p>Original cover letters and one-off supporting documents stay with this application. Reusable resumes belong in the Materials Library above.</p>
                                 </div>
                                 <span>10 MB max per file</span>
                             </div>
@@ -470,8 +559,8 @@
                             <div th:if="${#lists.isEmpty(attachments)}" class="attachment-empty">
                                 <span class="attachment-empty-icon">+</span>
                                 <div>
-                                    <strong>No file attachments yet</strong>
-                                    <p>Add the exact resume or cover letter you submitted so you never have to reconstruct which version went with this application.</p>
+                                    <strong>No application-specific files yet</strong>
+                                    <p>Add the exact cover letter or supporting document submitted for this application when it is not something you expect to reuse.</p>
                                 </div>
                             </div>
 

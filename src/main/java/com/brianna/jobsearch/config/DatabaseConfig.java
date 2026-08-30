@@ -1,6 +1,9 @@
 package com.brianna.jobsearch.config;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashSet;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -122,6 +125,35 @@ public class DatabaseConfig {
             jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_company_contacts_name ON company_contacts(name)");
 
             jdbcTemplate.execute("""
+                    CREATE TABLE IF NOT EXISTS material_files (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        material_type TEXT NOT NULL DEFAULT 'RESUME',
+                        display_name TEXT NOT NULL,
+                        file_name TEXT NOT NULL,
+                        mime_type TEXT NOT NULL,
+                        file_size INTEGER NOT NULL,
+                        sha256 TEXT NOT NULL UNIQUE,
+                        file_data BLOB NOT NULL,
+                        notes TEXT,
+                        created_at TEXT NOT NULL,
+                        updated_at TEXT NOT NULL
+                    )
+                    """);
+            jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_material_files_type ON material_files(material_type)");
+            jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_material_files_display_name ON material_files(display_name)");
+
+            jdbcTemplate.execute("""
+                    CREATE TABLE IF NOT EXISTS application_material_links (
+                        application_id INTEGER NOT NULL,
+                        material_id INTEGER NOT NULL,
+                        created_at TEXT NOT NULL,
+                        PRIMARY KEY (application_id, material_id)
+                    )
+                    """);
+            jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_application_material_links_application ON application_material_links(application_id)");
+            jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_application_material_links_material ON application_material_links(material_id)");
+
+            jdbcTemplate.execute("""
                     CREATE TABLE IF NOT EXISTS application_attachments (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         application_id INTEGER NOT NULL,
@@ -134,6 +166,7 @@ public class DatabaseConfig {
                     )
                     """);
             jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_application_attachments_application_id ON application_attachments(application_id)");
+            migrateResumeAttachments(jdbcTemplate);
 
             List<Map<String, Object>> prepColumns = jdbcTemplate.queryForList("PRAGMA table_info(prep_items)");
             Set<String> prepColumnNames = new HashSet<>();
@@ -143,6 +176,74 @@ public class DatabaseConfig {
             addColumnIfMissing(jdbcTemplate, prepColumnNames, "review_count", "INTEGER NOT NULL DEFAULT 0", "prep_items");
             jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_prep_items_last_reviewed_at ON prep_items(last_reviewed_at)");
         };
+    }
+
+    private void migrateResumeAttachments(JdbcTemplate jdbcTemplate) {
+        List<Map<String, Object>> resumes = jdbcTemplate.queryForList("""
+                SELECT id, application_id, file_name, mime_type, file_size, file_data, created_at
+                FROM application_attachments
+                WHERE attachment_type = 'RESUME'
+                ORDER BY id
+                """);
+
+        for (Map<String, Object> resume : resumes) {
+            byte[] data = (byte[]) resume.get("file_data");
+            String hash = sha256(data);
+            List<Long> existingIds = jdbcTemplate.queryForList(
+                    "SELECT id FROM material_files WHERE sha256 = ?", Long.class, hash);
+
+            long materialId;
+            if (existingIds.isEmpty()) {
+                String fileName = String.valueOf(resume.get("file_name"));
+                String createdAt = String.valueOf(resume.get("created_at"));
+                materialId = jdbcTemplate.queryForObject("""
+                        INSERT INTO material_files (
+                            material_type, display_name, file_name, mime_type, file_size,
+                            sha256, file_data, notes, created_at, updated_at
+                        ) VALUES ('RESUME', ?, ?, ?, ?, ?, ?, NULL, ?, ?)
+                        RETURNING id
+                        """, Long.class,
+                        displayNameFromFileName(fileName),
+                        fileName,
+                        String.valueOf(resume.get("mime_type")),
+                        ((Number) resume.get("file_size")).longValue(),
+                        hash,
+                        data,
+                        createdAt,
+                        createdAt);
+            } else {
+                materialId = existingIds.getFirst();
+            }
+
+            jdbcTemplate.update("""
+                    INSERT OR IGNORE INTO application_material_links (application_id, material_id, created_at)
+                    VALUES (?, ?, ?)
+                    """,
+                    ((Number) resume.get("application_id")).longValue(),
+                    materialId,
+                    String.valueOf(resume.get("created_at")));
+        }
+
+        if (!resumes.isEmpty()) {
+            jdbcTemplate.update("DELETE FROM application_attachments WHERE attachment_type = 'RESUME'");
+        }
+    }
+
+    private String displayNameFromFileName(String fileName) {
+        if (fileName == null || fileName.isBlank()) {
+            return "Resume";
+        }
+        int dot = fileName.lastIndexOf('.');
+        String displayName = dot > 0 ? fileName.substring(0, dot) : fileName;
+        return displayName.isBlank() ? "Resume" : displayName;
+    }
+
+    private String sha256(byte[] data) {
+        try {
+            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(data));
+        } catch (NoSuchAlgorithmException ex) {
+            throw new IllegalStateException("SHA-256 is not available.", ex);
+        }
     }
 
     private void addColumnIfMissing(JdbcTemplate jdbcTemplate, Set<String> names, String column, String definition) {

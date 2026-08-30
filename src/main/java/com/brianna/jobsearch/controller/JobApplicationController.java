@@ -21,6 +21,7 @@ import com.brianna.jobsearch.service.ApplicationImportService;
 import com.brianna.jobsearch.service.CompanyLogoService;
 import com.brianna.jobsearch.service.CompanyManagementService;
 import com.brianna.jobsearch.service.JobApplicationService;
+import com.brianna.jobsearch.service.MaterialService;
 import com.brianna.jobsearch.service.PrepService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -58,6 +59,7 @@ public class JobApplicationController {
     private final ApplicationAttachmentService attachmentService;
     private final CompanyLogoService companyLogoService;
     private final CompanyManagementService companyManagementService;
+    private final MaterialService materialService;
 
     public JobApplicationController(
             JobApplicationService service,
@@ -65,13 +67,15 @@ public class JobApplicationController {
             ApplicationImportService importService,
             ApplicationAttachmentService attachmentService,
             CompanyLogoService companyLogoService,
-            CompanyManagementService companyManagementService) {
+            CompanyManagementService companyManagementService,
+            MaterialService materialService) {
         this.service = service;
         this.prepService = prepService;
         this.importService = importService;
         this.attachmentService = attachmentService;
         this.companyLogoService = companyLogoService;
         this.companyManagementService = companyManagementService;
+        this.materialService = materialService;
     }
 
     @ModelAttribute("statuses")
@@ -305,7 +309,9 @@ public class JobApplicationController {
         model.addAttribute("applicationPrepItems", prepService.forApplication(id));
         model.addAttribute("linkablePrepItems", prepService.linkableReusableForApplication(id));
         model.addAttribute("attachments", attachmentService.forApplication(id));
-        model.addAttribute("attachmentTypes", ApplicationAttachmentType.values());
+        model.addAttribute("attachmentTypes", List.of(ApplicationAttachmentType.COVER_LETTER, ApplicationAttachmentType.OTHER));
+        model.addAttribute("sharedMaterials", materialService.forApplication(id));
+        model.addAttribute("linkableMaterials", materialService.linkableForApplication(id));
 
         if (editEvent != null) {
             model.addAttribute("eventForm", service.getEvent(id, editEvent));
@@ -328,13 +334,22 @@ public class JobApplicationController {
             RedirectAttributes redirectAttributes) {
         service.get(id);
         try {
-            var attachment = attachmentService.upload(id, attachmentType, file);
-            if (attachment.attachmentType() == ApplicationAttachmentType.COVER_LETTER) {
-                service.markCoverLetterUsedForAttachment(id);
+            if (ApplicationAttachmentType.fromFormValue(attachmentType) == ApplicationAttachmentType.RESUME) {
+                var result = materialService.uploadAndLink(id, "RESUME", null, null, file);
+                redirectAttributes.addFlashAttribute(
+                        "materialSuccess",
+                        result.created()
+                                ? "Resume added to your library and linked: " + result.material().displayName()
+                                : "Existing library resume linked: " + result.material().displayName());
+            } else {
+                var attachment = attachmentService.upload(id, attachmentType, file);
+                if (attachment.attachmentType() == ApplicationAttachmentType.COVER_LETTER) {
+                    service.markCoverLetterUsedForAttachment(id);
+                }
+                redirectAttributes.addFlashAttribute(
+                        "attachmentSuccess",
+                        attachment.attachmentType().getDisplayName() + " attached: " + attachment.fileName());
             }
-            redirectAttributes.addFlashAttribute(
-                    "attachmentSuccess",
-                    attachment.attachmentType().getDisplayName() + " attached: " + attachment.fileName());
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("attachmentError", ex.getMessage());
         }
@@ -378,6 +393,54 @@ public class JobApplicationController {
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("attachmentError", ex.getMessage());
         }
+        return "redirect:/applications/" + id + "#application-materials";
+    }
+
+    @PostMapping("/applications/{id}/materials")
+    public String uploadSharedMaterial(
+            @PathVariable long id,
+            @RequestParam(defaultValue = "RESUME") String materialType,
+            @RequestParam(required = false) String displayName,
+            @RequestParam(required = false) String notes,
+            @RequestParam("file") MultipartFile file,
+            RedirectAttributes redirectAttributes) {
+        service.get(id);
+        try {
+            var result = materialService.uploadAndLink(id, materialType, displayName, notes, file);
+            redirectAttributes.addFlashAttribute(
+                    "materialSuccess",
+                    result.created()
+                            ? "Added to your Materials Library and linked: " + result.material().displayName()
+                            : "That file was already in your library, so the existing copy was linked: " + result.material().displayName());
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("materialError", ex.getMessage());
+        }
+        return "redirect:/applications/" + id + "#application-materials";
+    }
+
+    @PostMapping("/applications/{id}/materials/{materialId}/link")
+    public String linkSharedMaterial(
+            @PathVariable long id,
+            @PathVariable long materialId,
+            RedirectAttributes redirectAttributes) {
+        service.get(id);
+        boolean linked = materialService.link(id, materialId);
+        var material = materialService.get(materialId);
+        redirectAttributes.addFlashAttribute(
+                "materialSuccess",
+                linked ? "Linked “" + material.displayName() + "”." : "“" + material.displayName() + "” was already linked.");
+        return "redirect:/applications/" + id + "#application-materials";
+    }
+
+    @PostMapping("/applications/{id}/materials/{materialId}/unlink")
+    public String unlinkSharedMaterial(
+            @PathVariable long id,
+            @PathVariable long materialId,
+            RedirectAttributes redirectAttributes) {
+        service.get(id);
+        var material = materialService.get(materialId);
+        materialService.unlink(id, materialId);
+        redirectAttributes.addFlashAttribute("materialSuccess", "Unlinked “" + material.displayName() + "”.");
         return "redirect:/applications/" + id + "#application-materials";
     }
 

@@ -5,13 +5,15 @@
 DELETE FROM prep_item_links;
 DELETE FROM prep_items;
 DELETE FROM application_events;
+DELETE FROM application_material_links;
+DELETE FROM material_files;
 DELETE FROM application_attachments;
 DELETE FROM company_contacts;
 DELETE FROM company_notes;
 DELETE FROM company_logos;
 DELETE FROM job_applications;
 DELETE FROM sqlite_sequence
-WHERE name IN ('job_applications', 'application_events', 'application_attachments', 'prep_items', 'company_contacts');
+WHERE name IN ('job_applications', 'application_events', 'application_attachments', 'material_files', 'prep_items', 'company_contacts');
 
 -- ---------------------------------------------------------------------------
 -- Applications
@@ -301,3 +303,31 @@ INSERT INTO company_contacts (
  'Technical interviewer. Focused on idempotency and service reliability.',
  strftime('%Y-%m-%dT10:00:00','now','localtime','-5 days'), strftime('%Y-%m-%dT10:00:00','now','localtime','-1 day'));
 
+
+
+-- v1.4 shared Materials Library. Synthetic resume bodies only; each BLOB is stored once
+-- and linked to several applications to demonstrate deduplicated reusable materials.
+INSERT INTO material_files (
+    id, material_type, display_name, file_name, mime_type, file_size, sha256, file_data, notes, created_at, updated_at
+) VALUES
+(1, 'RESUME', 'Backend / Platform Resume · Aug 2026', 'backend-platform-resume.txt', 'text/plain',
+ length(CAST('Synthetic demo resume: Java, Spring Boot, APIs, distributed systems, reliability.' AS BLOB)),
+ 'demo-backend-platform-resume-v1',
+ CAST('Synthetic demo resume: Java, Spring Boot, APIs, distributed systems, reliability.' AS BLOB),
+ 'Primary resume for backend and platform roles.',
+ strftime('%Y-%m-%dT12:00:00','now','localtime','-28 days'), strftime('%Y-%m-%dT12:00:00','now','localtime','-4 days')),
+(2, 'RESUME', 'Product Engineering Resume · Jul 2026', 'product-engineering-resume.txt', 'text/plain',
+ length(CAST('Synthetic demo resume: product engineering, backend ownership, cross-functional delivery.' AS BLOB)),
+ 'demo-product-engineering-resume-v1',
+ CAST('Synthetic demo resume: product engineering, backend ownership, cross-functional delivery.' AS BLOB),
+ 'Variant used for broader product-oriented roles.',
+ strftime('%Y-%m-%dT12:00:00','now','localtime','-58 days'), strftime('%Y-%m-%dT12:00:00','now','localtime','-20 days'));
+
+INSERT INTO application_material_links (application_id, material_id, created_at) VALUES
+(1, 1, strftime('%Y-%m-%dT09:00:00','now','localtime','-24 days')),
+(3, 1, strftime('%Y-%m-%dT13:10:00','now','localtime','-7 days')),
+(4, 1, strftime('%Y-%m-%dT08:30:00','now','localtime','-3 days')),
+(8, 1, strftime('%Y-%m-%dT10:00:00','now','localtime','-32 days')),
+(10, 1, strftime('%Y-%m-%dT09:35:00','now','localtime','-12 days')),
+(2, 2, strftime('%Y-%m-%dT10:15:00','now','localtime','-18 days')),
+(6, 2, strftime('%Y-%m-%dT09:20:00','now','localtime','-48 days'));

@@ -7,11 +7,26 @@
 - Starts the v1.4 development line at `1.4.0-SNAPSHOT`.
 - Adds Maven Wrapper launchers pinned to Maven 3.9.16 so local development and CI do not depend on a globally installed Maven version.
 - Adds JaCoCo 0.8.15 coverage reporting during Maven `verify`; coverage is informational in this first chunk rather than enforced as a percentage gate.
-- Adds a GitHub Actions CI workflow that checks out the repository, sets up Eclipse Temurin Java 21, and runs `./mvnw clean verify` on pushes and pull requests.
+- Adds a GitHub Actions CI workflow that checks out the repository, sets up Eclipse Temurin Java 21, and runs `./mvnw clean verify` on pushes and pull requests. The workflow explicitly restores the Unix executable bit on `mvnw` so Windows-created commits do not fail on Ubuntu with `Permission denied`.
 - Adds branded 404 and 500 pages and disables the default Whitelabel/error-detail browser surface.
 - Missing applications, timeline events, prep items, company groups, and application attachments now surface as true HTTP 404 resources where they are not already handled as form actions.
 - Adds regression tests for application lifecycle synchronization, child-row deletion order, attachment validation/scoping, and resource-not-found behavior.
 - Adds a migration test fixture based on the released v1.2 schema to verify v1.3+ migrations are idempotent and do not fake application activity by changing `updated_at`.
+
+
+### Shared Materials / Resume Library
+
+- Adds a dedicated **Materials Library** for reusable resumes and other files that should be stored once and referenced by many applications.
+- Adds `material_files` for unique file BLOBs and `application_material_links` for many-to-many application references.
+- Uses SHA-256 content hashes to detect exact duplicate uploads and reuse the existing stored BLOB instead of growing the SQLite database with another copy.
+- Adds library names and optional notes so resume versions can be labeled by purpose/date while preserving the original filename for downloads.
+- Adds Materials Library storage/usage summaries, including an estimate of duplicate storage avoided through reuse.
+- Application detail can link an existing library material, upload a new resume version and link it immediately, download the shared file, or unlink it without deleting the library copy.
+- Existing v1.3 `RESUME` rows in `application_attachments` migrate automatically into the shared library on startup; byte-identical resumes are deduplicated and linked back to every original application without touching application `updated_at` timestamps.
+- `application_attachments` remains available for application-specific cover letters and one-off supporting documents.
+- Deleting an application now removes its material links while leaving reusable library files intact for other applications.
+- Adds service, repository-integration, and migration regression coverage for shared materials and resume deduplication.
+
 
 ## 1.3.0
 

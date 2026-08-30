@@ -42,9 +42,9 @@ The working theme for v1.4 is making the command center faster, more connected, 
 - [x] Expand regression tests around application lifecycle behavior and attachments.
 - [x] Add a real older-schema migration fixture and migration/idempotency tests.
 
-### Planned product chunks
+### Product chunks
 
-1. **Shared Materials / Resume Library** — store reusable resume/material versions once, SHA-256 deduplicate uploads, and link one material to many applications while keeping unique per-application attachments available.
+1. **Shared Materials / Resume Library — completed** — reusable files are stored once, SHA-256 deduplicated, and linked many-to-many to applications. Existing v1.3 Resume attachments migrate into the library automatically while application-specific files remain separate.
 2. **People ↔ Applications** — many-to-many linking between company contacts and applications, with a path toward lifecycle events referencing saved people.
 3. **Application Detail navigation** — Overview / Timeline / Prep / People / Materials organization without turning the server-rendered app into a SPA.
 4. **Global Search / `Ctrl/Cmd + K`** — grouped search across applications, companies, people, prep, descriptions, and other useful local content.
@@ -126,15 +126,15 @@ Google Calendar sync belongs later under integrations.
 
 ### Application attachments
 
-Implemented in v1.3 with a reusable `application_attachments` table rather than one file column per material type. The application detail page can now keep:
+v1.3 introduced application-specific SQLite BLOB attachments. v1.4.1 separates reusable material from one-off files:
 
-- the exact resume version submitted
-- original cover-letter PDF / DOCX files
-- portfolio, writing samples, or other application-specific documents
+- reusable resumes/materials live in `material_files` and are linked through `application_material_links`
+- byte-identical uploads are SHA-256 deduplicated so the BLOB exists only once
+- existing v1.3 Resume attachments migrate automatically into the shared library
+- original cover-letter files and one-off supporting documents remain application-specific in `application_attachments`
+- metadata queries intentionally avoid loading BLOB content until download
 
-Attachments are categorized as Resume / Cover letter / Other, stored as modest SQLite BLOBs, limited to 10 MB each, and downloaded with their original filename. Metadata lists intentionally avoid loading BLOB content until a file is downloaded so ordinary application-detail rendering stays lightweight.
-
-Possible later polish: attachment rename / notes, richer file-type icons, and bulk export if those become useful.
+Possible later polish: richer file-type icons, bulk export, replacement/version-family relationships between resume revisions, and analytics by resume version once the dataset supports it.
 
 ### Company pages
 

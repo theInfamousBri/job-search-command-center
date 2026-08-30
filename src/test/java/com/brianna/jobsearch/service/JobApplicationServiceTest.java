@@ -18,6 +18,7 @@ import com.brianna.jobsearch.model.JobApplication;
 import com.brianna.jobsearch.repository.ApplicationAttachmentRepository;
 import com.brianna.jobsearch.repository.ApplicationEventRepository;
 import com.brianna.jobsearch.repository.JobApplicationRepository;
+import com.brianna.jobsearch.repository.MaterialRepository;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -40,6 +41,9 @@ class JobApplicationServiceTest {
 
     @Mock
     private ApplicationAttachmentRepository attachments;
+
+    @Mock
+    private MaterialRepository materials;
 
     @InjectMocks
     private JobApplicationService service;
@@ -113,10 +117,11 @@ class JobApplicationServiceTest {
 
     @Test
     void deleteRemovesChildRowsBeforeApplication() {
-        InOrder order = inOrder(attachments, events, applications);
+        InOrder order = inOrder(materials, attachments, events, applications);
 
         service.delete(55L);
 
+        order.verify(materials).deleteLinksByApplicationId(55L);
         order.verify(attachments).deleteByApplicationId(55L);
         order.verify(events).deleteByApplicationId(55L);
         order.verify(applications).delete(55L);
