@@ -1,5 +1,6 @@
 package com.brianna.jobsearch.service;
 
+import com.brianna.jobsearch.exception.ResourceNotFoundException;
 import com.brianna.jobsearch.model.CompanyContact;
 import com.brianna.jobsearch.model.CompanyContactRelationship;
 import com.brianna.jobsearch.repository.CompanyManagementRepository;
@@ -322,7 +323,7 @@ public class CompanyManagementService {
     private CompanyGroup requireGroup(String groupKey) {
         CompanyGroup group = groupsByKey().get(groupKey);
         if (group == null) {
-            throw new IllegalArgumentException("That company group changed or no longer exists. Reload and try again.");
+            throw new ResourceNotFoundException("That company group changed or no longer exists. Reload and try again.");
         }
         return group;
     }

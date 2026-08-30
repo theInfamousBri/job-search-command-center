@@ -1,5 +1,6 @@
 package com.brianna.jobsearch.service;
 
+import com.brianna.jobsearch.exception.ResourceNotFoundException;
 import com.brianna.jobsearch.model.PrepItem;
 import com.brianna.jobsearch.model.PrepItemType;
 import com.brianna.jobsearch.repository.PrepItemRepository;
@@ -22,7 +23,7 @@ public class PrepService {
 
     public PrepItem get(long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Prep item not found: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Prep item not found: " + id));
     }
 
     public List<PrepItem> forApplication(long applicationId) {

@@ -1,5 +1,6 @@
 package com.brianna.jobsearch.service;
 
+import com.brianna.jobsearch.exception.ResourceNotFoundException;
 import com.brianna.jobsearch.model.ApplicationAttachment;
 import com.brianna.jobsearch.model.ApplicationAttachmentType;
 import com.brianna.jobsearch.repository.ApplicationAttachmentRepository;
@@ -57,17 +58,17 @@ public class ApplicationAttachmentService {
 
     public ApplicationAttachment metadata(long applicationId, long attachmentId) {
         return repository.findMetadata(applicationId, attachmentId)
-                .orElseThrow(() -> new IllegalArgumentException("Attachment not found: " + attachmentId));
+                .orElseThrow(() -> new ResourceNotFoundException("Attachment not found: " + attachmentId));
     }
 
     public ApplicationAttachmentRepository.AttachmentContent download(long applicationId, long attachmentId) {
         return repository.findContent(applicationId, attachmentId)
-                .orElseThrow(() -> new IllegalArgumentException("Attachment not found: " + attachmentId));
+                .orElseThrow(() -> new ResourceNotFoundException("Attachment not found: " + attachmentId));
     }
 
     public void delete(long applicationId, long attachmentId) {
         if (repository.delete(applicationId, attachmentId) == 0) {
-            throw new IllegalArgumentException("Attachment not found: " + attachmentId);
+            throw new ResourceNotFoundException("Attachment not found: " + attachmentId);
         }
     }
 

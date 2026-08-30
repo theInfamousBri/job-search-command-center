@@ -5,7 +5,7 @@
 
 **A local-first command center for applications, interview prep, follow-ups, calendar events, imports, and job-search analytics.**
 
-Version **1.3.0**
+Development version **1.4.0-SNAPSHOT** · Latest release **v1.3.0**
 </div>
 
 ---
@@ -610,36 +610,56 @@ The generated dataset includes:
 
 Because the demo profile uses a separate database and port, it is safe to use for README screenshots without exposing the contents of your personal job search.
 
-### Maven command line
+### Maven Wrapper / command line
 
-If Maven is installed globally:
+The repository includes a Maven Wrapper pinned to Maven 3.9.16, so a separate global Maven installation is not required. The first wrapper run downloads the pinned Maven distribution into the user's Maven cache.
 
-```bash
-mvn spring-boot:run
-```
-
-Run the sanitized demo profile with:
+On macOS / Linux:
 
 ```bash
-mvn spring-boot:run -Dspring-boot.run.profiles=demo
+./mvnw spring-boot:run
 ```
 
-The private app opens on port `8080`; the demo opens on port `8081`.
+On Windows:
 
-To run tests:
+```powershell
+.\mvnw.cmd spring-boot:run
+```
+
+Run the sanitized demo profile by adding `-Dspring-boot.run.profiles=demo`. The private app opens on port `8080`; the demo opens on port `8081`.
+
+Run the full verification build with:
 
 ```bash
-mvn test
+./mvnw clean verify
 ```
 
-To create a packaged JAR:
+`verify` runs the automated test suite and generates a JaCoCo HTML coverage report at:
+
+```text
+target/site/jacoco/index.html
+```
+
+To create and run the current development JAR:
 
 ```bash
-mvn clean package
-java -jar target/job-search-dashboard-1.3.0.jar
+./mvnw clean package
+java -jar target/job-search-dashboard-1.4.0-SNAPSHOT.jar
 ```
 
-> The repository does not currently include the Maven Wrapper (`mvnw` / `mvnw.cmd`). Adding it is tracked in `NEXT-STEPS.md`.
+A global Maven installation still works, but the wrapper is the preferred development and CI path so local builds and GitHub Actions use the same Maven version.
+
+## Build quality and CI
+
+Version 1.4 starts with an engineering-safety baseline before the next product features:
+
+- Maven Wrapper for reproducible local and CI builds
+- JaCoCo coverage reporting during `verify`
+- GitHub Actions on every push and pull request using Java 21 / Eclipse Temurin
+- regression tests around application lifecycle behavior, attachment safety, and database migrations
+- branded 404 / 500 pages instead of the default Spring error surface
+
+Coverage is initially informational rather than a hard percentage gate. The goal is to increase meaningful protection around user-data behavior before enforcing a numeric threshold.
 
 ## First-use workflow
 
@@ -668,7 +688,7 @@ spring.thymeleaf.cache=false
 If a change still appears stale:
 
 1. stop the application
-2. run Maven `clean` and `package` from IntelliJ's Maven tool window
+2. run `./mvnw clean package` (or the equivalent goals from IntelliJ's Maven tool window)
 3. restart
 4. hard-refresh the browser (`Ctrl+Shift+R` on Windows)
 
@@ -753,6 +773,6 @@ The taxonomy is intentionally broad: role families describe the kind of engineer
 
 ## Version
 
-Current release: **1.3.0**
+Current release: **1.3.0** · Active development: **1.4.0-SNAPSHOT**
 
 Version 1.3.0 builds on v1.2 search-strategy analytics with Data Quality, structured career taxonomy, bulk normalization workflows, centralized company organization/branding, company-level people tracking, and exact application-file archiving. Career Lane analytics use the normalized Role Family field; existing free-form Career Lane tags remain preserved as source context even after bulk mapping.

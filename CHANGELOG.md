@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.4.0 (in progress)
+
+### Engineering foundation
+
+- Starts the v1.4 development line at `1.4.0-SNAPSHOT`.
+- Adds Maven Wrapper launchers pinned to Maven 3.9.16 so local development and CI do not depend on a globally installed Maven version.
+- Adds JaCoCo 0.8.15 coverage reporting during Maven `verify`; coverage is informational in this first chunk rather than enforced as a percentage gate.
+- Adds a GitHub Actions CI workflow that checks out the repository, sets up Eclipse Temurin Java 21, and runs `./mvnw clean verify` on pushes and pull requests.
+- Adds branded 404 and 500 pages and disables the default Whitelabel/error-detail browser surface.
+- Missing applications, timeline events, prep items, company groups, and application attachments now surface as true HTTP 404 resources where they are not already handled as form actions.
+- Adds regression tests for application lifecycle synchronization, child-row deletion order, attachment validation/scoping, and resource-not-found behavior.
+- Adds a migration test fixture based on the released v1.2 schema to verify v1.3+ migrations are idempotent and do not fake application activity by changing `updated_at`.
+
 ## 1.3.0
 
 Data quality, organization, company workspaces, people, and application materials.

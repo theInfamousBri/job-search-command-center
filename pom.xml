@@ -11,12 +11,13 @@
 
     <groupId>com.brianna</groupId>
     <artifactId>job-search-dashboard</artifactId>
-    <version>1.3.0</version>
+    <version>1.4.0-SNAPSHOT</version>
     <name>Job Search Command Center</name>
     <description>Local-first job search tracker, interview-prep library, calendar, and analytics dashboard</description>
 
     <properties>
         <java.version>21</java.version>
+        <jacoco.version>0.8.15</jacoco.version>
     </properties>
 
     <dependencies>
@@ -66,6 +67,26 @@
                 <configuration>
                     <mainClass>com.brianna.jobsearch.JobSearchDashboardApplication</mainClass>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>coverage-report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

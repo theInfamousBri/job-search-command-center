@@ -1,5 +1,6 @@
 package com.brianna.jobsearch.service;
 
+import com.brianna.jobsearch.exception.ResourceNotFoundException;
 import com.brianna.jobsearch.model.ApplicationEvent;
 import com.brianna.jobsearch.model.ApplicationEventType;
 import com.brianna.jobsearch.model.ApplicationPage;
@@ -61,7 +62,7 @@ public class JobApplicationService {
 
     public JobApplication get(long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Application not found: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Application not found: " + id));
     }
 
     public List<ApplicationEvent> eventsForApplication(long applicationId) {
@@ -83,7 +84,7 @@ public class JobApplicationService {
     public ApplicationEvent getEvent(long applicationId, long eventId) {
         get(applicationId);
         return eventRepository.findById(eventId, applicationId)
-                .orElseThrow(() -> new IllegalArgumentException("Timeline event not found: " + eventId));
+                .orElseThrow(() -> new ResourceNotFoundException("Timeline event not found: " + eventId));
     }
 
     @Transactional

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Something went wrong · Job Search</title>
+    <link rel="stylesheet" th:href="@{/css/app.css?v=1.4.0-dev}" href="/css/app.css?v=1.4.0-dev">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
+</head>
+<body class="error-page">
+<main class="error-shell">
+    <img class="error-logo" th:src="@{/images/job-search-logo.svg}" src="/images/job-search-logo.svg" alt="">
+    <p class="eyebrow">500 · UNEXPECTED DETOUR</p>
+    <h1>Something went off trail.</h1>
+    <p class="error-copy">The app hit an unexpected error. Your local data has not been intentionally changed by this error page.</p>
+    <div class="error-actions">
+        <a class="button button-primary" th:href="@{/}" href="/">Back to Dashboard</a>
+        <button class="button button-secondary" type="button" onclick="location.reload()">Try again</button>
+    </div>
+</main>
+</body>
+</html>

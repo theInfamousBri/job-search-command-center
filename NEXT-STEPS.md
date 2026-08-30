@@ -1,6 +1,6 @@
 # Job Search Command Center — Next Steps
 
-This file tracks the **post-1.3 roadmap** while preserving the completed v1.3 scope for context as the local-first command center grows.
+This file tracks the **v1.4 roadmap and later ideas** while preserving completed v1.3 scope for context as the local-first command center grows.
 
 The order below is directional rather than a promise. Features should continue to be added when they solve a real workflow problem rather than just making the project larger.
 
@@ -26,6 +26,34 @@ The order below is directional rather than a promise. Features should continue t
 - [x] Generalized application attachments stored locally, beginning with original cover-letter files and exact resume versions.
 
 The v1.3 scope is complete. New work starts with the post-1.3 priorities below rather than expanding the release further.
+
+
+## v1.4.0 — Workflow Intelligence & Personalization (in progress)
+
+The working theme for v1.4 is making the command center faster, more connected, more informative, and safer to evolve.
+
+### Chunk 0 — Engineering baseline
+
+- [x] Move development to `1.4.0-SNAPSHOT`.
+- [x] Add Maven Wrapper launchers and pin the Maven distribution.
+- [x] Add JaCoCo coverage reporting without an arbitrary initial coverage gate.
+- [x] Add GitHub Actions CI for Java 21 + Maven verification.
+- [x] Add branded 404 / 500 pages and true not-found handling for missing core resources.
+- [x] Expand regression tests around application lifecycle behavior and attachments.
+- [x] Add a real older-schema migration fixture and migration/idempotency tests.
+
+### Planned product chunks
+
+1. **Shared Materials / Resume Library** — store reusable resume/material versions once, SHA-256 deduplicate uploads, and link one material to many applications while keeping unique per-application attachments available.
+2. **People ↔ Applications** — many-to-many linking between company contacts and applications, with a path toward lifecycle events referencing saved people.
+3. **Application Detail navigation** — Overview / Timeline / Prep / People / Materials organization without turning the server-rendered app into a SPA.
+4. **Global Search / `Ctrl/Cmd + K`** — grouped search across applications, companies, people, prep, descriptions, and other useful local content.
+5. **Compensation context** — restrained salary-range visualization using comparable tracked roles, medians/quartiles, and sample-size fallbacks rather than noisy global min/max comparisons.
+6. **Smarter Needs Attention** — context-aware interview/follow-up/prep cues with useful direct actions.
+7. **Dark mode + accessibility** — System / Light / Dark theming plus contrast, keyboard, focus-state, semantic-label, and form-error polish.
+8. **Backup / Export + acceptance** — full SQLite backup, useful exports, database-size visibility, and final v1.4 release cleanup.
+
+Engineering coverage should continue to grow alongside these chunks, especially for new migrations and relationships that can affect stored user data.
 
 ## Near-term product priorities
 
@@ -367,7 +395,7 @@ Audit:
 
 ### Maven Wrapper
 
-Add official Maven Wrapper files:
+Implemented as the v1.4 engineering baseline. The repository now includes wrapper launchers and pinned wrapper properties:
 
 - `mvnw`
 - `mvnw.cmd`
@@ -377,7 +405,7 @@ This will make command-line setup more reliable on machines without Maven instal
 
 ### Automated tests
 
-Prioritize tests around behavior that protects user data:
+Expanded in the v1.4 engineering baseline; continue prioritizing behavior that protects user data:
 
 - application CRUD
 - stage-change lifecycle creation
@@ -389,7 +417,7 @@ Prioritize tests around behavior that protects user data:
 
 ### GitHub Actions
 
-Add CI for:
+Implemented as the v1.4 engineering baseline for:
 
 - Java 21
 - Maven build
@@ -406,7 +434,7 @@ The lightweight startup migrations are appropriate for the current local app. If
 
 ### Error pages
 
-Replace the Spring Whitelabel fallback with branded:
+Implemented as the v1.4 engineering baseline with branded:
 
 - 404
 - 500
@@ -440,8 +468,8 @@ Before or shortly after publishing:
 - [ ] Confirm `jobsearch.db` and sidecar files are ignored and untracked.
 - [ ] Choose a repository license.
 - [ ] Capture sanitized screenshots from the built-in demo profile and add them to the README.
-- [ ] Add Maven Wrapper.
-- [ ] Add a basic CI workflow.
+- [x] Add Maven Wrapper.
+- [x] Add a basic CI workflow.
 - [ ] Add a first `v1.0.0` Git tag / GitHub Release.
 - [ ] Add repository topics such as `spring-boot`, `java`, `sqlite`, `thymeleaf`, `job-search`.
 - [ ] Decide whether contributions / issues are welcome and document expectations if needed.

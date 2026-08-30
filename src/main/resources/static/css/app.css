@@ -4987,3 +4987,38 @@ body { color: var(--text); }
     .company-notes-form-polished .company-notes-actions { align-items: stretch; flex-direction: column; }
     .company-notes-form-polished .company-notes-actions .button { width: 100%; }
 }
+
+
+/* Branded error states */
+.error-page {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 32px;
+}
+
+.error-shell {
+    width: min(620px, 100%);
+    padding: 54px;
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    text-align: center;
+}
+
+.error-logo {
+    width: 72px;
+    height: 72px;
+    margin-bottom: 24px;
+}
+
+.error-shell .eyebrow { margin-bottom: 12px; }
+.error-shell h1 { margin-bottom: 14px; font-size: clamp(28px, 5vw, 40px); }
+.error-copy { max-width: 500px; margin: 0 auto 28px; color: var(--muted); line-height: 1.65; }
+.error-actions { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+
+@media (max-width: 640px) {
+    .error-page { padding: 18px; }
+    .error-shell { padding: 38px 24px; }
+}
