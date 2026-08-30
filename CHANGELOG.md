@@ -1,8 +1,8 @@
 # Changelog
 
-## 1.3.0 (in progress)
+## 1.3.0
 
-Data quality and organization foundation.
+Data quality, organization, company workspaces, people, and application materials.
 
 ### Added
 
@@ -42,7 +42,7 @@ Data quality and organization foundation.
 - v1.2 Career Lane analytics now use the normalized role-family field rather than the older free-form Career Lane string.
 - The Analytics `Needs more tagging` cue now links directly to applications missing a normalized Career Lane.
 - Existing free-form Career Lane values are preserved as an **Original career tag** and shown during editing instead of being discarded.
-- All application pages now cache-bust `app.css` with the v1.3 development version so UI changes are not hidden by a stale browser stylesheet.
+- All pages now share a v1.3.0 release cache key for `app.css` so the final UI is not hidden by an older development stylesheet cached by the browser.
 - Normalization updates classification fields directly without changing `updated_at`, applied dates, or lifecycle events, so cleanup does not make historical applications look newly active.
 - Demo data now keeps richer legacy Career Lane strings alongside normalized fields so the Normalization Center can be exercised safely.
 - Company branding/name cleanup updates intentionally preserve application `updated_at`, so organization work does not make historical applications look newly active.
@@ -51,11 +51,12 @@ Data quality and organization foundation.
 ### Data / migration
 
 - Adds nullable `role_family`, `industry_domain`, and `career_focus` columns to `job_applications`.
-- Existing `career_lane` data is intentionally left untouched so the upcoming normalization workflow can map it without losing detail.
+- Existing `career_lane` data is intentionally left untouched so the Normalization Center can map it without losing detail.
 - New indexes are created only after startup migration adds the new columns, keeping upgrades from older SQLite databases backward-safe.
 - Adds a `company_notes` table keyed by normalized company identity for reusable company-level notes.
 - Adds a `company_contacts` table for company-level people records and optional profile-photo BLOBs.
 - Adds an `application_attachments` table with application linkage, material type, original filename/MIME metadata, and locally stored BLOB content.
+- Release cleanup refreshes README/schema documentation and removes stale roadmap/limitations text now superseded by company People and attachments.
 
 ## 1.2.0
 

@@ -1,12 +1,12 @@
 # Job Search Command Center — Next Steps
 
-This file tracks the **1.3.0 in-progress roadmap** plus later ideas intentionally deferred while the local-first command center grows.
+This file tracks the **post-1.3 roadmap** while preserving the completed v1.3 scope for context as the local-first command center grows.
 
 The order below is directional rather than a promise. Features should continue to be added when they solve a real workflow problem rather than just making the project larger.
 
-## v1.3.0 — Data Quality & Organization
+## v1.3.0 — Data Quality & Organization (completed)
 
-### Foundation completed in the first v1.3 chunk
+### Completed foundation
 
 - [x] Data Quality dashboard with field coverage and missing counts.
 - [x] Click-through from missing counts to filtered Applications.
@@ -15,7 +15,7 @@ The order below is directional rather than a promise. Features should continue t
 - [x] Point Career Lane analytics at the normalized role-family field.
 - [x] Expand Role Family and Industry / Domain enums against the historical Career Lane dataset before bulk normalization.
 
-### Remaining v1.3 work
+### Completed expansion
 
 - [x] Normalization Center for preserved Career Lane strings, Source labels, and Work Arrangements.
 - [x] Bulk cleanup / bulk assignment so historical taxonomy and label data can be normalized without editing applications one at a time.
@@ -23,9 +23,9 @@ The order below is directional rather than a promise. Features should continue t
 - [x] Company alias normalization and centralized Company Branding manager with company grouping, domain propagation, logo refresh/upload/remove, and initials fallback.
 - [x] Company detail pages with grouped application history, persistent company notes, and known-domain suggestions during application entry.
 - [x] Company workspace polish with a company-level people directory, contact CRUD, LinkedIn/email references, optional local profile photos, and preservation across company rename/merge.
-- [ ] Generalized application attachments stored locally, beginning with original cover-letter files and exact resume versions.
+- [x] Generalized application attachments stored locally, beginning with original cover-letter files and exact resume versions.
 
-The next implementation chunk should focus on **SQLite-backed application attachments**, beginning with original cover-letter files and exact resume versions.
+The v1.3 scope is complete. New work starts with the post-1.3 priorities below rather than expanding the release further.
 
 ## Near-term product priorities
 
@@ -39,7 +39,7 @@ The current top-bar search is application-focused. Expand it into one search sur
 - prep items
 - STAR stories
 - company research
-- contacts / people once added
+- company people / contacts
 
 Possible UX:
 
@@ -98,18 +98,19 @@ Google Calendar sync belongs later under integrations.
 
 ### Application attachments
 
-Version 1.1.2 archives cover-letter text and saved job descriptions directly on the application. A future generalized attachment model could add:
+Implemented in v1.3 with a reusable `application_attachments` table rather than one file column per material type. The application detail page can now keep:
 
 - the exact resume version submitted
 - original cover-letter PDF / DOCX files
-- portfolio or writing samples
-- other application-specific documents
+- portfolio, writing samples, or other application-specific documents
 
-Prefer a reusable attachment table or equivalent model rather than adding one file column per material type. Because the product is local-first, keeping modest attachments inside SQLite would make a database backup self-contained.
+Attachments are categorized as Resume / Cover letter / Other, stored as modest SQLite BLOBs, limited to 10 MB each, and downloaded with their original filename. Metadata lists intentionally avoid loading BLOB content until a file is downloaded so ordinary application-detail rendering stays lightweight.
+
+Possible later polish: attachment rename / notes, richer file-type icons, and bulk export if those become useful.
 
 ### Company pages
 
-Implemented in the v1.3 development line: company detail pages now surface grouped application history, reusable company notes, and the shared branding/identity controls. The directory is browse-first and paginated. Remaining expansion ideas:
+Implemented in v1.3: company detail pages now surface grouped application history, reusable company notes, and the shared branding/identity controls. The directory is browse-first and paginated. Remaining expansion ideas:
 
 - global People directory and application-to-person linking
 - richer structured company research beyond the current notes field
@@ -118,7 +119,7 @@ Implemented in the v1.3 development line: company detail pages now surface group
 
 ### Company branding management
 
-Implemented in the v1.3 development line: company-level tooling now builds on the v1.1.2 domain-based logo cache so branding does not have to be maintained one application at a time:
+Implemented in v1.3: company-level tooling now builds on the v1.1.2 domain-based logo cache so branding does not have to be maintained one application at a time:
 
 - propagate a company domain to every application with the same normalized company name
 - reuse the same cached logo automatically across those matching applications

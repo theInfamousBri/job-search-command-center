@@ -5,7 +5,7 @@
 
 **A local-first command center for applications, interview prep, follow-ups, calendar events, imports, and job-search analytics.**
 
-Version **1.3.0-SNAPSHOT**
+Version **1.3.0**
 </div>
 
 ---
@@ -80,7 +80,7 @@ For larger histories, the application list also supports:
 
 ### Company management
 
-The v1.3 development line adds a centralized **Companies** workspace so branding and company identity can be maintained once instead of application-by-application.
+Version 1.3 adds a centralized **Companies** workspace so branding and company identity can be maintained once instead of application-by-application.
 
 It can:
 
@@ -468,11 +468,13 @@ The main data tables are:
 | `job_applications` | one row per tracked role, including richer role metadata, application materials, and import source |
 | `company_logos` | locally cached company-logo image data keyed by normalized domain |
 | `company_notes` | reusable company-level notes keyed by normalized company identity |
+| `company_contacts` | company-level people records, including optional locally stored profile photos |
+| `application_attachments` | application-specific Resume / Cover letter / Other files stored as SQLite BLOBs |
 | `application_events` | lifecycle / calendar events |
 | `prep_items` | reusable and role-specific prep material |
 | `prep_item_links` | many-to-many links between reusable prep and applications |
 
-The schema is created from `src/main/resources/schema.sql`. A small startup migration runner handles columns introduced after the earliest project versions, including the richer v1.1 application fields and v1.1.2 company/material columns.
+The schema is created from `src/main/resources/schema.sql`. A small startup migration runner handles columns and tables introduced after the earliest project versions, including the richer v1.1 application fields, v1.1.2 company/material columns, and v1.3 taxonomy/company/people/attachment storage.
 
 ## Project structure
 
@@ -487,8 +489,14 @@ src/main/java/com/brianna/jobsearch/
 │   ├── CalendarController.java
 │   ├── DashboardController.java
 │   ├── JobApplicationController.java
+│   ├── CompanyManagementController.java
+│   ├── DataQualityController.java
+│   ├── NormalizationController.java
 │   └── PrepController.java
 ├── model/
+│   ├── ApplicationAttachment.java
+│   ├── ApplicationAttachmentType.java
+│   ├── CompanyContact.java
 │   └── importing/
 │       ├── ApplicationImportPreview.java
 │       ├── ApplicationImportResult.java
@@ -496,12 +504,16 @@ src/main/java/com/brianna/jobsearch/
 │       ├── DuplicateMatchType.java
 │       └── ImportDecision.java
 ├── repository/
+│   ├── ApplicationAttachmentRepository.java
+│   ├── CompanyManagementRepository.java
 │   ├── CompanyLogoRepository.java
 │   └── ...
 ├── service/
 │   ├── AnalyticsService.java
+│   ├── ApplicationAttachmentService.java
 │   ├── ApplicationImportService.java
 │   ├── CompanyLogoService.java
+│   ├── CompanyManagementService.java
 │   ├── JobApplicationService.java
 │   └── PrepService.java
 ├── JobSearchDashboardApplication.java
@@ -529,6 +541,8 @@ src/main/resources/
 └── schema.sql
 
 src/test/java/com/brianna/jobsearch/
+├── model/
+│   └── ApplicationAttachmentTest.java
 └── service/
     └── ApplicationImportServiceTest.java
 ```
@@ -591,6 +605,7 @@ The generated dataset includes:
 - recruiter outreach, assessments, interviews, follow-ups, final rounds, and an offer
 - past and upcoming calendar activity
 - multiple application sources for source-performance analytics
+- normalized career taxonomy plus synthetic company contacts for v1.3 organization workflows
 - reusable technical prep, STAR stories, company research, and review-due items
 
 Because the demo profile uses a separate database and port, it is safe to use for README screenshots without exposing the contents of your personal job search.
@@ -621,7 +636,7 @@ To create a packaged JAR:
 
 ```bash
 mvn clean package
-java -jar target/job-search-dashboard-1.3.0-SNAPSHOT.jar
+java -jar target/job-search-dashboard-1.3.0.jar
 ```
 
 > The repository does not currently include the Maven Wrapper (`mvnw` / `mvnw.cmd`). Adding it is tracked in `NEXT-STEPS.md`.
@@ -721,7 +736,7 @@ The application is intentionally a local, single-user application. It includes a
 - arbitrary spreadsheet column mapping
 - import-batch history / one-click import undo
 - export / backup UI
-- contacts / recruiter CRM
+- global People directory and direct person-to-application linking
 - dark mode
 
 Those and other ideas are tracked in [`NEXT-STEPS.md`](NEXT-STEPS.md).
@@ -730,14 +745,14 @@ Those and other ideas are tracked in [`NEXT-STEPS.md`](NEXT-STEPS.md).
 
 See [`NEXT-STEPS.md`](NEXT-STEPS.md) for the prioritized product, analytics, automation, UX, and engineering backlog.
 
-## v1.3 development preview
+## What’s new in v1.3
 
-The v1.3 development line now includes the Data Quality workspace, structured career taxonomy, a review-before-write Normalization Center, and centralized Company Management. Existing free-form Career Lane values are preserved while bulk mapping can assign a broad Role Family, Industry / Domain, and optional Focus without changing lifecycle timestamps. Source and Work Arrangement labels can also be normalized in bulk, Career Lane analytics continue to use the normalized Role Family field, and company domains/logos can now be maintained once across grouped applications. Company pages have also become working spaces with grouped application history, reusable company notes, and a company-level people directory with optional locally stored profile photos.
+Version 1.3 includes the Data Quality workspace, structured career taxonomy, a review-before-write Normalization Center, centralized Company Management, company-level People, and SQLite-backed application attachments. Existing free-form Career Lane values are preserved while bulk mapping can assign a broad Role Family, Industry / Domain, and optional Focus without changing lifecycle timestamps. Source and Work Arrangement labels can also be normalized in bulk, Career Lane analytics continue to use the normalized Role Family field, and company domains/logos can now be maintained once across grouped applications. Company pages have also become working spaces with grouped application history, reusable company notes, and a company-level people directory with optional locally stored profile photos.
 
-The taxonomy is intentionally broad: role families describe the kind of engineering work, industry/domain captures business context, and detailed concepts such as AI, distributed systems, fraud, payments modernization, IAM, or recommendation systems belong in Focus. The enum set was expanded against the historical tracker before bulk normalization begins.
+The taxonomy is intentionally broad: role families describe the kind of engineering work, industry/domain captures business context, and detailed concepts such as AI, distributed systems, fraud, payments modernization, IAM, or recommendation systems belong in Focus. The enum set was expanded against the historical tracker before bulk normalization, while the preserved original tags remain available as source context.
 
 ## Version
 
-Current development version: **1.3.0-SNAPSHOT**
+Current release: **1.3.0**
 
-The 1.3.0 development line builds on v1.2 search-strategy analytics with Data Quality, structured career taxonomy, bulk normalization workflows, centralized company organization/branding, and company-level people tracking. Career Lane analytics use the normalized Role Family field; existing free-form Career Lane tags remain preserved as source context even after bulk mapping.
+Version 1.3.0 builds on v1.2 search-strategy analytics with Data Quality, structured career taxonomy, bulk normalization workflows, centralized company organization/branding, company-level people tracking, and exact application-file archiving. Career Lane analytics use the normalized Role Family field; existing free-form Career Lane tags remain preserved as source context even after bulk mapping.
