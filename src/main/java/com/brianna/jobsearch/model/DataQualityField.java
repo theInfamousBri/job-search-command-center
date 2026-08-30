@@ -1,7 +1,7 @@
 package com.brianna.jobsearch.model;
 
 public enum DataQualityField {
-    ROLE_FAMILY("Career Lane", "Broad role family used for strategy analytics."),
+    ROLE_FAMILY("Role Family", "Broad role family used for strategy analytics."),
     INDUSTRY_DOMAIN("Industry / Domain", "The business domain the role belongs to."),
     SOURCE("Source", "Where the application originated."),
     WORK_ARRANGEMENT("Work Arrangement", "Remote, hybrid, on-site, or another arrangement."),

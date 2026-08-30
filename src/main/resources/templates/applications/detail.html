@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="${jobApplication.company + ' · ' + jobApplication.role}">Application · Job Search</title>
-    <link rel="stylesheet" th:href="@{/css/app.css?v=1.4.1-materials-polish}">
+    <link rel="stylesheet" th:href="@{/css/app.css?v=1.4.3-detail-polish}">
     <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
 </head>
 <body>
@@ -95,7 +95,151 @@
             <a class="text-link" th:href="@{/applications/{id}/edit(id=${jobApplication.id})}">Edit →</a>
         </section>
 
-        <section class="panel lifecycle-panel">
+        <nav class="application-section-nav" aria-label="Application sections">
+            <a href="#application-overview">Overview</a>
+            <a href="#application-timeline">Timeline <span th:text="${#lists.size(events)}">2</span></a>
+            <a href="#interview-prep">Prep <span th:text="${#lists.size(applicationPrepItems)}">3</span></a>
+            <a href="#application-materials">Materials</a>
+        </nav>
+
+        <div class="application-overview-grid" id="application-overview">
+            <div class="application-overview-left">
+                <section class="panel application-notes-panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">WORKING NOTES</p>
+                            <h2>Notes</h2>
+                        </div>
+                        <a class="text-link" th:href="@{/applications/{id}/edit(id=${jobApplication.id})}">Edit →</a>
+                    </div>
+    
+                    <div th:if="${jobApplication.notes == null or #strings.isEmpty(jobApplication.notes)}" class="empty-mini"><p>No notes yet.</p></div>
+                    <div th:if="${jobApplication.notes != null and !#strings.isEmpty(jobApplication.notes) and #strings.length(jobApplication.notes) <= 650}"
+                         class="prose" th:text="${jobApplication.notes}">Notes go here.</div>
+                    <details th:if="${jobApplication.notes != null and #strings.length(jobApplication.notes) > 650}"
+                             class="application-notes-expand">
+                        <summary>
+                            <span class="application-notes-preview" th:text="${jobApplication.notes}">Long notes preview...</span>
+                            <span class="application-notes-toggle application-notes-show">Show full notes ↓</span>
+                            <span class="application-notes-toggle application-notes-hide">Hide full notes ↑</span>
+                        </summary>
+                        <div class="prose application-notes-full" th:text="${jobApplication.notes}">Full notes go here.</div>
+                    </details>
+                </section>
+
+            <section class="panel application-people-panel application-people-compact" id="application-people">
+                <div class="panel-header application-people-header compact-panel-header">
+                    <div>
+                        <p class="eyebrow">PEOPLE</p>
+                        <h2>People</h2>
+                    </div>
+                    <div class="application-people-header-actions">
+                        <span class="event-count"><strong th:text="${#lists.size(linkedPeople)}">2</strong> linked</span>
+                        <a class="text-link"
+                           th:if="${companyGroupKey != null && !#strings.isEmpty(companyGroupKey)}"
+                           th:href="@{/companies/{key}(key=${companyGroupKey})} + '#company-people'">Company people →</a>
+                    </div>
+                </div>
+    
+                <div th:if="${peopleSuccess != null}" class="inline-alert inline-alert-success" th:text="${peopleSuccess}">Person linked.</div>
+                <div th:if="${peopleError != null}" class="inline-alert inline-alert-error" th:text="${peopleError}">Could not link person.</div>
+    
+                <div th:if="${#lists.isEmpty(linkedPeople)}" class="application-people-empty application-people-empty-compact">
+                    <span class="application-people-empty-icon" aria-hidden="true">◎</span>
+                    <div>
+                        <strong>No people linked yet</strong>
+                        <p th:if="${!#lists.isEmpty(linkablePeople)}">Choose someone already saved for this company below.</p>
+                        <p th:if="${#lists.isEmpty(linkablePeople)}">Add someone in the company workspace first.</p>
+                    </div>
+                    <a class="text-link application-people-empty-action"
+                       th:if="${#lists.isEmpty(linkablePeople) && companyGroupKey != null && !#strings.isEmpty(companyGroupKey)}"
+                       th:href="@{/companies/{key}(key=${companyGroupKey})} + '#company-people'">Add person →</a>
+                </div>
+    
+                <div class="application-people-list" th:unless="${#lists.isEmpty(linkedPeople)}">
+                    <article class="application-person-row" th:each="person : ${linkedPeople}">
+                        <span class="company-contact-avatar application-person-avatar application-person-avatar-compact">
+                            <strong th:text="${person.initials()}">AS</strong>
+                            <img th:if="${person.hasPhoto}"
+                                 th:src="@{/companies/people/{id}/photo(id=${person.id})}"
+                                 th:alt="|${person.name} profile photo|"
+                                 onerror="this.style.display='none'">
+                        </span>
+                        <div class="application-person-copy application-person-copy-compact">
+                            <div class="application-person-name-row">
+                                <strong th:text="${person.name}">Alicia Smith</strong>
+                                <span class="company-contact-type" th:text="${person.relationship.displayName}">Recruiter</span>
+                            </div>
+                            <span class="application-person-role" th:if="${person.role != null}" th:text="${person.role}">Technical Recruiter</span>
+                            <div class="application-person-links" th:if="${person.email != null || person.linkedinUrl != null}">
+                                <a th:if="${person.email != null}" th:href="|mailto:${person.email}|" th:text="${person.email}">name@company.com</a>
+                                <a th:if="${person.linkedinUrl != null}" th:href="${person.linkedinUrl}" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a>
+                            </div>
+                        </div>
+                        <form th:action="@{/applications/{applicationId}/people/{contactId}/unlink(applicationId=${jobApplication.id},contactId=${person.id})}"
+                              method="post">
+                            <button class="text-button muted-action application-person-unlink" type="submit">Unlink</button>
+                        </form>
+                    </article>
+                </div>
+    
+                <details class="application-people-linker application-people-linker-compact" th:if="${!#lists.isEmpty(linkablePeople)}">
+                    <summary>
+                        <span class="composer-icon">＋</span>
+                        <span>
+                            <strong>Link person</strong>
+                            <small>Choose someone already saved for this company.</small>
+                        </span>
+                        <span class="composer-chevron" aria-hidden="true">⌄</span>
+                    </summary>
+                    <form class="application-people-link-form" method="post"
+                          th:action="@{/applications/{applicationId}/people/link(applicationId=${jobApplication.id})}">
+                        <select name="contactId" aria-label="Person to link">
+                            <option th:each="person : ${linkablePeople}"
+                                    th:value="${person.id}"
+                                    th:text="${person.name + ' · ' + person.relationship.displayName + (person.role == null ? '' : ' · ' + person.role)}">Alicia Smith · Recruiter</option>
+                        </select>
+                        <button class="button button-secondary button-small" type="submit">Link</button>
+                    </form>
+                </details>
+    
+                <div class="application-people-all-linked application-people-all-linked-compact"
+                     th:if="${#lists.isEmpty(linkablePeople) && !#lists.isEmpty(linkedPeople)}">
+                    <span>All saved company people are linked.</span>
+                    <a class="text-link"
+                       th:if="${companyGroupKey != null && !#strings.isEmpty(companyGroupKey)}"
+                       th:href="@{/companies/{key}(key=${companyGroupKey})} + '#company-people'">Add person →</a>
+                </div>
+            </section>
+            </div>
+
+            <section class="panel application-info-panel role-details-panel">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">ROLE</p>
+                        <h2>Role details</h2>
+                    </div>
+                </div>
+
+                <dl class="info-list role-details-list">
+                    <div><dt>Work arrangement</dt><dd th:text="${jobApplication.workArrangement == null ? '—' : jobApplication.workArrangement}">Hybrid</dd></div>
+                    <div><dt>Experience required</dt><dd th:text="${jobApplication.yearsExperienceRequired == null ? '—' : jobApplication.yearsExperienceRequired}">3+</dd></div>
+                    <div><dt>Role family</dt><dd th:text="${jobApplication.roleFamily == null ? '—' : jobApplication.roleFamily.displayName}">Backend / Platform</dd></div>
+                    <div><dt>Industry / domain</dt><dd th:text="${jobApplication.industryDomain == null ? '—' : jobApplication.industryDomain.displayName}">Fintech &amp; Payments</dd></div>
+                </dl>
+
+                <div class="role-details-focus" th:if="${jobApplication.careerFocus != null and !#strings.isEmpty(jobApplication.careerFocus)}">
+                    <span>Focus</span>
+                    <strong th:text="${jobApplication.careerFocus}">Distributed systems</strong>
+                </div>
+
+                <footer class="role-details-footer">
+                    <span th:text="|Updated ${jobApplication.updatedDateTimeDisplay}|"></span>
+                </footer>
+            </section>
+        </div>
+
+        <section class="panel lifecycle-panel" id="application-timeline">
             <div class="panel-header lifecycle-header">
                 <div>
                     <p class="eyebrow">LIFECYCLE</p>
@@ -322,56 +466,8 @@
             </details>
         </section>
 
-        <div class="detail-grid">
-            <section class="panel">
-                <div class="panel-header">
-                    <div>
-                        <p class="eyebrow">WORKING NOTES</p>
-                        <h2>Notes</h2>
-                    </div>
-                    <a class="text-link" th:href="@{/applications/{id}/edit(id=${jobApplication.id})}">Edit →</a>
-                </div>
 
-                <div th:if="${jobApplication.notes == null}" class="empty-mini"><p>No notes yet.</p></div>
-                <div th:unless="${jobApplication.notes == null}" class="prose" th:text="${jobApplication.notes}">Notes go here.</div>
-            </section>
-
-            <section class="panel">
-                <div class="panel-header">
-                    <div>
-                        <p class="eyebrow">ACTIVITY</p>
-                        <h2>Application info</h2>
-                    </div>
-                </div>
-
-                <dl class="info-list">
-                    <div><dt>Company</dt><dd th:text="${jobApplication.company}">Northstar Labs</dd></div>
-                    <div><dt>Company domain</dt><dd th:text="${jobApplication.companyDomain == null ? '—' : jobApplication.companyDomain}">northstarlabs.com</dd></div>
-                    <div><dt>Role</dt><dd th:text="${jobApplication.role}">Senior Software Engineer</dd></div>
-                    <div><dt>Work arrangement</dt><dd th:text="${jobApplication.workArrangement == null ? '—' : jobApplication.workArrangement}">Hybrid</dd></div>
-                    <div><dt>Experience required</dt><dd th:text="${jobApplication.yearsExperienceRequired == null ? '—' : jobApplication.yearsExperienceRequired}">3+</dd></div>
-                    <div><dt>Career lane</dt><dd th:text="${jobApplication.roleFamily == null ? '—' : jobApplication.roleFamily.displayName}">Backend / Platform</dd></div>
-                    <div><dt>Industry / domain</dt><dd th:text="${jobApplication.industryDomain == null ? '—' : jobApplication.industryDomain.displayName}">Fintech &amp; Payments</dd></div>
-                    <div><dt>Focus</dt><dd th:text="${jobApplication.careerFocus == null ? '—' : jobApplication.careerFocus}">Distributed systems</dd></div>
-                    <div th:if="${jobApplication.careerLane != null and !#strings.isEmpty(jobApplication.careerLane)}"><dt>Original career tag</dt><dd th:text="${jobApplication.careerLane}">Backend / Payments</dd></div>
-                    <div><dt>Pipeline stage</dt><dd th:text="${jobApplication.status.displayName}">Technical Interview</dd></div>
-                    <div><dt>Current state</dt><dd th:text="${jobApplication.state.displayName}">Awaiting Feedback</dd></div>
-                    <div><dt>Last updated</dt><dd th:text="${jobApplication.updatedDateTimeDisplay}">Aug 26, 2026</dd></div>
-                    <div>
-                        <dt>Posting</dt>
-                        <dd>
-                            <a th:if="${jobApplication.jobUrl != null}"
-                               class="text-link"
-                               th:href="${jobApplication.jobUrl}"
-                               target="_blank"
-                               rel="noopener noreferrer">Open original ↗</a>
-                            <span th:if="${jobApplication.jobUrl == null}">—</span>
-                        </dd>
-                    </div>
-                </dl>
-            </section>
-
-            <section class="panel panel-full materials-panel" id="application-materials">
+            <section class="panel materials-panel" id="application-materials">
                 <div class="panel-header">
                     <div>
                         <p class="eyebrow">APPLICATION MATERIALS</p>
@@ -589,7 +685,6 @@
                     </details>
                 </div>
             </section>
-        </div>
 
         <details class="panel company-branding-panel" id="company-branding" th:attr="open=${logoSuccess != null or logoError != null} ? 'open' : null">
             <summary class="company-branding-summary">

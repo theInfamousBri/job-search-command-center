@@ -60,7 +60,7 @@ public class AnalyticsService {
                 true);
         PerformanceDimension careerLanePerformance = buildPerformanceDimension(
                 "career-lane",
-                "Career lane",
+                "Role family",
                 repository.careerLanePerformance(12),
                 applied,
                 responseRate,
@@ -85,7 +85,7 @@ public class AnalyticsService {
 
         List<StrategyInsight> strategyInsights = List.of(
                 buildStrategyInsight("PRIORITY SIGNAL", "Priority", priorityPerformance),
-                buildStrategyInsight("CAREER LANE", "Career lane", careerLanePerformance),
+                buildStrategyInsight("ROLE FAMILY", "Role family", careerLanePerformance),
                 buildStrategyInsight("WORK ARRANGEMENT", "Work arrangement", workArrangementPerformance),
                 buildStrategyInsight("SOURCE SIGNAL", "Source", sourcePerformance));
 

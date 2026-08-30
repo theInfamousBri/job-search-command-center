@@ -120,7 +120,7 @@
                     </label>
 
                     <label class="field">
-                        <span>Career lane / role family</span>
+                        <span>Role family</span>
                         <select th:field="*{roleFamily}">
                             <option value="">Not tagged</option>
                             <option th:each="family : ${roleFamilies}"
@@ -146,12 +146,9 @@
                         <small class="field-help">Use this for the details that are useful to remember but too specific to be an analytics category.</small>
                     </label>
 
-                    <input type="hidden" th:field="*{careerLane}">
-                    <div class="legacy-taxonomy-note field-full" th:if="${jobApplication.careerLane != null and !#strings.isEmpty(jobApplication.careerLane)}">
-                        <span>Original career tag</span>
-                        <strong th:text="${jobApplication.careerLane}">Backend / Payments Platform</strong>
-                        <small>Preserved from your existing tracker. We will use this later in the normalization workflow instead of throwing it away.</small>
-                    </div>
+                    <!-- Legacy careerLane is intentionally preserved on edits for backward compatibility,
+                         but retired from the normal application UI and never requested for new records. -->
+                    <input type="hidden" th:if="${editing and jobApplication.careerLane != null}" th:field="*{careerLane}">
 
                     <label class="field field-full">
                         <span>Job posting URL</span>

@@ -34,7 +34,7 @@ class DatabaseMigrationTest {
         Set<String> applicationColumns = columns(jdbc, "job_applications");
         assertThat(applicationColumns).contains("role_family", "industry_domain", "career_focus");
         assertThat(tableNames(jdbc)).contains(
-                "company_notes", "company_contacts", "application_attachments",
+                "company_notes", "company_contacts", "application_contact_links", "application_attachments",
                 "material_files", "application_material_links");
 
         Map<String, Object> migrated = jdbc.queryForMap("""

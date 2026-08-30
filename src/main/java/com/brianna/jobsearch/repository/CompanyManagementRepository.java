@@ -153,7 +153,9 @@ public class CompanyManagementRepository {
         return jdbcTemplate.query("""
                 SELECT id, company_key, name, role, relationship_type, email, linkedin_url, notes,
                        CASE WHEN photo_data IS NULL THEN 0 ELSE 1 END AS has_photo,
-                       created_at, updated_at
+                       created_at, updated_at,
+                       (SELECT COUNT(*) FROM application_contact_links acl WHERE acl.contact_id = company_contacts.id)
+                           AS linked_application_count
                 FROM company_contacts
                 WHERE company_key = ?
                 ORDER BY
@@ -178,7 +180,8 @@ public class CompanyManagementRepository {
                         rs.getString("notes"),
                         rs.getInt("has_photo") == 1,
                         LocalDateTime.parse(rs.getString("created_at")),
-                        LocalDateTime.parse(rs.getString("updated_at"))),
+                        LocalDateTime.parse(rs.getString("updated_at")),
+                        rs.getLong("linked_application_count")),
                 companyKey);
     }
 
@@ -186,7 +189,9 @@ public class CompanyManagementRepository {
         return jdbcTemplate.query("""
                 SELECT id, company_key, name, role, relationship_type, email, linkedin_url, notes,
                        CASE WHEN photo_data IS NULL THEN 0 ELSE 1 END AS has_photo,
-                       created_at, updated_at
+                       created_at, updated_at,
+                       (SELECT COUNT(*) FROM application_contact_links acl WHERE acl.contact_id = company_contacts.id)
+                           AS linked_application_count
                 FROM company_contacts
                 WHERE id = ?
                 """, (rs, rowNum) -> new CompanyContact(
@@ -200,7 +205,8 @@ public class CompanyManagementRepository {
                         rs.getString("notes"),
                         rs.getInt("has_photo") == 1,
                         LocalDateTime.parse(rs.getString("created_at")),
-                        LocalDateTime.parse(rs.getString("updated_at"))),
+                        LocalDateTime.parse(rs.getString("updated_at")),
+                        rs.getLong("linked_application_count")),
                 id).stream().findFirst().orElse(null);
     }
 
@@ -264,6 +270,7 @@ public class CompanyManagementRepository {
     }
 
     public int deleteContact(long id) {
+        jdbcTemplate.update("DELETE FROM application_contact_links WHERE contact_id = ?", id);
         return jdbcTemplate.update("DELETE FROM company_contacts WHERE id = ?", id);
     }
 

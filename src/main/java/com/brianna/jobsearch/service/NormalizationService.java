@@ -60,7 +60,7 @@ public class NormalizationService {
             throw new IllegalArgumentException("Select at least one original career tag to map.");
         }
         if (roleFamily == null && industryDomain == null && (focus == null || focus.isBlank())) {
-            throw new IllegalArgumentException("Choose a Career Lane, Industry / Domain, or Focus before applying the mapping.");
+            throw new IllegalArgumentException("Choose a Role Family, Industry / Domain, or Focus before applying the mapping.");
         }
         return repository.applyCareerMapping(legacyTags, roleFamily, industryDomain, focus, overwriteExisting);
     }

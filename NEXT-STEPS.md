@@ -45,8 +45,8 @@ The working theme for v1.4 is making the command center faster, more connected, 
 ### Product chunks
 
 1. **Shared Materials / Resume Library — completed** — reusable files are stored once, SHA-256 deduplicated, and linked many-to-many to applications. Existing v1.3 Resume attachments migrate into the library automatically while application-specific files remain separate.
-2. **People ↔ Applications** — many-to-many linking between company contacts and applications, with a path toward lifecycle events referencing saved people.
-3. **Application Detail navigation** — Overview / Timeline / Prep / People / Materials organization without turning the server-rendered app into a SPA.
+2. **People ↔ Applications — completed** — company-level contacts now link many-to-many to applications without duplication, with application-page linking/unlinking and safe relationship cleanup. Lifecycle events can reference saved people in a later chunk.
+3. **Application Detail navigation — completed** — the overview now prioritizes Notes, compact People, and Role Details; long notes collapse gracefully; legacy career-tag UI is retired; and Overview / Timeline / Prep / Materials jump navigation keeps the server-rendered page easy to scan.
 4. **Global Search / `Ctrl/Cmd + K`** — grouped search across applications, companies, people, prep, descriptions, and other useful local content.
 5. **Compensation context** — restrained salary-range visualization using comparable tracked roles, medians/quartiles, and sample-size fallbacks rather than noisy global min/max comparisons.
 6. **Smarter Needs Attention** — context-aware interview/follow-up/prep cues with useful direct actions.
@@ -92,23 +92,22 @@ v1.3 now stores reusable people records inside each company workspace for recrui
 
 - global People directory across all companies
 - first / last contact dates
-- direct links between people and specific applications
+- [x] direct links between people and specific applications
 - lifecycle events referencing a saved person instead of only free-form `contact_name` text
 - follow-up reminders and communication history
 
 LinkedIn URLs are saved only as references; the app should not depend on scraping LinkedIn profile pages or profile photos.
 
-### 4. Application detail tabs
+### 4. Application detail navigation
 
-Move the long application page toward the mockup-style layout:
+Completed for v1.4.3. The detail page now uses a compact one-page hierarchy:
 
-- Overview
+- Overview — Working Notes + compact People alongside Application Info
 - Timeline
-- Prep & Notes
-- Contacts
-- Files / Links
+- Prep
+- Materials
 
-Keep the information available on one page for fast navigation, but use tabs or anchors to reduce vertical scanning.
+A lightweight anchor bar provides fast jumps without hiding information behind SPA-style state. Role Details uses the normalized Role Family / Industry / Focus taxonomy, long notes expand inline when needed, and the legacy Original Career Tag is no longer part of normal application entry or detail views.
 
 ### 5. Calendar refinement
 

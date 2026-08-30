@@ -32,7 +32,7 @@
             <form class="application-filter-form" th:action="@{/applications}" method="get">
                 <input th:if="${filters.missing != null}" type="hidden" name="missing" th:value="${filters.missing.name()}">
                 <div class="data-quality-filter-banner" th:if="${filters.missing != null}">
-                    <span>Showing applications missing <strong th:text="${filters.missing.displayName}">Career Lane</strong></span>
+                    <span>Showing applications missing <strong th:text="${filters.missing.displayName}">Role Family</strong></span>
                     <a th:href="@{/data-quality}">Back to Data Quality →</a>
                 </div>
                 <div class="application-search-row">
@@ -101,9 +101,9 @@
                         </select>
                     </label>
                     <label>
-                        <span>Career lane</span>
+                        <span>Role family</span>
                         <select name="roleFamily" class="filter-control">
-                            <option value="">All career lanes</option>
+                            <option value="">All role families</option>
                             <option th:each="option : ${roleFamilies}"
                                     th:value="${option.name()}"
                                     th:text="${option.displayName}"

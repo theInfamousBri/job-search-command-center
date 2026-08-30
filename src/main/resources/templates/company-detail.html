@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="|${company.group.displayName} · Companies · Job Search|">Company · Job Search</title>
-    <link rel="stylesheet" th:href="@{/css/app.css?v=1.4.1-materials}">
+    <link rel="stylesheet" th:href="@{/css/app.css?v=1.4.2-people-links}">
     <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
 </head>
 <body>
@@ -101,7 +101,7 @@
                     </div>
                 </section>
 
-                <section class="panel company-workspace-panel company-people-panel">
+                <section class="panel company-workspace-panel company-people-panel" id="company-people">
                     <div class="panel-header company-section-heading company-people-heading">
                         <div>
                             <p class="eyebrow">PEOPLE</p>
@@ -195,6 +195,9 @@
                                         <a th:if="${person.linkedinUrl != null}" th:href="${person.linkedinUrl}" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a>
                                     </div>
                                     <p class="company-contact-note" th:if="${person.notes != null}" th:text="${person.notes}">Useful notes.</p>
+                                    <span class="company-contact-application-count"
+                                          th:if="${person.linkedApplicationCount > 0}"
+                                          th:text="|Linked to ${person.linkedApplicationCount} application${person.linkedApplicationCount == 1 ? '' : 's'}|">Linked to 2 applications</span>
                                 </div>
                                 <details class="company-contact-edit">
                                     <summary>Edit</summary>

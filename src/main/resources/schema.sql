@@ -71,6 +71,18 @@ CREATE INDEX IF NOT EXISTS idx_company_contacts_company_key
 CREATE INDEX IF NOT EXISTS idx_company_contacts_name
     ON company_contacts(name);
 
+CREATE TABLE IF NOT EXISTS application_contact_links (
+    application_id INTEGER NOT NULL,
+    contact_id INTEGER NOT NULL,
+    created_at TEXT NOT NULL,
+    PRIMARY KEY (application_id, contact_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_application_contact_links_application
+    ON application_contact_links(application_id);
+CREATE INDEX IF NOT EXISTS idx_application_contact_links_contact
+    ON application_contact_links(contact_id);
+
 
 
 CREATE TABLE IF NOT EXISTS material_files (

@@ -56,7 +56,7 @@
                     <div class="data-quality-card-top">
                         <div>
                             <span class="quality-status" th:text="${metric.strengthLabel}">Needs attention</span>
-                            <h3 th:text="${metric.label}">Career Lane</h3>
+                            <h3 th:text="${metric.label}">Role Family</h3>
                         </div>
                         <strong class="quality-rate" th:text="|${#numbers.formatDecimal(metric.coverageRate, 1, 0)}%|">10%</strong>
                     </div>
@@ -99,14 +99,14 @@
             <div class="taxonomy-foundation-copy">
                 <p class="eyebrow">CAREER TAXONOMY</p>
                 <h2>Broad categories first, specifics second</h2>
-                <p>v1.3 separates the old all-in-one Career Lane text into a broad role family, an industry/domain, and an optional focus. Existing detailed tags stay preserved while the Normalization Center maps them in bulk.</p>
+                <p>Role Family, Industry / Domain, and optional Focus are the active taxonomy. Older imported career tags remain available only to the legacy Normalization Center for compatibility.</p>
                 <div class="taxonomy-foundation-actions">
                     <a class="button button-primary" th:href="@{/data-quality/normalize}">Open Normalization Center →</a>
                 </div>
             </div>
             <div class="taxonomy-example">
                 <div>
-                    <span>Career lane</span>
+                    <span>Role family</span>
                     <strong>Backend / Platform</strong>
                 </div>
                 <div>

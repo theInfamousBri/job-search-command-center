@@ -62,18 +62,18 @@ Applications can store:
 - original job-posting URL
 - salary / compensation range
 - years of experience required
-- career lane
+- role family
 - applied date
 - next step / follow-up
 - cover-letter usage and archived cover-letter text
 - working notes
 - a saved copy of the job description
 
-The tracker supports text search across company, company domain, role, location, work arrangement, experience requirements, career lane, source, state, next step, archived cover-letter text, notes, and saved job descriptions.
+The tracker supports text search across company, company domain, role, location, work arrangement, experience requirements, role family, source, state, next step, archived cover-letter text, notes, and saved job descriptions.
 
 For larger histories, the application list also supports:
 
-- filters for stage, state, priority, work arrangement, source, career lane, and applied-date range
+- filters for stage, state, priority, work arrangement, source, role family, and applied-date range
 - sorting by recent update, oldest update, applied date, or company
 - 25 / 50 / 100-row page sizes
 - server-side pagination so large histories remain fast and scannable
@@ -99,8 +99,12 @@ It can:
 - preserve application `updated_at` while performing company cleanup
 - keep a company-level people directory for recruiters, hiring managers, interviewers, referrals, team members, and networking contacts
 - store contact email / LinkedIn references, notes, and an optional local profile photo with initials fallback
+- link one reusable company Person to multiple applications without duplicating the contact record
+- see how many tracked applications reference each Person
 
 Company-logo bytes remain stored locally in SQLite. Setting a domain or renaming a company from this workspace is treated as organization metadata rather than lifecycle activity. Company notes and people records are also local SQLite data and follow the normalized company identity when aliases are renamed or merged. Profile photos are optional and stored locally; LinkedIn URLs are references only and the app does not scrape LinkedIn profiles or photos.
+
+Application detail pages can link any Person already saved under that company. The relationship is many-to-many: a recruiter or interviewer is stored once at the company level and can be associated with several applications. Linking or unlinking a Person does not alter application activity timestamps.
 
 ### Application materials
 
@@ -334,7 +338,7 @@ Current metrics include:
 - average time from application to key pipeline stages
 - prep-library confidence and review health
 - visual response / interview performance by priority
-- visual response / interview performance by career lane
+- visual response / interview performance by role family
 - visual response / interview performance by work arrangement
 - visual response / interview performance by application source
 - percentage-point deltas against the overall search baseline
@@ -472,6 +476,7 @@ The main data tables are:
 | `company_logos` | locally cached company-logo image data keyed by normalized domain |
 | `company_notes` | reusable company-level notes keyed by normalized company identity |
 | `company_contacts` | company-level people records, including optional locally stored profile photos |
+| `application_contact_links` | many-to-many links between company People and applications |
 | `material_files` | reusable resume/material file BLOBs, deduplicated by SHA-256 |
 | `application_material_links` | many-to-many links between reusable materials and applications |
 | `application_attachments` | application-specific Cover letter / Other files stored as SQLite BLOBs |
@@ -479,7 +484,7 @@ The main data tables are:
 | `prep_items` | reusable and role-specific prep material |
 | `prep_item_links` | many-to-many links between reusable prep and applications |
 
-The schema is created from `src/main/resources/schema.sql`. A small startup migration runner handles columns and tables introduced after the earliest project versions, including the richer v1.1 application fields, v1.1.2 company/material columns, v1.3 taxonomy/company/people/attachment storage, and the v1.4 shared-material migration.
+The schema is created from `src/main/resources/schema.sql`. A small startup migration runner handles columns and tables introduced after the earliest project versions, including the richer v1.1 application fields, v1.1.2 company/material columns, v1.3 taxonomy/company/people/attachment storage, and the v1.4 shared-material and Person ↔ Application relationships.
 
 ## Project structure
 
@@ -513,6 +518,7 @@ src/main/java/com/brianna/jobsearch/
 │       └── ImportDecision.java
 ├── repository/
 │   ├── ApplicationAttachmentRepository.java
+│   ├── ApplicationContactRepository.java
 │   ├── MaterialRepository.java
 │   ├── CompanyManagementRepository.java
 │   ├── CompanyLogoRepository.java
@@ -520,6 +526,7 @@ src/main/java/com/brianna/jobsearch/
 ├── service/
 │   ├── AnalyticsService.java
 │   ├── ApplicationAttachmentService.java
+│   ├── ApplicationContactService.java
 │   ├── MaterialService.java
 │   ├── ApplicationImportService.java
 │   ├── CompanyLogoService.java
@@ -555,7 +562,11 @@ src/test/java/com/brianna/jobsearch/
 ├── config/
 │   └── DatabaseMigrationTest.java
 ├── model/
+├── controller/
+│   └── JobApplicationControllerTest.java
 ├── repository/
+│   ├── ApplicationContactRepositoryTest.java
+│   ├── CompanyManagementRepositoryTest.java
 │   └── MaterialRepositoryTest.java
 └── service/
     ├── MaterialServiceTest.java
@@ -783,9 +794,9 @@ See [`NEXT-STEPS.md`](NEXT-STEPS.md) for the prioritized product, analytics, aut
 
 ## What’s new in active v1.4 development
 
-The first v1.4 product chunk adds a **Materials Library** for reusable resume versions. A resume is now stored once in SQLite and linked to every application where it was submitted. SHA-256 duplicate detection prevents byte-identical files from being stored again, and the library shows how many application references reuse each physical file. Existing v1.3 Resume attachments migrate into this model automatically while cover letters and other application-specific files stay attached directly to their application.
+v1.4 now includes a **Materials Library** for reusable resume versions, direct People ↔ Application links, and a redesigned Application Detail overview. A resume is now stored once in SQLite and linked to every application where it was submitted. SHA-256 duplicate detection prevents byte-identical files from being stored again, and the library shows how many application references reuse each physical file. Existing v1.3 Resume attachments migrate into this model automatically while cover letters and other application-specific files stay attached directly to their application.
 
-The v1.4 engineering baseline also adds Maven Wrapper support, JaCoCo coverage reporting, GitHub Actions CI, branded 404/500 pages, and a growing set of data-safety regression/migration tests.
+The v1.4 engineering baseline also adds Maven Wrapper support, JaCoCo coverage reporting, GitHub Actions CI, branded 404/500 pages, and a growing set of data-safety regression/migration tests. The active application taxonomy is now consistently presented as Role Family / Industry / Focus; the old free-form `career_lane` value is retained only as legacy import/migration context.
 
 ## What’s new in v1.3
 

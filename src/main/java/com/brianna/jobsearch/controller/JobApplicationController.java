@@ -1,5 +1,6 @@
 package com.brianna.jobsearch.controller;
 
+import com.brianna.jobsearch.exception.ResourceNotFoundException;
 import com.brianna.jobsearch.model.ApplicationEvent;
 import com.brianna.jobsearch.model.ApplicationAttachmentType;
 import com.brianna.jobsearch.model.ApplicationEventType;
@@ -18,6 +19,7 @@ import com.brianna.jobsearch.model.importing.ApplicationImportResult;
 import com.brianna.jobsearch.model.importing.ImportDecision;
 import com.brianna.jobsearch.service.ApplicationAttachmentService;
 import com.brianna.jobsearch.service.ApplicationImportService;
+import com.brianna.jobsearch.service.ApplicationContactService;
 import com.brianna.jobsearch.service.CompanyLogoService;
 import com.brianna.jobsearch.service.CompanyManagementService;
 import com.brianna.jobsearch.service.JobApplicationService;
@@ -57,6 +59,7 @@ public class JobApplicationController {
     private final PrepService prepService;
     private final ApplicationImportService importService;
     private final ApplicationAttachmentService attachmentService;
+    private final ApplicationContactService applicationContactService;
     private final CompanyLogoService companyLogoService;
     private final CompanyManagementService companyManagementService;
     private final MaterialService materialService;
@@ -66,6 +69,7 @@ public class JobApplicationController {
             PrepService prepService,
             ApplicationImportService importService,
             ApplicationAttachmentService attachmentService,
+            ApplicationContactService applicationContactService,
             CompanyLogoService companyLogoService,
             CompanyManagementService companyManagementService,
             MaterialService materialService) {
@@ -73,6 +77,7 @@ public class JobApplicationController {
         this.prepService = prepService;
         this.importService = importService;
         this.attachmentService = attachmentService;
+        this.applicationContactService = applicationContactService;
         this.companyLogoService = companyLogoService;
         this.companyManagementService = companyManagementService;
         this.materialService = materialService;
@@ -312,6 +317,8 @@ public class JobApplicationController {
         model.addAttribute("attachmentTypes", List.of(ApplicationAttachmentType.COVER_LETTER, ApplicationAttachmentType.OTHER));
         model.addAttribute("sharedMaterials", materialService.forApplication(id));
         model.addAttribute("linkableMaterials", materialService.linkableForApplication(id));
+        model.addAttribute("linkedPeople", applicationContactService.forApplication(id));
+        model.addAttribute("linkablePeople", applicationContactService.linkableForApplication(id));
 
         if (editEvent != null) {
             model.addAttribute("eventForm", service.getEvent(id, editEvent));
@@ -324,6 +331,54 @@ public class JobApplicationController {
         }
 
         return "applications/detail";
+    }
+
+    @PostMapping("/applications/{id}/people/link")
+    public String linkPerson(
+            @PathVariable long id,
+            @RequestParam long contactId,
+            RedirectAttributes redirectAttributes) {
+        service.get(id);
+        try {
+            boolean linked = applicationContactService.link(id, contactId);
+            var person = applicationContactService.forApplication(id).stream()
+                    .filter(contact -> contact.id() == contactId)
+                    .findFirst()
+                    .orElse(null);
+            String personName = person == null ? "Person" : person.name();
+            redirectAttributes.addFlashAttribute(
+                    "peopleSuccess",
+                    linked ? personName + " linked to this application." : personName + " was already linked.");
+        } catch (ResourceNotFoundException ex) {
+            throw ex;
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("peopleError", ex.getMessage());
+        }
+        return "redirect:/applications/" + id + "#application-people";
+    }
+
+    @PostMapping("/applications/{id}/people/{contactId}/unlink")
+    public String unlinkPerson(
+            @PathVariable long id,
+            @PathVariable long contactId,
+            RedirectAttributes redirectAttributes) {
+        service.get(id);
+        try {
+            String name = applicationContactService.forApplication(id).stream()
+                    .filter(contact -> contact.id() == contactId)
+                    .map(com.brianna.jobsearch.model.CompanyContact::name)
+                    .findFirst()
+                    .orElse("Person");
+            boolean unlinked = applicationContactService.unlink(id, contactId);
+            redirectAttributes.addFlashAttribute(
+                    "peopleSuccess",
+                    unlinked ? name + " unlinked from this application." : name + " was not linked to this application.");
+        } catch (ResourceNotFoundException ex) {
+            throw ex;
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("peopleError", ex.getMessage());
+        }
+        return "redirect:/applications/" + id + "#application-people";
     }
 
     @PostMapping("/applications/{id}/attachments")

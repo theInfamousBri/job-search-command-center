@@ -11,6 +11,7 @@ import com.brianna.jobsearch.model.CalendarEntry;
 import com.brianna.jobsearch.model.CalendarFilter;
 import com.brianna.jobsearch.model.JobApplication;
 import com.brianna.jobsearch.repository.ApplicationAttachmentRepository;
+import com.brianna.jobsearch.repository.ApplicationContactRepository;
 import com.brianna.jobsearch.repository.ApplicationEventRepository;
 import com.brianna.jobsearch.repository.JobApplicationRepository;
 import com.brianna.jobsearch.repository.MaterialRepository;
@@ -28,16 +29,19 @@ public class JobApplicationService {
     private final ApplicationEventRepository eventRepository;
     private final ApplicationAttachmentRepository attachmentRepository;
     private final MaterialRepository materialRepository;
+    private final ApplicationContactRepository contactRepository;
 
     public JobApplicationService(
             JobApplicationRepository repository,
             ApplicationEventRepository eventRepository,
             ApplicationAttachmentRepository attachmentRepository,
-            MaterialRepository materialRepository) {
+            MaterialRepository materialRepository,
+            ApplicationContactRepository contactRepository) {
         this.repository = repository;
         this.eventRepository = eventRepository;
         this.attachmentRepository = attachmentRepository;
         this.materialRepository = materialRepository;
+        this.contactRepository = contactRepository;
     }
 
     public List<JobApplication> search(String query) {
@@ -163,6 +167,7 @@ public class JobApplicationService {
 
     @Transactional
     public void delete(long id) {
+        contactRepository.deleteLinksByApplicationId(id);
         materialRepository.deleteLinksByApplicationId(id);
         attachmentRepository.deleteByApplicationId(id);
         eventRepository.deleteByApplicationId(id);

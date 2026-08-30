@@ -237,7 +237,7 @@ class CompanyManagementServiceTest {
             long id = nextContactId++;
             contacts.add(new CompanyContact(
                     id, companyKey, name, role, CompanyContactRelationship.valueOf(relationshipType),
-                    email, linkedinUrl, notes, photoData != null, LocalDateTime.now(), LocalDateTime.now()));
+                    email, linkedinUrl, notes, photoData != null, LocalDateTime.now(), LocalDateTime.now(), 0));
             return id;
         }
 
@@ -256,7 +256,7 @@ class CompanyManagementServiceTest {
             contacts.add(new CompanyContact(
                     id, existing.companyKey(), name, role, CompanyContactRelationship.valueOf(relationshipType),
                     email, linkedinUrl, notes, replacePhoto ? photoData != null : existing.hasPhoto(),
-                    existing.createdAt(), LocalDateTime.now()));
+                    existing.createdAt(), LocalDateTime.now(), existing.linkedApplicationCount()));
             return 1;
         }
 

@@ -14,7 +14,8 @@ public record CompanyContact(
         String notes,
         boolean hasPhoto,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt) {
+        LocalDateTime updatedAt,
+        long linkedApplicationCount) {
 
     public String initials() {
         if (name == null || name.isBlank()) return "?";

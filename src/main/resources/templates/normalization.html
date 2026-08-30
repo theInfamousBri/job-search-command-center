@@ -34,14 +34,14 @@
                 <small>Total records in the local database</small>
             </article>
             <article class="normalization-summary-card">
-                <span>Original career tags</span>
+                <span>Legacy career tags</span>
                 <strong th:text="${normalization.legacyCareerTagged}">120</strong>
                 <small>Applications with preserved legacy detail</small>
             </article>
             <article class="normalization-summary-card" th:classappend="${normalization.careerApplicationsNeedingMapping > 0} ? ' needs-work' : ' complete'">
                 <span>Need career mapping</span>
                 <strong th:text="${normalization.careerApplicationsNeedingMapping}">98</strong>
-                <small>Missing Career Lane or Industry / Domain</small>
+                <small>Missing Role Family or Industry / Domain</small>
             </article>
             <article class="normalization-summary-card">
                 <span>Cleanup rule</span>
@@ -61,7 +61,7 @@
                 <div>
                     <p class="eyebrow">CAREER TAXONOMY</p>
                     <h2>Map preserved career tags</h2>
-                    <p>Group older detailed labels into a broad Career Lane and Industry / Domain. The original tag stays untouched for reference.</p>
+                    <p>Map older detailed labels into a broad Role Family and Industry / Domain. The legacy tag stays preserved in the database for historical compatibility.</p>
                 </div>
                 <span class="normalization-count-chip"
                       th:text="|${#lists.size(normalization.careerGroups)} groups shown|">24 groups shown</span>
@@ -70,7 +70,7 @@
             <form class="normalization-filter-bar" method="get" th:action="@{/data-quality/normalize}">
                 <label class="normalization-search">
                     <span>⌕</span>
-                    <input type="search" name="q" th:value="${normalization.query}" placeholder="Search original career tags…">
+                    <input type="search" name="q" th:value="${normalization.query}" placeholder="Search legacy career tags…">
                 </label>
                 <select name="careerStatus" aria-label="Career mapping status">
                     <option value="UNMAPPED" th:selected="${normalization.careerStatus == 'UNMAPPED'}">Needs mapping</option>
@@ -86,7 +86,7 @@
                 <div class="normalization-action-bar">
                     <div class="normalization-map-fields">
                         <label>
-                            <span>Career Lane</span>
+                            <span>Role Family</span>
                             <select name="roleFamily">
                                 <option value="">Leave unchanged</option>
                                 <option th:each="option : ${roleFamilies}"
@@ -119,7 +119,7 @@
                             <button class="button button-primary" type="submit">Apply chosen mapping</button>
                         </div>
                     </div>
-                    <p class="normalization-safety-note">“Apply selected suggestions” uses the visible keyword suggestions per tag and only fills blank Career Lane / Domain fields. “Apply chosen mapping” uses the selections above for every checked tag. Existing values are preserved unless overwrite is checked.</p>
+                    <p class="normalization-safety-note">“Apply selected suggestions” uses the visible keyword suggestions per tag and only fills blank Role Family / Domain fields. “Apply chosen mapping” uses the selections above for every checked tag. Existing values are preserved unless overwrite is checked.</p>
                 </div>
 
                 <div class="normalization-list-toolbar" th:if="${!#lists.isEmpty(normalization.careerGroups)}">
@@ -269,7 +269,7 @@
             </form>
         </section>
 
-        <p class="normalization-footer-note">Normalization changes classification fields only. It intentionally leaves <code>updated_at</code>, lifecycle history, applied dates, notes, and the preserved original career tag unchanged.</p>
+        <p class="normalization-footer-note">Normalization changes classification fields only. It intentionally leaves <code>updated_at</code>, lifecycle history, applied dates, notes, and the preserved legacy career tag unchanged.</p>
     </main>
 </div>
 

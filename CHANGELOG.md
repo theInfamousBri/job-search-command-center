@@ -2,6 +2,15 @@
 
 ## 1.4.0 (in progress)
 
+### Application detail polish
+
+- Refines the v1.4.3 application overview into a clearer Notes / People / Role Details hierarchy.
+- Retires the legacy Original Career Tag from normal application UI while preserving `career_lane` in SQLite for backward compatibility and old imports.
+- Standardizes the active taxonomy label on **Role Family** instead of using Career Lane for both legacy and normalized concepts.
+- Collapses unusually long working notes behind an inline Show full notes control.
+- Makes the zero-People state quieter and gives Focus full-width treatment in Role Details.
+- Removes duplicated company-domain/posting rows from Role Details and demotes last-updated metadata to a subtle footer.
+
 ### Engineering foundation
 
 - Starts the v1.4 development line at `1.4.0-SNAPSHOT`.
@@ -26,6 +35,28 @@
 - `application_attachments` remains available for application-specific cover letters and one-off supporting documents.
 - Deleting an application now removes its material links while leaving reusable library files intact for other applications.
 - Adds service, repository-integration, and migration regression coverage for shared materials and resume deduplication.
+
+
+### People ↔ Applications
+
+- Adds `application_contact_links` so company-level People can be connected to any number of applications without duplicating the contact record.
+- Application detail now shows the recruiters, hiring managers, interviewers, referrals, team members, and other contacts involved with that role.
+- Existing People from the application company can be linked or unlinked directly from the application page; cross-company links are rejected.
+- Company People cards now show how many applications reference each person.
+- Linking/unlinking People is relationship metadata only and does not touch application or contact `updated_at` timestamps.
+- Deleting an application removes its person links while preserving the reusable company contact; deleting a person removes that person’s application links.
+- Demo mode includes representative Person ↔ Application links for the active interview flows.
+- Adds repository, service, migration, and HTTP/controller regression tests around the new relationship, including 404 behavior and company scoping.
+
+
+### Application Detail organization
+
+- Starts the v1.4.3 Application Detail redesign by moving high-value application context above the long timeline/prep sections.
+- Adds a lightweight Overview / Timeline / Prep / Materials jump bar while keeping the page server-rendered and fully available as one document.
+- Moves Application Info into the top overview area and removes fields already repeated in the header/summary so the detail panel stays compact.
+- Moves People beneath Working Notes in the left overview column and replaces the large full-width contact cards with compact linked-person rows and a collapsed linker.
+- Keeps Timeline, Prep, Materials, company branding, and destructive maintenance actions progressively deeper in the page.
+
 
 
 ## 1.3.0

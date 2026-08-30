@@ -5,6 +5,7 @@
 DELETE FROM prep_item_links;
 DELETE FROM prep_items;
 DELETE FROM application_events;
+DELETE FROM application_contact_links;
 DELETE FROM application_material_links;
 DELETE FROM material_files;
 DELETE FROM application_attachments;
@@ -302,6 +303,13 @@ INSERT INTO company_contacts (
 ('northstar labs', 'Alex Morgan', 'Staff Backend Engineer', 'INTERVIEWER', NULL, NULL,
  'Technical interviewer. Focused on idempotency and service reliability.',
  strftime('%Y-%m-%dT10:00:00','now','localtime','-5 days'), strftime('%Y-%m-%dT10:00:00','now','localtime','-1 day'));
+
+-- v1.4.2 People ↔ Applications. People remain company-level records; these rows only
+-- connect the people involved with a specific application.
+INSERT INTO application_contact_links (application_id, contact_id, created_at) VALUES
+(2, 1, strftime('%Y-%m-%dT12:00:00','now','localtime','-16 days')),
+(2, 2, strftime('%Y-%m-%dT12:30:00','now','localtime','-10 days')),
+(1, 3, strftime('%Y-%m-%dT14:00:00','now','localtime','-4 days'));
 
 
 
