@@ -456,6 +456,9 @@ h3 { font-size: 16px; }
 
 .field { min-width: 0; display: grid; gap: 7px; }
 
+/* Keep paired application-form fields top-aligned when only one side has helper text. */
+.application-form .form-grid > .field { align-content: start; }
+
 .field > span {
     color: #555d69;
     font-size: 10px;
@@ -6053,4 +6056,126 @@ body { color: var(--text); }
     .application-people-empty-action {
         grid-column: 2;
     }
+}
+
+/* v1.4.4 — requisition identity + application materials refinement */
+.application-notes-preview,
+.application-notes-panel .prose {
+    font-size: 12px;
+    line-height: 1.72;
+}
+
+.role-details-requisition {
+    padding-bottom: 11px !important;
+    margin-bottom: 2px;
+    border-bottom-color: #dfe5ee !important;
+}
+.role-details-requisition dd { color: var(--ink); font-weight: 800; overflow-wrap: anywhere; }
+
+.duplicate-application-warning {
+    margin-bottom: 18px;
+    padding: 16px 18px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 14px;
+    align-items: center;
+    border: 1px solid #f1d392;
+    border-radius: 16px;
+    background: #fffaf0;
+    box-shadow: var(--shadow-soft);
+}
+.duplicate-warning-icon {
+    width: 36px; height: 36px; display: grid; place-items: center;
+    border-radius: 12px; background: #fff0c9; color: #9a6711;
+    font-size: 15px; font-weight: 900;
+}
+.duplicate-warning-copy strong { display: block; color: #54431f; font-size: 11px; }
+.duplicate-warning-copy p { margin: 4px 0 2px; color: #715d32; font-size: 10px; line-height: 1.55; }
+.duplicate-warning-copy a { color: var(--accent); font-weight: 800; }
+.duplicate-warning-copy code {
+    padding: 2px 5px; border-radius: 6px; background: rgba(154,103,17,.08);
+    color: #72500d; font-family: inherit; font-weight: 800;
+}
+.duplicate-warning-copy small { color: #9a855a; font-size: 8.5px; }
+
+.materials-panel-refined { display: grid; gap: 14px; }
+.materials-refined-header { margin-bottom: 0; }
+.application-materials-overview {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+.application-material-summary-card {
+    min-width: 0; padding: 14px 15px; border: 1px solid var(--border);
+    border-radius: 15px; background: #fff;
+}
+.application-material-summary-card-resume {
+    grid-column: 1 / -1; display: flex; justify-content: space-between;
+    gap: 16px; align-items: center;
+}
+.application-material-summary-heading,
+.application-material-readable > summary {
+    min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr);
+    gap: 11px; align-items: center;
+}
+.application-material-summary-heading > div,
+.application-material-readable > summary > span:nth-child(2) { min-width: 0; }
+.application-material-kicker {
+    display: block; margin-bottom: 3px; color: var(--muted); font-size: 7.5px;
+    font-weight: 900; letter-spacing: .1em;
+}
+.application-material-summary-card strong { display: block; color: var(--ink); font-size: 10.5px; line-height: 1.35; }
+.application-material-summary-card small {
+    display: block; margin-top: 4px; color: var(--muted); font-size: 8.5px;
+    line-height: 1.45; overflow-wrap: anywhere;
+}
+.application-material-summary-actions { flex: 0 0 auto; display: flex; gap: 8px; align-items: center; }
+.material-count-note { color: var(--muted); font-size: 8.5px; font-weight: 700; }
+.application-material-readable { padding: 0; overflow: hidden; }
+.application-material-readable > summary {
+    min-height: 72px; padding: 14px 15px; grid-template-columns: auto minmax(0, 1fr) auto;
+    cursor: pointer; list-style: none;
+}
+.application-material-readable > summary::-webkit-details-marker,
+.application-materials-manager > summary::-webkit-details-marker { display: none; }
+.application-material-readable[open] .material-toggle > span,
+.application-materials-manager[open] .material-toggle > span { display: inline-block; transform: rotate(180deg); }
+.application-material-readable .material-body { border-top: 1px solid var(--border); }
+.application-material-readable .material-prose {
+    min-height: 0; max-height: 380px; padding: 14px 15px; overflow: auto; font-size: 10px;
+}
+.application-material-quick-files { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+.application-material-quick-files a {
+    max-width: 100%; padding: 5px 8px; overflow: hidden; border-radius: 8px;
+    background: var(--accent-soft); color: var(--accent); font-size: 8px; font-weight: 800;
+    text-overflow: ellipsis; white-space: nowrap;
+}
+.application-materials-manager {
+    overflow: hidden; border: 1px solid var(--border); border-radius: 15px; background: #f9fafc;
+}
+.application-materials-manager > summary {
+    padding: 13px 15px; display: flex; justify-content: space-between; gap: 16px;
+    align-items: center; cursor: pointer; list-style: none;
+}
+.application-materials-manager > summary strong { display: block; color: var(--ink); font-size: 10px; }
+.application-materials-manager > summary small { display: block; margin-top: 2px; color: var(--muted); font-size: 8.5px; }
+.application-materials-manager-body {
+    display: grid; gap: 12px; padding: 0 15px 15px; border-top: 1px solid var(--border);
+}
+.materials-manager-section { padding: 15px 0 2px; }
+.materials-manager-section + .materials-manager-section { border-top: 1px solid var(--border); }
+.materials-manager-section-heading {
+    margin-bottom: 12px; display: flex; justify-content: space-between; gap: 18px; align-items: flex-start;
+}
+.materials-manager-section-heading strong { display: block; color: var(--ink); font-size: 11px; }
+.materials-manager-section-heading p { margin: 3px 0 0; color: var(--muted); font-size: 8.5px; line-height: 1.5; }
+.materials-manager-limit { flex: 0 0 auto; color: var(--muted); font-size: 8px; }
+.materials-manager-actions { margin-top: 12px; }
+
+@media (max-width: 760px) {
+    .duplicate-application-warning { grid-template-columns: auto minmax(0, 1fr); }
+    .duplicate-application-warning > .button { grid-column: 2; justify-self: start; }
+    .application-materials-overview { grid-template-columns: 1fr; }
+    .application-material-summary-card-resume { grid-column: auto; align-items: flex-start; flex-direction: column; }
+    .materials-manager-section-heading { flex-direction: column; }
 }

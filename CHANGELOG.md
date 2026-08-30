@@ -2,6 +2,17 @@
 
 ## 1.4.0 (in progress)
 
+### Requisition identity & application materials refinement
+
+- Adds an optional **Requisition / Job ID** to applications and carries it through SQLite, forms, Role Details, and application search.
+- Adds a company + requisition duplicate check when creating or editing an application, with a direct link to the existing record and an explicit **Save anyway** escape hatch rather than a hard uniqueness constraint.
+- Adds an index for company/requisition lookup after the backward-safe startup migration adds the new column, without changing historical application `updated_at` timestamps.
+- Treats requisition IDs as strong posting identity ahead of the upcoming global `Ctrl/Cmd + K` search.
+- Uses the same compact typography for collapsed and expanded Working Notes so expanding content does not cause an unnecessary visual jump.
+- Reworks Application Materials into a read-first **What you submitted** summary for resume, cover letter, saved posting, and application-specific files.
+- Moves resume linking/uploading, unlinking, and attachment maintenance behind a collapsed **Manage materials** control while preserving shared-resume deduplication and application-specific attachments.
+- Adds migration, repository, service, controller, and template regression coverage around requisition identity, duplicate detection, and the refined Materials surface.
+
 ### Application detail polish
 
 - Refines the v1.4.3 application overview into a clearer Notes / People / Role Details hierarchy.

@@ -339,3 +339,9 @@ INSERT INTO application_material_links (application_id, material_id, created_at)
 (10, 1, strftime('%Y-%m-%dT09:35:00','now','localtime','-12 days')),
 (2, 2, strftime('%Y-%m-%dT10:15:00','now','localtime','-18 days')),
 (6, 2, strftime('%Y-%m-%dT09:20:00','now','localtime','-48 days'));
+
+-- v1.4 searchable requisition / job IDs.
+UPDATE job_applications SET requisition_id = 'ATL-PLAT-260812' WHERE id = 2;
+UPDATE job_applications SET requisition_id = 'NSL-BE-1042' WHERE id = 1;
+UPDATE job_applications SET requisition_id = 'HD-SWE-4418' WHERE id = 10;
+UPDATE job_applications SET requisition_id = 'CC-ORD-9031' WHERE id = 6;

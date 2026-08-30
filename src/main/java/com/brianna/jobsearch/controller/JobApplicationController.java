@@ -287,12 +287,22 @@ public class JobApplicationController {
     public String create(
             @Valid @ModelAttribute("jobApplication") JobApplication application,
             BindingResult bindingResult,
+            @RequestParam(defaultValue = "false") boolean saveAnyway,
             Model model,
             RedirectAttributes redirectAttributes) {
 
         if (bindingResult.hasErrors()) {
             model.addAttribute("editing", false);
             return "applications/form";
+        }
+
+        if (!saveAnyway) {
+            var duplicate = service.findPotentialDuplicate(application);
+            if (duplicate.isPresent()) {
+                model.addAttribute("editing", false);
+                model.addAttribute("duplicateApplication", duplicate.get());
+                return "applications/form";
+            }
         }
 
         long id = service.create(application);
@@ -600,9 +610,11 @@ public class JobApplicationController {
             @PathVariable long id,
             @Valid @ModelAttribute("jobApplication") JobApplication application,
             BindingResult bindingResult,
+            @RequestParam(defaultValue = "false") boolean saveAnyway,
             Model model,
             RedirectAttributes redirectAttributes) {
 
+        application.setId(id);
         if (bindingResult.hasErrors()) {
             model.addAttribute("editing", true);
             return "applications/form";
@@ -611,7 +623,15 @@ public class JobApplicationController {
         JobApplication previous = service.get(id);
         String previousDomain = previous.getCompanyDomain();
 
-        application.setId(id);
+        if (!saveAnyway) {
+            var duplicate = service.findPotentialDuplicate(application);
+            if (duplicate.isPresent()) {
+                model.addAttribute("editing", true);
+                model.addAttribute("duplicateApplication", duplicate.get());
+                return "applications/form";
+            }
+        }
+
         service.update(application);
         refreshLogoWhenDomainChanges(previousDomain, application.getCompanyDomain(), redirectAttributes);
         return "redirect:/applications/" + id;

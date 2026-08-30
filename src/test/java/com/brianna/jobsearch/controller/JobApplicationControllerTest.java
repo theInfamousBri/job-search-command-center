@@ -1,5 +1,8 @@
 package com.brianna.jobsearch.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -30,6 +33,7 @@ import com.brianna.jobsearch.service.PrepService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -57,6 +61,41 @@ class JobApplicationControllerTest {
         JobApplicationController controller = new JobApplicationController(
                 applications, prep, imports, attachments, contacts, logos, companies, materials);
         mvc = MockMvcBuilders.standaloneSetup(controller).build();
+    }
+
+
+    @Test
+    void createWithMatchingCompanyAndRequisitionShowsDuplicateWarningBeforeSaving() throws Exception {
+        JobApplication duplicate = application(9L);
+        duplicate.setCompany("Mastercard");
+        duplicate.setRole("Senior Software Engineer");
+        duplicate.setRequisitionId("R-274666");
+        when(applications.findPotentialDuplicate(any(JobApplication.class))).thenReturn(Optional.of(duplicate));
+
+        mvc.perform(post("/applications")
+                        .param("company", "Mastercard")
+                        .param("role", "Senior Software Engineer")
+                        .param("requisitionId", "R-274666"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("applications/form"))
+                .andExpect(model().attribute("duplicateApplication", duplicate));
+
+        verify(applications, never()).create(any(JobApplication.class));
+    }
+
+    @Test
+    void createCanSaveAnywayAfterDuplicateWarning() throws Exception {
+        when(applications.create(any(JobApplication.class))).thenReturn(77L);
+
+        mvc.perform(post("/applications")
+                        .param("company", "Mastercard")
+                        .param("role", "Senior Software Engineer")
+                        .param("requisitionId", "R-274666")
+                        .param("saveAnyway", "true"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/applications/77"));
+
+        verify(applications, never()).findPotentialDuplicate(any(JobApplication.class));
     }
 
     @Test

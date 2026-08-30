@@ -60,6 +60,7 @@ Applications can store:
 - priority, including `Stretch` and `Skip`
 - source
 - original job-posting URL
+- optional requisition / job ID for posting identity and duplicate detection
 - salary / compensation range
 - years of experience required
 - role family
@@ -69,7 +70,7 @@ Applications can store:
 - working notes
 - a saved copy of the job description
 
-The tracker supports text search across company, company domain, role, location, work arrangement, experience requirements, role family, source, state, next step, archived cover-letter text, notes, and saved job descriptions.
+The tracker supports text search across company, company domain, role, **requisition / job ID**, location, work arrangement, experience requirements, role family, source, state, next step, archived cover-letter text, notes, and saved job descriptions. Exact company + requisition matches are also used to warn about likely duplicate applications before saving, with an explicit override for legitimate edge cases.
 
 For larger histories, the application list also supports:
 
@@ -108,9 +109,9 @@ Application detail pages can link any Person already saved under that company. T
 
 ### Application materials
 
-Long-form material is archived with the application but stays collapsed by default on the detail page so it does not dominate the working view.
+Application Detail presents materials as a read-first **What you submitted** summary so the normal view answers which resume, cover letter, posting, and one-off files belong to the role without exposing storage-management controls by default. Link/upload/unlink and attachment maintenance live behind a collapsed **Manage materials** control.
 
-The **Application Materials** panel currently stores and references:
+The application materials surface stores and references:
 
 - cover-letter usage (`Yes`, `No`, or `Not tracked`)
 - the full cover-letter text when available
@@ -472,7 +473,7 @@ The main data tables are:
 
 | Table | Purpose |
 | --- | --- |
-| `job_applications` | one row per tracked role, including richer role metadata, application materials, and import source |
+| `job_applications` | one row per tracked role, including requisition/job ID, richer role metadata, application materials, and import source |
 | `company_logos` | locally cached company-logo image data keyed by normalized domain |
 | `company_notes` | reusable company-level notes keyed by normalized company identity |
 | `company_contacts` | company-level people records, including optional locally stored profile photos |
@@ -484,7 +485,7 @@ The main data tables are:
 | `prep_items` | reusable and role-specific prep material |
 | `prep_item_links` | many-to-many links between reusable prep and applications |
 
-The schema is created from `src/main/resources/schema.sql`. A small startup migration runner handles columns and tables introduced after the earliest project versions, including the richer v1.1 application fields, v1.1.2 company/material columns, v1.3 taxonomy/company/people/attachment storage, and the v1.4 shared-material and Person ↔ Application relationships.
+The schema is created from `src/main/resources/schema.sql`. A small startup migration runner handles columns and tables introduced after the earliest project versions, including the richer v1.1 application fields, v1.1.2 company/material columns, v1.3 taxonomy/company/people/attachment storage, and the v1.4 shared-material, Person ↔ Application, and requisition-identity additions.
 
 ## Project structure
 
@@ -794,7 +795,9 @@ See [`NEXT-STEPS.md`](NEXT-STEPS.md) for the prioritized product, analytics, aut
 
 ## What’s new in active v1.4 development
 
-v1.4 now includes a **Materials Library** for reusable resume versions, direct People ↔ Application links, and a redesigned Application Detail overview. A resume is now stored once in SQLite and linked to every application where it was submitted. SHA-256 duplicate detection prevents byte-identical files from being stored again, and the library shows how many application references reuse each physical file. Existing v1.3 Resume attachments migrate into this model automatically while cover letters and other application-specific files stay attached directly to their application.
+v1.4 now includes a **Materials Library** for reusable resume versions, direct People ↔ Application links, a redesigned Application Detail overview, and optional **Requisition / Job ID** tracking with same-company duplicate warnings. A resume is now stored once in SQLite and linked to every application where it was submitted. SHA-256 duplicate detection prevents byte-identical files from being stored again, and the library shows how many application references reuse each physical file. Existing v1.3 Resume attachments migrate into this model automatically while cover letters and other application-specific files stay attached directly to their application.
+
+The Application Detail materials surface now emphasizes a read-first **What you submitted** summary, with maintenance controls collapsed until needed. Current application search also includes requisition IDs, establishing a strong exact identifier for the upcoming global command palette.
 
 The v1.4 engineering baseline also adds Maven Wrapper support, JaCoCo coverage reporting, GitHub Actions CI, branded 404/500 pages, and a growing set of data-safety regression/migration tests. The active application taxonomy is now consistently presented as Role Family / Industry / Focus; the old free-form `career_lane` value is retained only as legacy import/migration context.
 

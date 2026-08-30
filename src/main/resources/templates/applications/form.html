@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="${editing ? 'Edit Application · Job Search' : 'Add Application · Job Search'}">Application · Job Search</title>
-    <link rel="stylesheet" th:href="@{/css/app.css?v=1.4.1-materials}">
+    <link rel="stylesheet" th:href="@{/css/app.css?v=1.4.4-form-alignment}">
     <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
 </head>
 <body>
@@ -25,6 +25,19 @@
               th:object="${jobApplication}"
               th:action="${editing ? '/applications/' + jobApplication.id : '/applications'}"
               method="post">
+
+            <section class="duplicate-application-warning" th:if="${duplicateApplication != null}">
+                <div class="duplicate-warning-icon" aria-hidden="true">!</div>
+                <div class="duplicate-warning-copy">
+                    <strong>Possible duplicate application</strong>
+                    <p>You already have
+                        <a th:href="@{/applications/{id}(id=${duplicateApplication.id})}" th:text="|${duplicateApplication.company} · ${duplicateApplication.role}|">Existing application</a>
+                        with requisition / job ID <code th:text="${duplicateApplication.requisitionId}">R-12345</code>.
+                    </p>
+                    <small>Open the existing application to compare, or save anyway if this is intentionally a separate record.</small>
+                </div>
+                <a class="button button-secondary button-small" th:href="@{/applications/{id}(id=${duplicateApplication.id})}">View existing →</a>
+            </section>
 
             <section class="panel form-section">
                 <div class="section-heading">
@@ -104,6 +117,13 @@
                 </div>
 
                 <div class="form-grid">
+                    <label class="field">
+                        <span>Requisition / Job ID</span>
+                        <input type="text" th:field="*{requisitionId}" maxlength="100" placeholder="R-274666, REF076199W, JR-18421…">
+                        <small class="field-help">Optional. Used to spot duplicate applications and for exact lookup in search.</small>
+                        <small class="field-error" th:if="${#fields.hasErrors('requisitionId')}" th:errors="*{requisitionId}">Requisition error</small>
+                    </label>
+
                     <label class="field">
                         <span>Source</span>
                         <input type="text" th:field="*{source}" placeholder="LinkedIn, referral, recruiter…">
@@ -209,7 +229,8 @@
 
             <div class="form-actions">
                 <a class="button button-secondary" th:href="${editing ? '/applications/' + jobApplication.id : '/applications'}">Cancel</a>
-                <button class="button button-primary" type="submit" th:text="${editing ? 'Save changes' : 'Create application'}">Create application</button>
+                <button th:if="${duplicateApplication == null}" class="button button-primary" type="submit" th:text="${editing ? 'Save changes' : 'Create application'}">Create application</button>
+                <button th:if="${duplicateApplication != null}" class="button button-primary" type="submit" name="saveAnyway" value="true">Save anyway</button>
             </div>
         </form>
     </main>

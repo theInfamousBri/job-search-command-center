@@ -132,6 +132,40 @@ class JobApplicationServiceTest {
         order.verify(applications).delete(55L);
     }
 
+
+    @Test
+    void requisitionDuplicateCheckIsSkippedWhenNoJobIdIsSaved() {
+        JobApplication application = application(0L, ApplicationStatus.APPLIED);
+        application.setId(null);
+
+        assertThat(service.findPotentialDuplicate(application)).isEmpty();
+        verify(applications, never()).findDuplicateByCompanyAndRequisition(any(), any(), any());
+    }
+
+    @Test
+    void requisitionDuplicateCheckUsesCompanyAndExcludesCurrentApplicationOnEdit() {
+        JobApplication application = application(42L, ApplicationStatus.APPLIED);
+        application.setRequisitionId(" R-274666 ");
+        JobApplication duplicate = application(7L, ApplicationStatus.REJECTED);
+        duplicate.setRequisitionId("R-274666");
+        when(applications.findDuplicateByCompanyAndRequisition("Example Co", " R-274666 ", 42L))
+                .thenReturn(Optional.of(duplicate));
+
+        assertThat(service.findPotentialDuplicate(application)).contains(duplicate);
+    }
+
+    @Test
+    void createTrimsRequisitionIdBeforeSaving() {
+        JobApplication application = application(0L, ApplicationStatus.APPLIED);
+        application.setId(null);
+        application.setRequisitionId("  REF076199W  ");
+        when(applications.save(application)).thenReturn(11L);
+
+        service.create(application);
+
+        assertThat(application.getRequisitionId()).isEqualTo("REF076199W");
+    }
+
     @Test
     void missingApplicationIsA404StyleResourceError() {
         when(applications.findById(404L)).thenReturn(Optional.empty());

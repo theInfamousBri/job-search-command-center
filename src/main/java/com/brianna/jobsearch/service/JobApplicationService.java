@@ -17,6 +17,7 @@ import com.brianna.jobsearch.repository.JobApplicationRepository;
 import com.brianna.jobsearch.repository.MaterialRepository;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -66,6 +67,14 @@ public class JobApplicationService {
 
     public List<String> careerLanes() {
         return repository.findCareerLanes();
+    }
+
+    public Optional<JobApplication> findPotentialDuplicate(JobApplication application) {
+        if (application == null || application.getRequisitionId() == null || application.getRequisitionId().isBlank()) {
+            return Optional.empty();
+        }
+        return repository.findDuplicateByCompanyAndRequisition(
+                application.getCompany(), application.getRequisitionId(), application.getId());
     }
 
     public JobApplication get(long id) {
@@ -327,9 +336,17 @@ public class JobApplicationService {
     private void normalizeApplication(JobApplication application) {
         normalizeState(application);
         application.setCompanyDomain(CompanyLogoService.normalizeDomain(application.getCompanyDomain()));
+        application.setRequisitionId(blankToNull(application.getRequisitionId()));
         if (application.hasCoverLetterText()) {
             application.setCoverLetter(true);
         }
+    }
+
+    private String blankToNull(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
     }
 
     private void normalizeState(JobApplication application) {

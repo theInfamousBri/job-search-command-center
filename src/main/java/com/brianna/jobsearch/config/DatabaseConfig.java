@@ -51,6 +51,7 @@ public class DatabaseConfig {
             addColumnIfMissing(jdbcTemplate, applicationColumns, "cover_letter", "INTEGER");
             addColumnIfMissing(jdbcTemplate, applicationColumns, "cover_letter_text", "TEXT");
             addColumnIfMissing(jdbcTemplate, applicationColumns, "import_source", "TEXT");
+            addColumnIfMissing(jdbcTemplate, applicationColumns, "requisition_id", "TEXT");
 
             // Terminal outcomes are closed by definition. This also tidies data created before
             // the State field existed without changing active/interviewing applications.
@@ -86,6 +87,7 @@ public class DatabaseConfig {
             jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_job_applications_role_family ON job_applications(role_family)");
             jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_job_applications_industry_domain ON job_applications(industry_domain)");
             jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_job_applications_work_arrangement ON job_applications(work_arrangement)");
+            jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_job_applications_company_requisition ON job_applications(company, requisition_id)");
 
             jdbcTemplate.execute("""
                     CREATE TABLE IF NOT EXISTS company_logos (

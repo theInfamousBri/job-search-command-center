@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="${jobApplication.company + ' · ' + jobApplication.role}">Application · Job Search</title>
-    <link rel="stylesheet" th:href="@{/css/app.css?v=1.4.3-detail-polish}">
+    <link rel="stylesheet" th:href="@{/css/app.css?v=1.4.4-form-alignment}">
     <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
 </head>
 <body>
@@ -222,6 +222,7 @@
                 </div>
 
                 <dl class="info-list role-details-list">
+                    <div class="role-details-requisition"><dt>Requisition / Job ID</dt><dd th:text="${jobApplication.requisitionId == null ? '—' : jobApplication.requisitionId}">R-274666</dd></div>
                     <div><dt>Work arrangement</dt><dd th:text="${jobApplication.workArrangement == null ? '—' : jobApplication.workArrangement}">Hybrid</dd></div>
                     <div><dt>Experience required</dt><dd th:text="${jobApplication.yearsExperienceRequired == null ? '—' : jobApplication.yearsExperienceRequired}">3+</dd></div>
                     <div><dt>Role family</dt><dd th:text="${jobApplication.roleFamily == null ? '—' : jobApplication.roleFamily.displayName}">Backend / Platform</dd></div>
@@ -467,89 +468,100 @@
         </section>
 
 
-            <section class="panel materials-panel" id="application-materials">
-                <div class="panel-header">
+            <section class="panel materials-panel materials-panel-refined" id="application-materials">
+                <div class="panel-header materials-refined-header">
                     <div>
                         <p class="eyebrow">APPLICATION MATERIALS</p>
-                        <h2>Archived materials</h2>
-                        <p class="panel-subtitle">Reference what you submitted without keeping long-form text open all the time.</p>
+                        <h2>What you submitted</h2>
+                        <p class="panel-subtitle">A quick record of the resume, cover letter, posting, and files tied to this application.</p>
                     </div>
-                    <a class="text-link" th:href="@{/applications/{id}/edit(id=${jobApplication.id})}">Edit materials →</a>
+                    <a class="text-link" th:href="@{/materials}">Materials library →</a>
                 </div>
 
-                <div class="material-list">
-                    <details class="material-item">
-                        <summary class="material-summary">
-                            <span class="material-summary-main">
-                                <span class="material-icon">CL</span>
-                                <span>
-                                    <strong>Cover letter</strong>
-                                    <small th:text="${jobApplication.coverLetterDisplay}">Used · archived</small>
-                                </span>
-                            </span>
-                            <span class="material-toggle">View <span aria-hidden="true">⌄</span></span>
-                        </summary>
-                        <div class="material-body">
-                            <div th:if="${jobApplication.hasCoverLetterText()}" class="prose material-prose" th:text="${jobApplication.coverLetterText}">Cover letter.</div>
-                            <div th:unless="${jobApplication.hasCoverLetterText()}" class="empty-mini material-empty">
-                                <p th:if="${jobApplication.coverLetter == true}">A cover letter was used, but its content has not been archived.</p>
-                                <p th:if="${jobApplication.coverLetter == false}">No cover letter was used for this application.</p>
-                                <p th:if="${jobApplication.coverLetter == null}">Cover-letter usage has not been tracked for this application.</p>
+                <div th:if="${materialSuccess != null}" class="inline-alert inline-alert-success" th:text="${materialSuccess}">Material linked.</div>
+                <div th:if="${materialError != null}" class="inline-alert inline-alert-error" th:text="${materialError}">Material error.</div>
+                <div th:if="${attachmentSuccess != null}" class="inline-alert inline-alert-success" th:text="${attachmentSuccess}">Attachment saved.</div>
+                <div th:if="${attachmentError != null}" class="inline-alert inline-alert-error" th:text="${attachmentError}">Attachment error.</div>
+
+                <div class="application-materials-overview">
+                    <article class="application-material-summary-card application-material-summary-card-resume">
+                        <div class="application-material-summary-heading">
+                            <span class="material-icon material-icon-shared">CV</span>
+                            <div>
+                                <span class="application-material-kicker">RESUME SUBMITTED</span>
+                                <strong th:if="${#lists.isEmpty(sharedMaterials)}">No reusable resume linked</strong>
+                                <strong th:unless="${#lists.isEmpty(sharedMaterials)}" th:text="${sharedMaterials[0].displayName}">Backend Engineering · Aug 2026</strong>
+                                <small th:if="${#lists.isEmpty(sharedMaterials)}">Link a version from your Materials Library.</small>
+                                <small th:unless="${#lists.isEmpty(sharedMaterials)}" th:text="|${sharedMaterials[0].fileName} · ${sharedMaterials[0].fileSizeDisplay()} · ${sharedMaterials[0].usageDisplay()}|">resume.pdf · 71 KB · Used by 1 application</small>
                             </div>
+                        </div>
+                        <div class="application-material-summary-actions" th:unless="${#lists.isEmpty(sharedMaterials)}">
+                            <a class="button button-secondary button-small" th:href="@{/materials/{id}/download(id=${sharedMaterials[0].id})}">Download</a>
+                            <span th:if="${sharedMaterials.size() > 1}" class="material-count-note" th:text="|+${sharedMaterials.size() - 1} more|">+1 more</span>
+                        </div>
+                    </article>
+
+                    <details class="application-material-summary-card application-material-readable">
+                        <summary>
+                            <span class="material-icon">CL</span>
+                            <span>
+                                <span class="application-material-kicker">COVER LETTER</span>
+                                <strong th:text="${jobApplication.coverLetterDisplay}">Used · archived</strong>
+                            </span>
+                            <span class="material-toggle" th:if="${jobApplication.hasCoverLetterText()}">View <span aria-hidden="true">⌄</span></span>
+                        </summary>
+                        <div class="material-body" th:if="${jobApplication.hasCoverLetterText()}">
+                            <div class="prose material-prose" th:text="${jobApplication.coverLetterText}">Cover letter.</div>
                         </div>
                     </details>
 
-                    <details class="material-item">
-                        <summary class="material-summary">
-                            <span class="material-summary-main">
-                                <span class="material-icon">JD</span>
-                                <span>
-                                    <strong>Saved job description</strong>
-                                    <small th:text="${jobApplication.hasJobDescription() ? 'Archived' : 'Not saved'}">Archived</small>
-                                </span>
+                    <details class="application-material-summary-card application-material-readable">
+                        <summary>
+                            <span class="material-icon">JD</span>
+                            <span>
+                                <span class="application-material-kicker">SAVED POSTING</span>
+                                <strong th:text="${jobApplication.hasJobDescription() ? 'Job description archived' : 'No job description saved'}">Job description archived</strong>
                             </span>
-                            <span class="material-toggle">View <span aria-hidden="true">⌄</span></span>
+                            <span class="material-toggle" th:if="${jobApplication.hasJobDescription()}">View <span aria-hidden="true">⌄</span></span>
                         </summary>
-                        <div class="material-body">
-                            <div th:if="${jobApplication.hasJobDescription()}" class="prose job-description material-prose" th:text="${jobApplication.jobDescription}">Job description.</div>
-                            <div th:unless="${jobApplication.hasJobDescription()}" class="empty-mini material-empty">
-                                <p>No job description saved yet. Add it before the original posting disappears.</p>
-                            </div>
+                        <div class="material-body" th:if="${jobApplication.hasJobDescription()}">
+                            <div class="prose job-description material-prose" th:text="${jobApplication.jobDescription}">Job description.</div>
                         </div>
                     </details>
 
-                    <details class="material-item shared-material-item"
-                             th:attr="open=${materialSuccess != null or materialError != null} ? 'open' : null">
-                        <summary class="material-summary">
-                            <span class="material-summary-main">
-                                <span class="material-icon material-icon-shared">CV</span>
-                                <span>
-                                    <strong>Reusable materials</strong>
-                                    <small th:if="${#lists.isEmpty(sharedMaterials)}">No library materials linked yet</small>
-                                    <small th:unless="${#lists.isEmpty(sharedMaterials)}"
-                                           th:text="${sharedMaterials.size() == 1 ? '1 library file linked · stored once' : sharedMaterials.size() + ' library files linked · stored once'}">1 library file linked · stored once</small>
-                                </span>
-                            </span>
-                            <span class="material-toggle">Manage <span aria-hidden="true">⌄</span></span>
-                        </summary>
-                        <div class="material-body shared-material-body">
-                            <div th:if="${materialSuccess != null}" class="inline-alert inline-alert-success" th:text="${materialSuccess}">Material linked.</div>
-                            <div th:if="${materialError != null}" class="inline-alert inline-alert-error" th:text="${materialError}">Material error.</div>
-
-                            <div class="shared-material-intro">
-                                <div>
-                                    <strong>Store once, reference everywhere</strong>
-                                    <p>Resume versions live in the Materials Library as one BLOB, even when the same version is submitted to many applications.</p>
-                                </div>
-                                <a class="button button-secondary button-small" th:href="@{/materials}">Open library</a>
+                    <article class="application-material-summary-card">
+                        <div class="application-material-summary-heading">
+                            <span class="material-icon material-icon-files">FILE</span>
+                            <div>
+                                <span class="application-material-kicker">APPLICATION-SPECIFIC FILES</span>
+                                <strong th:text="${#lists.isEmpty(attachments) ? 'No one-off files attached' : (attachments.size() == 1 ? '1 file attached' : attachments.size() + ' files attached')}">1 file attached</strong>
+                                <small>Cover-letter files, writing samples, and other one-off documents.</small>
                             </div>
+                        </div>
+                        <div class="application-material-quick-files" th:unless="${#lists.isEmpty(attachments)}">
+                            <a th:each="fileRow : ${attachments}" th:href="@{/applications/{id}/attachments/{attachmentId}(id=${jobApplication.id},attachmentId=${fileRow.id})}" th:text="${fileRow.fileName}">cover-letter.pdf</a>
+                        </div>
+                    </article>
+                </div>
 
-                            <div th:if="${#lists.isEmpty(sharedMaterials)}" class="attachment-empty shared-material-empty">
-                                <span class="attachment-empty-icon">CV</span>
+                <details class="application-materials-manager" th:attr="open=${materialSuccess != null or materialError != null or attachmentSuccess != null or attachmentError != null} ? 'open' : null">
+                    <summary>
+                        <span>
+                            <strong>Manage materials</strong>
+                            <small>Link or upload a resume, unlink a reusable file, or manage application-specific attachments.</small>
+                        </span>
+                        <span class="material-toggle">Manage <span aria-hidden="true">⌄</span></span>
+                    </summary>
+
+                    <div class="application-materials-manager-body">
+                        <section class="materials-manager-section">
+                            <div class="materials-manager-section-heading">
                                 <div>
-                                    <strong>No reusable material linked</strong>
-                                    <p>Link an existing resume below or upload a new version. Future applications can reuse the same stored file.</p>
+                                    <span class="application-material-kicker">REUSABLE RESUME</span>
+                                    <strong>Library links</strong>
+                                    <p>The file is stored once even when you submit it to many applications.</p>
                                 </div>
+                                <a class="text-link" th:href="@{/materials}">Open library →</a>
                             </div>
 
                             <div th:unless="${#lists.isEmpty(sharedMaterials)}" class="attachment-file-list shared-material-list">
@@ -564,88 +576,60 @@
                                     </div>
                                     <div class="attachment-file-actions">
                                         <a class="button button-secondary button-small" th:href="@{/materials/{id}/download(id=${materialRow.id})}">Download</a>
-                                        <form method="post" th:action="@{/applications/{applicationId}/materials/{materialId}/unlink(applicationId=${jobApplication.id},materialId=${materialRow.id})}"
-                                              onsubmit="return confirm('Unlink this material from this application? The file will stay in your Materials Library.');">
+                                        <form method="post" th:action="@{/applications/{applicationId}/materials/{materialId}/unlink(applicationId=${jobApplication.id},materialId=${materialRow.id})}" onsubmit="return confirm('Unlink this material from this application? The file will stay in your Materials Library.');">
                                             <button class="button button-quiet button-small" type="submit">Unlink</button>
                                         </form>
                                     </div>
                                 </article>
                             </div>
 
-                            <div class="shared-material-actions-grid">
-                                <form th:if="${!#lists.isEmpty(linkableMaterials)}" class="shared-material-link-form" method="post"
-                                      th:attr="data-base-action=@{/applications/{id}/materials(id=${jobApplication.id})}"
-                                      onsubmit="this.action = this.dataset.baseAction + '/' + this.querySelector('[name=materialId]').value + '/link';">
+                            <div class="shared-material-actions-grid materials-manager-actions">
+                                <form th:if="${!#lists.isEmpty(linkableMaterials)}" class="shared-material-link-form" method="post" th:attr="data-base-action=@{/applications/{id}/materials(id=${jobApplication.id})}" onsubmit="this.action = this.dataset.baseAction + '/' + this.querySelector('[name=materialId]').value + '/link';">
                                     <label class="field">
                                         <span>Link existing library file</span>
                                         <select name="materialId" required>
                                             <option value="" selected disabled>Choose material…</option>
-                                            <option th:each="materialOption : ${linkableMaterials}"
-                                                    th:value="${materialOption.id}"
-                                                    th:text="|${materialOption.displayName} · ${materialOption.materialType.displayName}|">Backend Resume · Resume</option>
+                                            <option th:each="materialOption : ${linkableMaterials}" th:value="${materialOption.id}" th:text="|${materialOption.displayName} · ${materialOption.materialType.displayName}|">Backend Resume · Resume</option>
                                         </select>
                                     </label>
                                     <button class="button button-secondary" type="submit">Link existing</button>
                                 </form>
 
-                                <form class="shared-material-upload-form" method="post" enctype="multipart/form-data"
-                                      th:action="@{/applications/{id}/materials(id=${jobApplication.id})}">
+                                <form class="shared-material-upload-form" method="post" enctype="multipart/form-data" th:action="@{/applications/{id}/materials(id=${jobApplication.id})}">
                                     <input type="hidden" name="materialType" value="RESUME">
                                     <label class="field">
                                         <span>Upload new resume version <em class="optional">Optional label</em></span>
                                         <input type="text" name="displayName" maxlength="160" placeholder="Backend / Platform · Aug 2026">
                                     </label>
                                     <div class="attachment-file-picker">
-                                        <input th:id="|shared-material-upload-${jobApplication.id}|" type="file" name="file" required
-                                               onchange="this.parentElement.querySelector('.file-name').textContent = this.files.length ? this.files[0].name : 'No file selected'">
+                                        <input th:id="|shared-material-upload-${jobApplication.id}|" type="file" name="file" required onchange="this.parentElement.querySelector('.file-name').textContent = this.files.length ? this.files[0].name : 'No file selected'">
                                         <label th:for="|shared-material-upload-${jobApplication.id}|">Choose resume</label>
                                         <span class="file-name">No file selected</span>
                                     </div>
                                     <button class="button button-primary" type="submit">Upload &amp; link</button>
                                 </form>
                             </div>
-                        </div>
-                    </details>
+                        </section>
 
-                    <details class="material-item attachment-material-item"
-                             th:attr="open=${attachmentSuccess != null or attachmentError != null} ? 'open' : null">
-                        <summary class="material-summary">
-                            <span class="material-summary-main">
-                                <span class="material-icon material-icon-files">FILE</span>
-                                <span>
-                                    <strong>Attached files</strong>
-                                    <small th:if="${#lists.isEmpty(attachments)}">No files attached yet</small>
-                                    <small th:unless="${#lists.isEmpty(attachments)}"
-                                           th:text="${attachments.size() == 1 ? '1 file · stored locally in SQLite' : attachments.size() + ' files · stored locally in SQLite'}">2 files · stored locally in SQLite</small>
-                                </span>
-                            </span>
-                            <span class="material-toggle">Manage <span aria-hidden="true">⌄</span></span>
-                        </summary>
-                        <div class="material-body attachment-material-body">
-                            <div th:if="${attachmentSuccess != null}" class="inline-alert inline-alert-success" th:text="${attachmentSuccess}">Attachment saved.</div>
-                            <div th:if="${attachmentError != null}" class="inline-alert inline-alert-error" th:text="${attachmentError}">Attachment error.</div>
-
-                            <div class="attachment-intro">
+                        <section class="materials-manager-section">
+                            <div class="materials-manager-section-heading">
                                 <div>
-                                    <strong>Keep application-specific files</strong>
-                                    <p>Original cover letters and one-off supporting documents stay with this application. Reusable resumes belong in the Materials Library above.</p>
+                                    <span class="application-material-kicker">APPLICATION-SPECIFIC</span>
+                                    <strong>One-off files</strong>
+                                    <p>Use this for original cover-letter files, writing samples, and documents unique to this application.</p>
                                 </div>
-                                <span>10 MB max per file</span>
+                                <span class="materials-manager-limit">10 MB max per file</span>
                             </div>
 
-                            <form class="attachment-upload-form" method="post" enctype="multipart/form-data"
-                                  th:action="@{/applications/{id}/attachments(id=${jobApplication.id})}">
+                            <form class="attachment-upload-form" method="post" enctype="multipart/form-data" th:action="@{/applications/{id}/attachments(id=${jobApplication.id})}">
                                 <label class="attachment-type-field">
                                     <span>File type</span>
                                     <select name="attachmentType" required>
-                                        <option th:each="fileType : ${attachmentTypes}"
-                                                th:value="${fileType.name()}"
-                                                th:text="${fileType.displayName}">Resume</option>
+                                        <option th:each="fileType : ${attachmentTypes}" th:value="${fileType.name()}" th:text="${fileType.displayName}">Cover letter</option>
                                     </select>
                                 </label>
                                 <div class="attachment-file-picker">
-                                    <input id="application-attachment-upload" type="file" name="file" required
-                                           onchange="this.parentElement.querySelector('.file-name').textContent = this.files.length ? this.files[0].name : 'No file selected'">
+                                    <input id="application-attachment-upload" type="file" name="file" required onchange="this.parentElement.querySelector('.file-name').textContent = this.files.length ? this.files[0].name : 'No file selected'">
                                     <label for="application-attachment-upload">Choose file</label>
                                     <span class="file-name">No file selected</span>
                                 </div>
@@ -656,77 +640,32 @@
                                 <span class="attachment-empty-icon">+</span>
                                 <div>
                                     <strong>No application-specific files yet</strong>
-                                    <p>Add the exact cover letter or supporting document submitted for this application when it is not something you expect to reuse.</p>
+                                    <p>You can leave this empty when the resume from your library is the only file you need to track.</p>
                                 </div>
                             </div>
 
                             <div th:unless="${#lists.isEmpty(attachments)}" class="attachment-file-list">
                                 <article class="attachment-file-row" th:each="fileRow : ${attachments}">
-                                    <span class="attachment-file-icon" th:text="${fileRow.attachmentType.iconLabel}">CV</span>
+                                    <span class="attachment-file-icon" th:text="${fileRow.attachmentType.iconLabel}">CL</span>
                                     <div class="attachment-file-copy">
                                         <div class="attachment-file-heading">
-                                            <strong th:text="${fileRow.fileName}">resume-v4.pdf</strong>
-                                            <span class="attachment-type-chip" th:text="${fileRow.attachmentType.displayName}">Resume</span>
+                                            <strong th:text="${fileRow.fileName}">cover-letter.pdf</strong>
+                                            <span class="attachment-type-chip" th:text="${fileRow.attachmentType.displayName}">Cover letter</span>
                                         </div>
                                         <small th:text="${fileRow.fileSizeDisplay() + ' · added ' + #temporals.format(fileRow.createdAt, 'MMM d, yyyy')}">184.2 KB · added Aug 29, 2026</small>
                                     </div>
                                     <div class="attachment-file-actions">
-                                        <a class="button button-secondary button-small"
-                                           th:href="@{/applications/{id}/attachments/{attachmentId}(id=${jobApplication.id},attachmentId=${fileRow.id})}">Download</a>
-                                        <form method="post"
-                                              th:action="@{/applications/{id}/attachments/{attachmentId}/delete(id=${jobApplication.id},attachmentId=${fileRow.id})}"
-                                              onsubmit="return confirm('Remove this attachment?');">
+                                        <a class="button button-secondary button-small" th:href="@{/applications/{id}/attachments/{attachmentId}(id=${jobApplication.id},attachmentId=${fileRow.id})}">Download</a>
+                                        <form method="post" th:action="@{/applications/{id}/attachments/{attachmentId}/delete(id=${jobApplication.id},attachmentId=${fileRow.id})}" onsubmit="return confirm('Remove this attachment?');">
                                             <button class="button button-quiet button-small" type="submit">Remove</button>
                                         </form>
                                     </div>
                                 </article>
                             </div>
-                        </div>
-                    </details>
-                </div>
+                        </section>
+                    </div>
+                </details>
             </section>
-
-        <details class="panel company-branding-panel" id="company-branding" th:attr="open=${logoSuccess != null or logoError != null} ? 'open' : null">
-            <summary class="company-branding-summary">
-                <span>
-                    <span class="eyebrow">COMPANY BRANDING</span>
-                    <strong>Company logo</strong>
-                    <small th:if="${jobApplication.companyDomain == null}">Add a company domain to enable logo caching.</small>
-                    <small th:if="${jobApplication.companyDomain != null and logoCached}" th:text="${'Cached locally for ' + jobApplication.companyDomain}">Cached locally</small>
-                    <small th:if="${jobApplication.companyDomain != null and !logoCached}" th:text="${'Using initials · ' + jobApplication.companyDomain}">Using initials</small>
-                </span>
-                <span class="material-toggle">Manage <span aria-hidden="true">⌄</span></span>
-            </summary>
-
-            <div class="company-branding-body">
-                <div th:if="${logoSuccess != null}" class="inline-alert inline-alert-success" th:text="${logoSuccess}">Logo updated.</div>
-                <div th:if="${logoError != null}" class="inline-alert inline-alert-error" th:text="${logoError}">Logo error.</div>
-
-                <div th:if="${jobApplication.companyDomain == null}" class="branding-empty">
-                    <p>Add a company domain such as <code>mastercard.com</code> on the Edit Application screen. Initials remain the fallback.</p>
-                    <a class="button button-secondary button-small" th:href="@{/applications/{id}/edit(id=${jobApplication.id})}">Add company domain</a>
-                </div>
-
-                <div th:if="${jobApplication.companyDomain != null}" class="branding-actions">
-                    <div>
-                        <strong th:text="${jobApplication.companyDomain}">mastercard.com</strong>
-                        <p>Fetch reads the company's homepage for declared favicons and touch icons, checks its web app manifest when present, then falls back to common icon locations. The selected image is cached in your local SQLite database.</p>
-                    </div>
-                    <div class="branding-button-row">
-                        <form th:action="@{/applications/{id}/logo/fetch(id=${jobApplication.id})}" method="post">
-                            <button class="button button-secondary button-small" type="submit" th:text="${logoCached ? 'Refresh from domain' : 'Fetch from domain'}">Fetch from domain</button>
-                        </form>
-                        <form class="logo-upload-form" th:action="@{/applications/{id}/logo/upload(id=${jobApplication.id})}" method="post" enctype="multipart/form-data">
-                            <input id="company-logo-upload" type="file" name="logo" accept="image/png,image/jpeg,image/webp,image/gif,image/x-icon,image/vnd.microsoft.icon,image/svg+xml" required>
-                            <button class="button button-secondary button-small" type="submit">Upload image</button>
-                        </form>
-                        <form th:if="${logoCached}" th:action="@{/applications/{id}/logo/delete(id=${jobApplication.id})}" method="post">
-                            <button class="button button-quiet button-small" type="submit">Remove cached logo</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </details>
 
         <section class="danger-zone">
             <div>

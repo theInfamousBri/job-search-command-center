@@ -32,6 +32,8 @@ public class JobApplication {
     private Priority priority = Priority.MEDIUM;
     private String source;
     private String jobUrl;
+    @Size(max = 100, message = "Requisition / Job ID must be 100 characters or fewer.")
+    private String requisitionId;
     private String salary;
     private LocalDate appliedDate = LocalDate.now();
     private String nextStep;
@@ -167,6 +169,9 @@ public class JobApplication {
 
     public String getJobUrl() { return jobUrl; }
     public void setJobUrl(String jobUrl) { this.jobUrl = jobUrl; }
+
+    public String getRequisitionId() { return requisitionId; }
+    public void setRequisitionId(String requisitionId) { this.requisitionId = requisitionId; }
 
     public String getSalary() { return salary; }
     public void setSalary(String salary) { this.salary = salary; }

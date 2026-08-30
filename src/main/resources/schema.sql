@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS job_applications (
     priority TEXT NOT NULL,
     source TEXT,
     job_url TEXT,
+    requisition_id TEXT,
     salary TEXT,
     applied_date TEXT,
     next_step TEXT,

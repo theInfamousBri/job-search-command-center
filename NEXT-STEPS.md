@@ -47,7 +47,7 @@ The working theme for v1.4 is making the command center faster, more connected, 
 1. **Shared Materials / Resume Library — completed** — reusable files are stored once, SHA-256 deduplicated, and linked many-to-many to applications. Existing v1.3 Resume attachments migrate into the library automatically while application-specific files remain separate.
 2. **People ↔ Applications — completed** — company-level contacts now link many-to-many to applications without duplication, with application-page linking/unlinking and safe relationship cleanup. Lifecycle events can reference saved people in a later chunk.
 3. **Application Detail navigation — completed** — the overview now prioritizes Notes, compact People, and Role Details; long notes collapse gracefully; legacy career-tag UI is retired; and Overview / Timeline / Prep / Materials jump navigation keeps the server-rendered page easy to scan.
-4. **Global Search / `Ctrl/Cmd + K`** — grouped search across applications, companies, people, prep, descriptions, and other useful local content.
+4. **Global Search / `Ctrl/Cmd + K` — in progress** — the prerequisite application identity work is complete: applications now store/search an optional Requisition / Job ID and warn on same-company requisition duplicates. The command palette itself will provide grouped search across applications, companies, people, prep, descriptions, and other useful local content.
 5. **Compensation context** — restrained salary-range visualization using comparable tracked roles, medians/quartiles, and sample-size fallbacks rather than noisy global min/max comparisons.
 6. **Smarter Needs Attention** — context-aware interview/follow-up/prep cues with useful direct actions.
 7. **Dark mode + accessibility** — System / Light / Dark theming plus contrast, keyboard, focus-state, semantic-label, and form-error polish.
@@ -59,7 +59,9 @@ Engineering coverage should continue to grow alongside these chunks, especially 
 
 ### 1. True global search / command palette
 
-The current top-bar search is application-focused. Expand it into one search surface across:
+The opening v1.4.4 identity slice is complete: applications now have an optional **Requisition / Job ID**, current application search includes it, and create/edit warns before saving the same company + requisition twice while still allowing an intentional override. Exact requisition matches should rank especially strongly once the command palette lands.
+
+The current top-bar search is otherwise application-focused. Expand it into one search surface across:
 
 - applications
 - lifecycle events

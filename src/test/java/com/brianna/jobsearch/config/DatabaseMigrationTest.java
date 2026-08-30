@@ -32,7 +32,7 @@ class DatabaseMigrationTest {
         new DatabaseConfig().databaseMigrations(jdbc).run(null);
 
         Set<String> applicationColumns = columns(jdbc, "job_applications");
-        assertThat(applicationColumns).contains("role_family", "industry_domain", "career_focus");
+        assertThat(applicationColumns).contains("role_family", "industry_domain", "career_focus", "requisition_id");
         assertThat(tableNames(jdbc)).contains(
                 "company_notes", "company_contacts", "application_contact_links", "application_attachments",
                 "material_files", "application_material_links");
@@ -98,7 +98,7 @@ class DatabaseMigrationTest {
         migrations.run(null);
 
         assertThat(columns(jdbc, "job_applications"))
-                .contains("role_family", "industry_domain", "career_focus");
+                .contains("role_family", "industry_domain", "career_focus", "requisition_id");
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM job_applications", Long.class)).isEqualTo(1L);
         assertThat(jdbc.queryForObject("SELECT updated_at FROM job_applications WHERE id = 1", String.class))
                 .isEqualTo("2026-02-03T11:22:33");

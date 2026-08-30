@@ -25,6 +25,11 @@ class ApplicationDetailTemplateTest {
         assertTrue(template.contains("jobApplication.roleFamily"));
         assertTrue(template.contains("jobApplication.industryDomain"));
         assertTrue(template.contains("jobApplication.careerFocus"));
+        assertTrue(template.contains("Requisition / Job ID"));
+        assertTrue(template.contains("jobApplication.requisitionId"));
+        assertTrue(template.contains("What you submitted"));
+        assertTrue(template.contains("Manage materials"));
+        assertFalse(template.contains("Store once, reference everywhere"));
         assertFalse(template.contains("Original career tag"));
         assertFalse(template.contains("jobApplication.careerLane"));
     }
