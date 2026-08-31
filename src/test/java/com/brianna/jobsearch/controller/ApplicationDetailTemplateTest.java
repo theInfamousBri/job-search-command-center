@@ -29,6 +29,8 @@ class ApplicationDetailTemplateTest {
         assertTrue(template.contains("jobApplication.requisitionId"));
         assertTrue(template.contains("What you submitted"));
         assertTrue(template.contains("Manage materials"));
+        assertTrue(template.contains("id=\"manage-materials\""));
+        assertTrue(template.contains("application-detail.js?v=1.4.4-material-return"));
         assertFalse(template.contains("Store once, reference everywhere"));
         assertFalse(template.contains("Original career tag"));
         assertFalse(template.contains("jobApplication.careerLane"));

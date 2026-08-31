@@ -418,7 +418,7 @@ public class JobApplicationController {
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("attachmentError", ex.getMessage());
         }
-        return "redirect:/applications/" + id + "#application-materials";
+        return "redirect:/applications/" + id + "#manage-materials";
     }
 
     @GetMapping("/applications/{id}/attachments/{attachmentId}")
@@ -458,7 +458,7 @@ public class JobApplicationController {
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("attachmentError", ex.getMessage());
         }
-        return "redirect:/applications/" + id + "#application-materials";
+        return "redirect:/applications/" + id + "#manage-materials";
     }
 
     @PostMapping("/applications/{id}/materials")
@@ -480,7 +480,7 @@ public class JobApplicationController {
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("materialError", ex.getMessage());
         }
-        return "redirect:/applications/" + id + "#application-materials";
+        return "redirect:/applications/" + id + "#manage-materials";
     }
 
     @PostMapping("/applications/{id}/materials/{materialId}/link")
@@ -494,7 +494,7 @@ public class JobApplicationController {
         redirectAttributes.addFlashAttribute(
                 "materialSuccess",
                 linked ? "Linked “" + material.displayName() + "”." : "“" + material.displayName() + "” was already linked.");
-        return "redirect:/applications/" + id + "#application-materials";
+        return "redirect:/applications/" + id + "#manage-materials";
     }
 
     @PostMapping("/applications/{id}/materials/{materialId}/unlink")
@@ -506,7 +506,7 @@ public class JobApplicationController {
         var material = materialService.get(materialId);
         materialService.unlink(id, materialId);
         redirectAttributes.addFlashAttribute("materialSuccess", "Unlinked “" + material.displayName() + "”.");
-        return "redirect:/applications/" + id + "#application-materials";
+        return "redirect:/applications/" + id + "#manage-materials";
     }
 
     @GetMapping("/applications/{id}/logo")

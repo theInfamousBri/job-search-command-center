@@ -66,15 +66,49 @@
 </aside>
 
 <header class="topbar" th:fragment="topbar">
-    <form class="topbar-search" th:action="@{/applications}" method="get">
+    <form class="topbar-search" th:action="@{/applications}" method="get" data-global-search-trigger-form>
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
-        <input type="search" name="q" placeholder="Search applications…" aria-label="Search applications">
-        <span class="search-hint">↵</span>
+        <input type="search" name="q" placeholder="Search anything…" aria-label="Search applications, companies, and people"
+               autocomplete="off" data-global-search-trigger>
+        <span class="search-hint" data-search-shortcut>Ctrl K</span>
     </form>
     <div class="topbar-actions">
         <span class="local-chip" th:classappend="${demoMode} ? ' demo-chip' : ''"><i></i><span th:text="${demoMode} ? 'Demo' : 'Local'">Local</span></span>
         <a class="topbar-add" th:href="@{/applications/new}" aria-label="Add application" title="Add application">+</a>
     </div>
+
+    <div class="command-palette-backdrop" data-global-search-dialog hidden>
+        <section class="command-palette" role="dialog" aria-modal="true" aria-labelledby="global-search-title">
+            <div class="command-palette-search">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+                <div class="command-palette-input-wrap">
+                    <span class="sr-only" id="global-search-title">Global search</span>
+                    <input type="search" placeholder="Search applications, companies, people, or a requisition…"
+                           aria-label="Global search" aria-autocomplete="list" aria-controls="global-search-results"
+                           autocomplete="off" data-global-search-input>
+                </div>
+                <kbd>Esc</kbd>
+            </div>
+
+            <div class="command-palette-body">
+                <div class="command-palette-empty" data-global-search-empty>
+                    <span class="command-palette-empty-icon" aria-hidden="true">⌕</span>
+                    <strong>Search your command center</strong>
+                    <p>Find an application, company, person, or exact requisition / job ID.</p>
+                </div>
+                <div class="command-palette-results" id="global-search-results" role="listbox" data-global-search-results hidden></div>
+            </div>
+
+            <footer class="command-palette-footer">
+                <span><kbd>↑</kbd><kbd>↓</kbd> Navigate</span>
+                <span><kbd>Enter</kbd> Open</span>
+                <span><kbd>Esc</kbd> Close</span>
+                <span class="command-palette-scope">Applications · Companies · People</span>
+            </footer>
+        </section>
+    </div>
+
+    <script th:src="@{/js/global-search.js?v=1.4.4-search-polish-3}" src="/js/global-search.js?v=1.4.4-search-polish-3" defer></script>
 </header>
 </body>
 </html>

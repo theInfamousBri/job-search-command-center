@@ -185,6 +185,51 @@ public class CompanyManagementRepository {
                 companyKey);
     }
 
+    public List<CompanyContact> searchContacts(String rawQuery, int limit) {
+        if (rawQuery == null || rawQuery.isBlank() || limit <= 0) {
+            return List.of();
+        }
+        String query = rawQuery.trim();
+        String like = "%" + query + "%";
+        String prefix = query + "%";
+        return jdbcTemplate.query("""
+                SELECT id, company_key, name, role, relationship_type, email, linkedin_url, notes,
+                       CASE WHEN photo_data IS NULL THEN 0 ELSE 1 END AS has_photo,
+                       created_at, updated_at,
+                       (SELECT COUNT(*) FROM application_contact_links acl WHERE acl.contact_id = company_contacts.id)
+                           AS linked_application_count
+                FROM company_contacts
+                WHERE LOWER(name) LIKE LOWER(?)
+                   OR LOWER(COALESCE(role, '')) LIKE LOWER(?)
+                   OR LOWER(COALESCE(email, '')) LIKE LOWER(?)
+                   OR LOWER(REPLACE(relationship_type, '_', ' ')) LIKE LOWER(?)
+                   OR LOWER(company_key) LIKE LOWER(?)
+                ORDER BY
+                    CASE
+                        WHEN LOWER(TRIM(name)) = LOWER(TRIM(?)) THEN 0
+                        WHEN LOWER(COALESCE(email, '')) = LOWER(TRIM(?)) THEN 1
+                        WHEN LOWER(name) LIKE LOWER(?) THEN 2
+                        ELSE 3
+                    END,
+                    linked_application_count DESC,
+                    LOWER(name) ASC
+                LIMIT ?
+                """, (rs, rowNum) -> new CompanyContact(
+                        rs.getLong("id"),
+                        rs.getString("company_key"),
+                        rs.getString("name"),
+                        rs.getString("role"),
+                        CompanyContactRelationship.valueOf(rs.getString("relationship_type")),
+                        rs.getString("email"),
+                        rs.getString("linkedin_url"),
+                        rs.getString("notes"),
+                        rs.getInt("has_photo") == 1,
+                        LocalDateTime.parse(rs.getString("created_at")),
+                        LocalDateTime.parse(rs.getString("updated_at")),
+                        rs.getLong("linked_application_count")),
+                like, like, like, like, like, query, query, prefix, limit);
+    }
+
     public CompanyContact findContact(long id) {
         return jdbcTemplate.query("""
                 SELECT id, company_key, name, role, relationship_type, email, linkedin_url, notes,

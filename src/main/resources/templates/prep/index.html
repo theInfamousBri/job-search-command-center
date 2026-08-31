@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Prep / Notes · Job Search</title>
-    <link rel="stylesheet" th:href="@{/css/app.css?v=1.4.1-materials}">
+    <link rel="stylesheet" th:href="@{/css/app.css?v=1.4.4-search-responsive}">
     <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
 </head>
 <body>
@@ -66,7 +66,9 @@
         <section class="panel prep-filter-panel">
             <form class="prep-filter-form" th:action="@{/prep}" method="get">
                 <div class="prep-search">
-                    <span>⌕</span>
+                    <span class="local-search-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4 4"></path></svg>
+                    </span>
                     <input type="search" name="q" th:value="${query}" placeholder="Search Java, Spring, STAR stories, Northstar…">
                 </div>
 

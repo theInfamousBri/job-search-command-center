@@ -41,6 +41,16 @@ class JobApplicationRepositoryTest {
     }
 
     @Test
+    void globalSearchRanksExactRequisitionAheadOfOtherTextMatches() {
+        long exactId = repository.save(application("Mastercard", "Senior Software Engineer", "R-274666"));
+        repository.save(application("R-274666 Labs", "Backend Engineer", "OTHER-1"));
+
+        assertThat(repository.searchGlobal("r-274666", 5))
+                .extracting(JobApplication::getId)
+                .startsWith(exactId);
+    }
+
+    @Test
     void duplicateLookupMatchesCompanyAndRequisitionCaseInsensitivelyAndCanExcludeCurrentRecord() {
         long id = repository.save(application("Mastercard", "Senior Software Engineer", "R-274666"));
         repository.save(application("Other Company", "Engineer", "R-274666"));

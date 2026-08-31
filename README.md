@@ -72,6 +72,12 @@ Applications can store:
 
 The tracker supports text search across company, company domain, role, **requisition / job ID**, location, work arrangement, experience requirements, role family, source, state, next step, archived cover-letter text, notes, and saved job descriptions. Exact company + requisition matches are also used to warn about likely duplicate applications before saving, with an explicit override for legitimate edge cases.
 
+### Global search / command palette
+
+The top bar is now a cross-resource command palette. Press **Ctrl+K** on Windows/Linux or **Cmd+K** on macOS to search Applications, Companies, and saved People without first choosing a workspace. Results are grouped by type and support arrow-key navigation, Enter-to-open, and Escape-to-close. Exact Requisition / Job ID matches are promoted above broader text matches, making it quick to confirm whether a specific posting is already tracked.
+
+The first global-search phase intentionally focuses on high-confidence structured records. Prep items, lifecycle events, saved job-description text, and richer company research remain planned extensions of the same palette rather than separate search UIs.
+
 For larger histories, the application list also supports:
 
 - filters for stage, state, priority, work arrangement, source, role family, and applied-date range
@@ -780,11 +786,11 @@ The application is intentionally a local, single-user application. It includes a
 - email parsing
 - Google Calendar synchronization
 - automatic job-posting imports
-- global cross-app search
+- deeper global search across prep, timeline, and long-form saved content
 - arbitrary spreadsheet column mapping
 - import-batch history / one-click import undo
 - export / backup UI
-- global People directory and direct person-to-application linking
+- global People directory across all companies
 - dark mode
 
 Those and other ideas are tracked in [`NEXT-STEPS.md`](NEXT-STEPS.md).
@@ -797,7 +803,7 @@ See [`NEXT-STEPS.md`](NEXT-STEPS.md) for the prioritized product, analytics, aut
 
 v1.4 now includes a **Materials Library** for reusable resume versions, direct People ↔ Application links, a redesigned Application Detail overview, and optional **Requisition / Job ID** tracking with same-company duplicate warnings. A resume is now stored once in SQLite and linked to every application where it was submitted. SHA-256 duplicate detection prevents byte-identical files from being stored again, and the library shows how many application references reuse each physical file. Existing v1.3 Resume attachments migrate into this model automatically while cover letters and other application-specific files stay attached directly to their application.
 
-The Application Detail materials surface now emphasizes a read-first **What you submitted** summary, with maintenance controls collapsed until needed. Current application search also includes requisition IDs, establishing a strong exact identifier for the upcoming global command palette.
+The Application Detail materials surface now emphasizes a read-first **What you submitted** summary, with maintenance controls collapsed until needed. Requisition IDs now feed the first **Global Search / Ctrl/Cmd + K** command-palette phase, which groups Applications, Companies, and People in one keyboard-first search surface and promotes exact requisition matches.
 
 The v1.4 engineering baseline also adds Maven Wrapper support, JaCoCo coverage reporting, GitHub Actions CI, branded 404/500 pages, and a growing set of data-safety regression/migration tests. The active application taxonomy is now consistently presented as Role Family / Industry / Focus; the old free-form `career_lane` value is retained only as legacy import/migration context.
 

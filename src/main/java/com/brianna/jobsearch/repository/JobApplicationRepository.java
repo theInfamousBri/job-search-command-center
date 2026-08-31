@@ -108,6 +108,43 @@ public class JobApplicationRepository {
                 """, rowMapper, like, like, like, like, like, like, like, like, like, like, like, like, like, like, like, like, like);
     }
 
+    public List<JobApplication> searchGlobal(String rawQuery, int limit) {
+        if (rawQuery == null || rawQuery.isBlank() || limit <= 0) {
+            return List.of();
+        }
+
+        String query = rawQuery.trim();
+        String like = "%" + query + "%";
+        String prefix = query + "%";
+        return jdbcTemplate.query("""
+                SELECT *
+                FROM job_applications
+                WHERE LOWER(company) LIKE LOWER(?)
+                   OR LOWER(role) LIKE LOWER(?)
+                   OR LOWER(COALESCE(requisition_id, '')) LIKE LOWER(?)
+                   OR LOWER(COALESCE(company_domain, '')) LIKE LOWER(?)
+                   OR LOWER(COALESCE(location, '')) LIKE LOWER(?)
+                   OR LOWER(COALESCE(work_arrangement, '')) LIKE LOWER(?)
+                   OR LOWER(COALESCE(source, '')) LIKE LOWER(?)
+                   OR LOWER(COALESCE(career_focus, '')) LIKE LOWER(?)
+                ORDER BY
+                    CASE
+                        WHEN LOWER(TRIM(COALESCE(requisition_id, ''))) = LOWER(TRIM(?)) THEN 0
+                        WHEN LOWER(TRIM(company)) = LOWER(TRIM(?)) THEN 1
+                        WHEN LOWER(TRIM(role)) = LOWER(TRIM(?)) THEN 2
+                        WHEN LOWER(COALESCE(requisition_id, '')) LIKE LOWER(?) THEN 3
+                        WHEN LOWER(company) LIKE LOWER(?) THEN 4
+                        WHEN LOWER(role) LIKE LOWER(?) THEN 5
+                        ELSE 6
+                    END,
+                    updated_at DESC,
+                    id DESC
+                LIMIT ?
+                """, rowMapper,
+                like, like, like, like, like, like, like, like,
+                query, query, query, prefix, prefix, prefix, limit);
+    }
+
     public ApplicationPage findPage(ApplicationSearchCriteria criteria) {
         StringBuilder where = new StringBuilder(" WHERE 1 = 1");
         List<Object> params = new ArrayList<>();

@@ -2,12 +2,23 @@
 
 ## 1.4.0 (in progress)
 
+### Global search / command palette
+
+- Replaces the application-only top-bar search experience with a global `Ctrl/Cmd + K` command palette.
+- Searches **Applications**, **Companies**, and company-level **People** from one keyboard-first surface while keeping the existing application-search URL as a no-JavaScript/error fallback.
+- Promotes exact Requisition / Job ID matches above fuzzy text matches and labels them explicitly as **Exact requisition**.
+- Groups results by resource type with compact role/company/contact context and direct navigation to application details, company workspaces, or the matched Person inside a company page.
+- Adds arrow-key navigation, Enter-to-open, Escape-to-close, click-outside dismissal, and a platform-aware `Ctrl K` / `⌘ K` shortcut hint.
+- Adds repository, service, and HTTP/controller regression coverage for exact-requisition ranking, contact search, company ranking, grouped search results, and no-cache JSON responses.
+- Material link/upload/unlink and application-specific attachment actions now return to the expanded **Manage materials** workspace instead of dropping the user back at the top of Application Detail.
+- Normalizes legacy data-entry control typography across application forms, company/People forms, company and normalization filters, Prep search, activity forms, and Materials upload controls so text fields no longer fall back to oversized browser-default text.
+
 ### Requisition identity & application materials refinement
 
 - Adds an optional **Requisition / Job ID** to applications and carries it through SQLite, forms, Role Details, and application search.
 - Adds a company + requisition duplicate check when creating or editing an application, with a direct link to the existing record and an explicit **Save anyway** escape hatch rather than a hard uniqueness constraint.
 - Adds an index for company/requisition lookup after the backward-safe startup migration adds the new column, without changing historical application `updated_at` timestamps.
-- Treats requisition IDs as strong posting identity ahead of the upcoming global `Ctrl/Cmd + K` search.
+- Treats requisition IDs as strong posting identity for exact matching in the global `Ctrl/Cmd + K` search.
 - Uses the same compact typography for collapsed and expanded Working Notes so expanding content does not cause an unnecessary visual jump.
 - Reworks Application Materials into a read-first **What you submitted** summary for resume, cover letter, saved posting, and application-specific files.
 - Moves resume linking/uploading, unlinking, and attachment maintenance behind a collapsed **Manage materials** control while preserving shared-resume deduplication and application-specific attachments.
@@ -66,7 +77,7 @@
 - Adds a lightweight Overview / Timeline / Prep / Materials jump bar while keeping the page server-rendered and fully available as one document.
 - Moves Application Info into the top overview area and removes fields already repeated in the header/summary so the detail panel stays compact.
 - Moves People beneath Working Notes in the left overview column and replaces the large full-width contact cards with compact linked-person rows and a collapsed linker.
-- Keeps Timeline, Prep, Materials, company branding, and destructive maintenance actions progressively deeper in the page.
+- Keeps Timeline, Prep, Materials, and destructive maintenance actions progressively deeper in the page; manual company branding stays in the Company workspace.
 
 
 

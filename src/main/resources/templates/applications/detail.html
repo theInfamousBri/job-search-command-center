@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="${jobApplication.company + ' · ' + jobApplication.role}">Application · Job Search</title>
-    <link rel="stylesheet" th:href="@{/css/app.css?v=1.4.4-form-alignment}">
+    <link rel="stylesheet" th:href="@{/css/app.css?v=1.4.4-form-type}">
     <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
 </head>
 <body>
@@ -544,7 +544,9 @@
                     </article>
                 </div>
 
-                <details class="application-materials-manager" th:attr="open=${materialSuccess != null or materialError != null or attachmentSuccess != null or attachmentError != null} ? 'open' : null">
+                <details class="application-materials-manager" id="manage-materials"
+                         th:attr="open=${materialSuccess != null or materialError != null or attachmentSuccess != null or attachmentError != null} ? 'open' : null,
+                                  data-return-active=${materialSuccess != null or materialError != null or attachmentSuccess != null or attachmentError != null}">
                     <summary>
                         <span>
                             <strong>Manage materials</strong>
@@ -680,5 +682,6 @@
         </section>
     </main>
 </div>
+<script th:src="@{/js/application-detail.js?v=1.4.4-material-return-session}" src="/js/application-detail.js"></script>
 </body>
 </html>

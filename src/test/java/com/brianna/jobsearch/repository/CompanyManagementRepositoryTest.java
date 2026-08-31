@@ -55,6 +55,14 @@ class CompanyManagementRepositoryTest {
     }
 
     @Test
+    void globalPeopleSearchMatchesNameRoleRelationshipEmailAndCompanyKey() {
+        assertThat(repository.searchContacts("Alex", 5)).extracting(CompanyContact::id).containsExactly(7L);
+        assertThat(repository.searchContacts("Staff Engineer", 5)).extracting(CompanyContact::id).containsExactly(7L);
+        assertThat(repository.searchContacts("interviewer", 5)).extracting(CompanyContact::id).containsExactly(7L);
+        assertThat(repository.searchContacts("northstar", 5)).extracting(CompanyContact::id).containsExactly(7L);
+    }
+
+    @Test
     void deletingPersonAlsoCleansApplicationLinksWithoutDeletingApplication() {
         assertThat(repository.deleteContact(7L)).isEqualTo(1);
 

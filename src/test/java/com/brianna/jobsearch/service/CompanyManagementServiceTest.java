@@ -145,6 +145,35 @@ class CompanyManagementServiceTest {
 
 
     @Test
+    void globalCompanySearchRanksExactCompanyAheadOfContainsMatches() {
+        FakeCompanyRepository repository = new FakeCompanyRepository();
+        repository.rows.add(new CompanyNameRow("Mastercard Labs", "labs.example", 1, 1, null));
+        repository.rows.add(new CompanyNameRow("Mastercard", "mastercard.com", 3, 1, null));
+        CompanyManagementService service = new CompanyManagementService(repository, new FakeLogoService());
+
+        assertEquals("Mastercard", service.searchCompanies("mastercard", 5).getFirst().displayName());
+    }
+
+    @Test
+    void globalPeopleSearchReturnsCompanyDisplayNameAndSkipsOrphanedCompanyKeys() {
+        FakeCompanyRepository repository = new FakeCompanyRepository();
+        repository.rows.add(new CompanyNameRow("Northstar Labs", "northstar.com", 2, 1, null));
+        repository.contacts.add(new CompanyContact(
+                7L, "northstar labs", "Alex Morgan", "Staff Engineer", CompanyContactRelationship.INTERVIEWER,
+                null, null, null, false, LocalDateTime.now(), LocalDateTime.now(), 1));
+        repository.contacts.add(new CompanyContact(
+                8L, "orphan company", "Alex Orphan", "Recruiter", CompanyContactRelationship.RECRUITER,
+                null, null, null, false, LocalDateTime.now(), LocalDateTime.now(), 0));
+        CompanyManagementService service = new CompanyManagementService(repository, new FakeLogoService());
+
+        var results = service.searchPeople("Alex", 5);
+
+        assertEquals(1, results.size());
+        assertEquals("Northstar Labs", results.getFirst().companyDisplayName());
+        assertEquals(7L, results.getFirst().contact().id());
+    }
+
+    @Test
     void createsAndUpdatesCompanyContactsWithoutTouchingApplicationRows() {
         FakeCompanyRepository repository = new FakeCompanyRepository();
         repository.rows.add(new CompanyNameRow("Acme", "acme.com", 2, 1, null));
@@ -239,6 +268,18 @@ class CompanyManagementServiceTest {
                     id, companyKey, name, role, CompanyContactRelationship.valueOf(relationshipType),
                     email, linkedinUrl, notes, photoData != null, LocalDateTime.now(), LocalDateTime.now(), 0));
             return id;
+        }
+
+        @Override
+        public List<CompanyContact> searchContacts(String rawQuery, int limit) {
+            if (rawQuery == null || rawQuery.isBlank()) return List.of();
+            String query = rawQuery.toLowerCase();
+            return contacts.stream()
+                    .filter(contact -> contact.name().toLowerCase().contains(query)
+                            || (contact.role() != null && contact.role().toLowerCase().contains(query))
+                            || contact.companyKey().toLowerCase().contains(query))
+                    .limit(limit)
+                    .toList();
         }
 
         @Override

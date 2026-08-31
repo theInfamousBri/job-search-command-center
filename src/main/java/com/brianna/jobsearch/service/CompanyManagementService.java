@@ -84,6 +84,31 @@ public class CompanyManagementService {
     }
 
 
+    public List<CompanyGroup> searchCompanies(String rawQuery, int limit) {
+        if (rawQuery == null || rawQuery.isBlank() || limit <= 0) {
+            return List.of();
+        }
+        String query = rawQuery.trim();
+        return buildGroups(repository.findCompanyNames(), false).stream()
+                .filter(group -> matchesQuery(group, query))
+                .sorted(Comparator.comparingInt((CompanyGroup group) -> companySearchScore(group, query))
+                        .thenComparing(CompanyGroup::displayName, String.CASE_INSENSITIVE_ORDER))
+                .limit(limit)
+                .toList();
+    }
+
+    public List<CompanyPersonSearchResult> searchPeople(String rawQuery, int limit) {
+        if (rawQuery == null || rawQuery.isBlank() || limit <= 0) {
+            return List.of();
+        }
+        Map<String, CompanyGroup> groups = groupsByKey(false);
+        return repository.searchContacts(rawQuery, limit * 2).stream()
+                .filter(contact -> groups.containsKey(contact.companyKey()))
+                .limit(limit)
+                .map(contact -> new CompanyPersonSearchResult(contact, groups.get(contact.companyKey()).displayName()))
+                .toList();
+    }
+
     public CompanyDetail detail(String groupKey) {
         CompanyGroup group = requireGroup(groupKey);
         return new CompanyDetail(
@@ -267,6 +292,10 @@ public class CompanyManagementService {
     }
 
     List<CompanyGroup> buildGroups(List<CompanyNameRow> rows) {
+        return buildGroups(rows, true);
+    }
+
+    private List<CompanyGroup> buildGroups(List<CompanyNameRow> rows, boolean includeLogoStatus) {
         Map<String, MutableCompanyGroup> grouped = new LinkedHashMap<>();
         for (CompanyNameRow row : rows) {
             String key = normalizeCompanyKey(row.companyName());
@@ -278,7 +307,7 @@ public class CompanyManagementService {
 
         List<CompanyGroup> result = new ArrayList<>();
         for (MutableCompanyGroup group : grouped.values()) {
-            result.add(group.toImmutable());
+            result.add(group.toImmutable(includeLogoStatus));
         }
         result.sort(Comparator
                 .comparing(CompanyGroup::needsAttention).reversed()
@@ -300,6 +329,21 @@ public class CompanyManagementService {
             }
         }
         return String.join(" ", kept);
+    }
+
+    private int companySearchScore(CompanyGroup group, String query) {
+        String q = query.toLowerCase(Locale.ROOT);
+        if (group.displayName().equalsIgnoreCase(query)
+                || group.aliases().stream().anyMatch(alias -> alias.equalsIgnoreCase(query))
+                || group.domains().stream().anyMatch(domain -> domain.equalsIgnoreCase(query))) {
+            return 0;
+        }
+        if (group.displayName().toLowerCase(Locale.ROOT).startsWith(q)
+                || group.aliases().stream().anyMatch(alias -> alias.toLowerCase(Locale.ROOT).startsWith(q))
+                || group.domains().stream().anyMatch(domain -> domain.toLowerCase(Locale.ROOT).startsWith(q))) {
+            return 1;
+        }
+        return 2;
     }
 
     private boolean matchesQuery(CompanyGroup group, String query) {
@@ -329,8 +373,12 @@ public class CompanyManagementService {
     }
 
     private Map<String, CompanyGroup> groupsByKey() {
+        return groupsByKey(true);
+    }
+
+    private Map<String, CompanyGroup> groupsByKey(boolean includeLogoStatus) {
         Map<String, CompanyGroup> map = new LinkedHashMap<>();
-        for (CompanyGroup group : buildGroups(repository.findCompanyNames())) {
+        for (CompanyGroup group : buildGroups(repository.findCompanyNames(), includeLogoStatus)) {
             map.put(group.key(), group);
         }
         return map;
@@ -477,7 +525,7 @@ public class CompanyManagementService {
             }
         }
 
-        private CompanyGroup toImmutable() {
+        private CompanyGroup toImmutable(boolean includeLogoStatus) {
             String displayName = aliasCounts.entrySet().stream()
                     .sorted(Map.Entry.<String, Long>comparingByValue().reversed()
                             .thenComparing(entry -> entry.getKey().length(), Comparator.reverseOrder()))
@@ -488,7 +536,7 @@ public class CompanyManagementService {
                     .sorted(String.CASE_INSENSITIVE_ORDER)
                     .toList();
             List<String> domainList = domains.stream().sorted().toList();
-            boolean logoCached = domainList.size() == 1 && logoService.hasLogo(domainList.get(0));
+            boolean logoCached = includeLogoStatus && domainList.size() == 1 && logoService.hasLogo(domainList.get(0));
             return new CompanyGroup(
                     key,
                     displayName,
@@ -501,6 +549,11 @@ public class CompanyManagementService {
         }
     }
 
+
+    public record CompanyPersonSearchResult(
+            CompanyContact contact,
+            String companyDisplayName) {
+    }
 
     public record CompanyDetail(
             CompanyGroup group,

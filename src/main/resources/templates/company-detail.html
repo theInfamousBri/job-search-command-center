@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="|${company.group.displayName} · Companies · Job Search|">Company · Job Search</title>
-    <link rel="stylesheet" th:href="@{/css/app.css?v=1.4.2-people-links}">
+    <link rel="stylesheet" th:href="@{/css/app.css?v=1.4.4-people-modal-3}">
     <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
 </head>
 <body>
@@ -112,6 +112,11 @@
                         <details class="company-add-person">
                             <summary class="button button-primary">+ Add person</summary>
                             <div class="company-contact-editor company-contact-add-editor">
+                                <div class="company-contact-editor-header">
+                                    <strong>Add person</strong>
+                                    <button class="company-contact-editor-close" type="button" aria-label="Close add person form"
+                                            onclick="this.closest('details').open = false">×</button>
+                                </div>
                                 <form method="post" enctype="multipart/form-data"
                                       th:action="@{/companies/{key}/people(key=${company.group.key})}">
                                     <div class="company-contact-form-grid">
@@ -175,7 +180,7 @@
                     </div>
 
                     <div class="company-contact-grid" th:unless="${#lists.isEmpty(company.contacts)}">
-                        <article class="company-contact-card" th:each="person : ${company.contacts}">
+                        <article class="company-contact-card" th:each="person : ${company.contacts}" th:id="|person-${person.id}|">
                             <div class="company-contact-card-main">
                                 <span class="company-contact-avatar">
                                     <strong th:text="${person.initials()}">AS</strong>
@@ -202,6 +207,11 @@
                                 <details class="company-contact-edit">
                                     <summary>Edit</summary>
                                     <div class="company-contact-editor">
+                                        <div class="company-contact-editor-header">
+                                            <strong th:text="|Edit ${person.name}|">Edit person</strong>
+                                            <button class="company-contact-editor-close" type="button" aria-label="Close edit person form"
+                                                    onclick="this.closest('details').open = false">×</button>
+                                        </div>
                                         <form method="post" enctype="multipart/form-data"
                                               th:action="@{/companies/{key}/people/{id}(key=${company.group.key},id=${person.id})}">
                                             <div class="company-contact-form-grid">
@@ -252,10 +262,17 @@
                                                 <button class="button button-primary" type="submit">Save changes</button>
                                             </div>
                                         </form>
-                                        <form class="company-contact-delete" method="post"
-                                              th:action="@{/companies/{key}/people/{id}/delete(key=${company.group.key},id=${person.id})}">
-                                            <button class="button button-danger" type="submit">Remove person</button>
-                                        </form>
+                                        <div class="company-contact-danger-zone">
+                                            <div class="company-contact-danger-copy">
+                                                <strong>Remove this person</strong>
+                                                <span>Deletes the saved contact and removes their application links.</span>
+                                            </div>
+                                            <form class="company-contact-delete" method="post"
+                                                  th:action="@{/companies/{key}/people/{id}/delete(key=${company.group.key},id=${person.id})}"
+                                                  onsubmit="return confirm('Remove this person? This will also remove their application links.');">
+                                                <button class="button button-danger" type="submit">Remove person</button>
+                                            </form>
+                                        </div>
                                     </div>
                                 </details>
                             </div>

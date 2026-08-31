@@ -53,6 +53,10 @@ public class JobApplicationService {
         return repository.findAll(null);
     }
 
+    public List<JobApplication> searchGlobal(String query, int limit) {
+        return repository.searchGlobal(query, limit);
+    }
+
     public ApplicationPage search(ApplicationSearchCriteria criteria) {
         return repository.findPage(criteria);
     }
