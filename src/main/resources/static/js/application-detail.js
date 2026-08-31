@@ -1,4 +1,56 @@
 (() => {
+    const openEventEditor = targetId => {
+        const editor = document.getElementById(targetId);
+        if (!editor) return false;
+
+        document.querySelectorAll('.timeline-inline-editor.is-open').forEach(openEditor => {
+            if (openEditor !== editor) openEditor.classList.remove('is-open');
+        });
+
+        editor.classList.add('is-open');
+
+        requestAnimationFrame(() => {
+            editor.scrollIntoView({block: 'center', behavior: 'auto'});
+            const url = new URL(window.location.href);
+            url.hash = targetId;
+            history.replaceState(null, '', url.href);
+        });
+        return true;
+    };
+
+    document.querySelectorAll('[data-event-editor-target]').forEach(toggle => {
+        toggle.addEventListener('click', event => {
+            const targetId = toggle.dataset.eventEditorTarget;
+            if (!targetId || !openEventEditor(targetId)) return;
+            event.preventDefault();
+        });
+    });
+
+    document.querySelectorAll('[data-event-editor-close]').forEach(button => {
+        button.addEventListener('click', () => {
+            const targetId = button.dataset.eventEditorClose;
+            const editor = targetId ? document.getElementById(targetId) : null;
+            if (editor) editor.classList.remove('is-open');
+
+            const returnId = button.dataset.eventReturn;
+            const returnTarget = returnId ? document.getElementById(returnId) : null;
+            if (returnTarget) {
+                returnTarget.scrollIntoView({block: 'center', behavior: 'auto'});
+                const url = new URL(window.location.href);
+                url.searchParams.delete('editEvent');
+                url.hash = returnId;
+                history.replaceState(null, '', url.href);
+            }
+        });
+    });
+
+    // If the server rendered edit mode as a progressive-enhancement fallback,
+    // make sure the selected inline editor is visible after layout settles.
+    const serverOpenEditor = document.querySelector('.timeline-inline-editor.is-open');
+    if (serverOpenEditor && window.location.hash === `#${serverOpenEditor.id}`) {
+        requestAnimationFrame(() => serverOpenEditor.scrollIntoView({block: 'center', behavior: 'auto'}));
+    }
+
     const manager = document.getElementById('manage-materials');
     if (!manager) return;
 

@@ -35,8 +35,20 @@ class ApplicationDetailTemplateTest {
         assertTrue(template.contains("Range midpoint"));
         assertTrue(template.contains("sampleStrength"));
         assertTrue(template.contains("targetRangeDisplay"));
+        assertTrue(template.contains("timeline-inline-editor"));
+        assertTrue(template.contains("event-editor-${event.id}"));
+        assertTrue(template.contains("th:object=\"${newEventForm}\""));
+        assertTrue(template.contains("data-event-editor-target"));
+        assertTrue(template.contains("data-event-editor-close"));
+        assertTrue(template.contains("data-event-return"));
+
+        int overviewLeft = template.indexOf("application-overview-left");
+        int timeline = template.indexOf("id=\"application-timeline\"");
+        int overviewRight = template.indexOf("application-overview-right");
+        assertTrue(overviewLeft >= 0 && timeline > overviewLeft && overviewRight > timeline,
+                "Timeline should continue the primary overview column before the right-side role context");
         assertTrue(template.contains("id=\"manage-materials\""));
-        assertTrue(template.contains("application-detail.js?v=1.4.4-material-return"));
+        assertTrue(template.contains("/js/application-detail.js"));
         assertFalse(template.contains("Store once, reference everywhere"));
         assertFalse(template.contains("Original career tag"));
         assertFalse(template.contains("jobApplication.careerLane"));

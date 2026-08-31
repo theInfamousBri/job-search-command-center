@@ -6954,3 +6954,75 @@ body.command-palette-open { overflow: hidden; }
         order: -1;
     }
 }
+
+/* v1.4.5 — keep lifecycle in the primary application-detail column -------- */
+.application-overview-left > .lifecycle-panel {
+    margin-bottom: 0;
+}
+
+.application-overview-left > .lifecycle-panel .lifecycle-layout {
+    grid-template-columns: 1fr;
+    gap: 18px;
+}
+
+.application-overview-left > .lifecycle-panel .activity-composer {
+    order: -1;
+    width: 100%;
+    max-width: 620px;
+    justify-self: end;
+}
+
+.application-overview-left > .lifecycle-panel .activity-composer:not([open]) {
+    width: 220px;
+}
+
+@media (max-width: 1120px) {
+    .application-overview-left > .lifecycle-panel .activity-composer,
+    .application-overview-left > .lifecycle-panel .activity-composer:not([open]) {
+        width: 100%;
+        max-width: 620px;
+        justify-self: stretch;
+    }
+}
+
+/* v1.4.5 — keep timeline editing beside the event being changed ----------- */
+.timeline-item,
+.timeline-inline-editor {
+    scroll-margin-top: 92px;
+}
+
+.timeline-inline-editor {
+    margin-top: 14px;
+    padding: 16px;
+    border: 1px solid #cfd7f8;
+    border-radius: 13px;
+    background: #fbfcff;
+    box-shadow: 0 0 0 3px rgba(49, 94, 251, .04);
+}
+
+.timeline-inline-editor-heading {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin-bottom: 14px;
+}
+
+.timeline-inline-editor-heading strong,
+.timeline-inline-editor-heading small {
+    display: block;
+}
+
+.timeline-inline-editor-heading strong {
+    font-size: 12px;
+}
+
+.timeline-inline-editor-heading small {
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: 9px;
+    line-height: 1.45;
+}
+
+.timeline-inline-editor:not(.is-open) {
+    display: none;
+}

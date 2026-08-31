@@ -15,6 +15,7 @@
 - Adds **Stronger sample / Directional** sample-strength context, a range-midpoint delta versus the tracked median, and more precise range-position language.
 - Refines large cohorts by Work Arrangement when at least 10 same-Role-Family peers remain, while retaining the broader Role Family fallback for smaller samples.
 - Uses the compact parsed annual range in the card header so long employer compensation notes do not crowd or wrap the Salary context title; the original text remains available elsewhere and as hover context.
+- Keeps the lifecycle timeline in the primary Application Detail column so a taller Role Details / Salary Context sidebar no longer creates a variable dead zone before activity history.
 
 ### Global search / command palette
 

@@ -207,6 +207,16 @@ class JobApplicationControllerTest {
     }
 
     @Test
+    void updateEventRedirectsBackToEditedTimelineEvent() throws Exception {
+        mvc.perform(post("/applications/42/events/15"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/applications/42#event-15"));
+
+        verify(applications).updateEvent(org.mockito.ArgumentMatchers.eq(42L),
+                org.mockito.ArgumentMatchers.eq(15L), any(ApplicationEvent.class));
+    }
+
+    @Test
     void linkPersonPostsAndRedirectsBackToPeopleSection() throws Exception {
         JobApplication application = application(42L);
         CompanyContact person = contact(7L, "Alex Morgan");

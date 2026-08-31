@@ -335,13 +335,15 @@ public class JobApplicationController {
         model.addAttribute("linkablePeople", applicationContactService.linkableForApplication(id));
         model.addAttribute("compensationContext", compensationService.contextFor(application));
 
+        ApplicationEvent newEventForm = new ApplicationEvent();
+        newEventForm.setEventDate(LocalDate.now());
+        model.addAttribute("newEventForm", newEventForm);
+
         if (editEvent != null) {
             model.addAttribute("eventForm", service.getEvent(id, editEvent));
             model.addAttribute("editingEvent", true);
         } else {
-            ApplicationEvent event = new ApplicationEvent();
-            event.setEventDate(LocalDate.now());
-            model.addAttribute("eventForm", event);
+            model.addAttribute("eventForm", newEventForm);
             model.addAttribute("editingEvent", false);
         }
 
@@ -580,7 +582,7 @@ public class JobApplicationController {
             @ModelAttribute("eventForm") ApplicationEvent event) {
 
         service.updateEvent(id, eventId, event);
-        return "redirect:/applications/" + id;
+        return "redirect:/applications/" + id + "#event-" + eventId;
     }
 
     @PostMapping("/applications/{id}/events/{eventId}/delete")

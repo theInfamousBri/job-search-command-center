@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="${jobApplication.company + ' · ' + jobApplication.role}">Application · Job Search</title>
-    <link rel="stylesheet" th:href="@{/css/app.css?v=1.4.5-comp-context-boost}">
+    <link rel="stylesheet" th:href="@{/css/app.css?v=1.4.5-inline-event-edit}">
     <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
 </head>
 <body>
@@ -211,6 +211,186 @@
                        th:href="@{/companies/{key}(key=${companyGroupKey})} + '#company-people'">Add person →</a>
                 </div>
             </section>
+
+            <section class="panel lifecycle-panel" id="application-timeline">
+            <div class="panel-header lifecycle-header">
+                <div>
+                    <p class="eyebrow">LIFECYCLE</p>
+                    <h2>Application timeline</h2>
+                    <p class="panel-subtitle">Pipeline milestones and day-to-day activity, kept in one chronological history.</p>
+                </div>
+                <span class="event-count"><strong th:text="${#lists.size(events)}">2</strong> events</span>
+            </div>
+
+            <div class="lifecycle-layout">
+                <div class="timeline-wrap">
+                    <div th:if="${#lists.isEmpty(events)}" class="empty-mini timeline-empty">
+                        <p>No activity yet. Add the first event to start this application's lifecycle.</p>
+                    </div>
+
+                    <ol th:unless="${#lists.isEmpty(events)}" class="timeline">
+                        <li th:each="event : ${events}" class="timeline-item"
+                            th:id="${'event-' + event.id}"
+                            th:classappend="${event.pipelineMilestone ? ' timeline-milestone' : ''}">
+                            <div class="timeline-rail">
+                                <span class="timeline-dot"
+                                      th:classappend="${' category-' + #strings.toLowerCase(event.category.name())}"></span>
+                            </div>
+
+                            <div class="timeline-content">
+                                <div class="timeline-topline">
+                                    <div>
+                                        <div class="event-label-row">
+                                            <span class="event-category"
+                                                  th:classappend="${' category-' + #strings.toLowerCase(event.category.name())}"
+                                                  th:text="${event.category.displayName}">Pipeline</span>
+                                            <span class="event-type" th:text="${event.eventType.displayName}">Technical Interview</span>
+                                        </div>
+                                        <h3 th:text="${event.displayTitle}">Technical Interview</h3>
+                                    </div>
+                                    <div class="event-actions">
+                                        <a class="icon-button icon-button-edit"
+                                           th:href="|/applications/${jobApplication.id}?editEvent=${event.id}#event-editor-${event.id}|"
+                                           th:attr="data-event-editor-target=${'event-editor-' + event.id}"
+                                           aria-label="Edit timeline event"
+                                           title="Edit">✎</a>
+                                        <form th:action="@{/applications/{applicationId}/events/{eventId}/delete(applicationId=${jobApplication.id}, eventId=${event.id})}"
+                                              method="post"
+                                              onsubmit="return confirm('Remove this timeline event?');">
+                                            <button type="submit" class="icon-button" aria-label="Delete timeline event" title="Delete">×</button>
+                                        </form>
+                                    </div>
+                                </div>
+
+                                <div class="event-meta">
+                                    <span th:text="${event.eventDateDisplay}">Aug 26, 2026</span>
+                                    <span th:if="${event.eventTimeDisplay != null}" th:text="${event.eventTimeDisplay}">2:00 PM</span>
+                                    <span th:if="${event.contactName != null}" th:text="${'with ' + event.contactName}">with Jay</span>
+                                    <span th:if="${event.interview}" class="mini-pill">Interview</span>
+                                    <span th:if="${event.eventType.name() == 'CODING_ASSESSMENT' or event.eventType.name() == 'TAKE_HOME_ASSESSMENT'}"
+                                          class="mini-pill mini-pill-assessment">Assessment</span>
+                                </div>
+
+                                <p th:if="${event.notes != null}" class="event-notes" th:text="${event.notes}">Interview notes.</p>
+
+                                <div class="timeline-inline-editor"
+                                     th:classappend="${editingEvent and event.id == eventForm.id ? ' is-open' : ''}"
+                                     th:id="${'event-editor-' + event.id}">
+                                    <div class="timeline-inline-editor-heading">
+                                        <span class="composer-icon">✎</span>
+                                        <span>
+                                            <strong>Edit activity</strong>
+                                            <small>Update this event without deleting and recreating it.</small>
+                                        </span>
+                                    </div>
+
+                                    <form class="event-form"
+                                          th:action="@{/applications/{applicationId}/events/{eventId}(applicationId=${jobApplication.id}, eventId=${event.id})}"
+                                          method="post">
+                                        <label class="field">
+                                            <span>Activity type</span>
+                                            <select name="eventType" required>
+                                                <option th:each="type : ${eventTypes}"
+                                                        th:value="${type}"
+                                                        th:selected="${type == event.eventType}"
+                                                        th:text="${type.category.displayName + ' · ' + type.displayName}">Activity · Other</option>
+                                            </select>
+                                        </label>
+
+                                        <label class="field">
+                                            <span>Title <em class="optional">Optional</em></span>
+                                            <input type="text" name="title" th:value="${event.title}" placeholder="e.g. Recruiter reached out">
+                                        </label>
+
+                                        <div class="event-form-row">
+                                            <label class="field">
+                                                <span>Date</span>
+                                                <input type="date" name="eventDate" th:value="${event.eventDateInputValue}" required>
+                                            </label>
+                                            <label class="field">
+                                                <span>Time <em class="optional">Optional</em></span>
+                                                <input type="time" name="eventTime" th:value="${event.eventTimeInputValue}">
+                                            </label>
+                                        </div>
+
+                                        <label class="field">
+                                            <span>Person <em class="optional">Optional</em></span>
+                                            <input type="text" name="contactName" th:value="${event.contactName}" placeholder="e.g. Jay, team lead">
+                                        </label>
+
+                                        <label class="field">
+                                            <span>Notes <em class="optional">Optional</em></span>
+                                            <textarea name="notes" rows="4" placeholder="What happened? What should future-you remember?" th:text="${event.notes}"></textarea>
+                                        </label>
+
+                                        <div class="event-form-actions">
+                                            <button type="button"
+                                                    class="button button-secondary"
+                                                    th:attr="data-event-editor-close=${'event-editor-' + event.id},data-event-return=${'event-' + event.id}">Cancel</button>
+                                            <button type="submit" class="button button-primary">Save activity</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </li>
+                    </ol>
+                </div>
+
+                <details class="activity-composer" id="activity-composer">
+                    <summary class="activity-composer-summary">
+                        <span class="composer-icon">＋</span>
+                        <span class="activity-composer-heading-copy">
+                            <strong>Add activity</strong>
+                            <small>Add a lifecycle event when you need it.</small>
+                        </span>
+                        <span class="composer-chevron" aria-hidden="true">⌄</span>
+                    </summary>
+
+                    <form class="event-form"
+                          th:action="@{/applications/{applicationId}/events(applicationId=${jobApplication.id})}"
+                          th:object="${newEventForm}"
+                          method="post">
+                        <label class="field">
+                            <span>Activity type</span>
+                            <select th:field="*{eventType}" required>
+                                <option th:each="type : ${eventTypes}"
+                                        th:value="${type}"
+                                        th:text="${type.category.displayName + ' · ' + type.displayName}">Activity · Other</option>
+                            </select>
+                        </label>
+
+                        <label class="field">
+                            <span>Title <em class="optional">Optional</em></span>
+                            <input type="text" th:field="*{title}" placeholder="e.g. Recruiter reached out">
+                        </label>
+
+                        <div class="event-form-row">
+                            <label class="field">
+                                <span>Date</span>
+                                <input type="date" name="eventDate" th:value="${newEventForm.eventDateInputValue}" required>
+                            </label>
+                            <label class="field">
+                                <span>Time <em class="optional">Optional</em></span>
+                                <input type="time" name="eventTime" th:value="${newEventForm.eventTimeInputValue}">
+                            </label>
+                        </div>
+
+                        <label class="field">
+                            <span>Person <em class="optional">Optional</em></span>
+                            <input type="text" th:field="*{contactName}" placeholder="e.g. Jay, team lead">
+                        </label>
+
+                        <label class="field">
+                            <span>Notes <em class="optional">Optional</em></span>
+                            <textarea th:field="*{notes}" rows="4" placeholder="What happened? What should future-you remember?"></textarea>
+                        </label>
+
+                        <button type="submit" class="button button-primary event-submit">Add to timeline</button>
+                    </form>
+                </details>
+            </div>
+            </section>
+
             </div>
 
             <div class="application-overview-right">
@@ -305,137 +485,6 @@
                 </section>
             </div>
         </div>
-
-        <section class="panel lifecycle-panel" id="application-timeline">
-            <div class="panel-header lifecycle-header">
-                <div>
-                    <p class="eyebrow">LIFECYCLE</p>
-                    <h2>Application timeline</h2>
-                    <p class="panel-subtitle">Pipeline milestones and day-to-day activity, kept in one chronological history.</p>
-                </div>
-                <span class="event-count"><strong th:text="${#lists.size(events)}">2</strong> events</span>
-            </div>
-
-            <div class="lifecycle-layout">
-                <div class="timeline-wrap">
-                    <div th:if="${#lists.isEmpty(events)}" class="empty-mini timeline-empty">
-                        <p>No activity yet. Add the first event to start this application's lifecycle.</p>
-                    </div>
-
-                    <ol th:unless="${#lists.isEmpty(events)}" class="timeline">
-                        <li th:each="event : ${events}" class="timeline-item"
-                            th:id="${'event-' + event.id}"
-                            th:classappend="${event.pipelineMilestone ? ' timeline-milestone' : ''}">
-                            <div class="timeline-rail">
-                                <span class="timeline-dot"
-                                      th:classappend="${' category-' + #strings.toLowerCase(event.category.name())}"></span>
-                            </div>
-
-                            <div class="timeline-content">
-                                <div class="timeline-topline">
-                                    <div>
-                                        <div class="event-label-row">
-                                            <span class="event-category"
-                                                  th:classappend="${' category-' + #strings.toLowerCase(event.category.name())}"
-                                                  th:text="${event.category.displayName}">Pipeline</span>
-                                            <span class="event-type" th:text="${event.eventType.displayName}">Technical Interview</span>
-                                        </div>
-                                        <h3 th:text="${event.displayTitle}">Technical Interview</h3>
-                                    </div>
-                                    <div class="event-actions">
-                                        <a class="icon-button icon-button-edit"
-                                           th:href="|/applications/${jobApplication.id}?editEvent=${event.id}#activity-composer|"
-                                           aria-label="Edit timeline event"
-                                           title="Edit">✎</a>
-                                        <form th:action="@{/applications/{applicationId}/events/{eventId}/delete(applicationId=${jobApplication.id}, eventId=${event.id})}"
-                                              method="post"
-                                              onsubmit="return confirm('Remove this timeline event?');">
-                                            <button type="submit" class="icon-button" aria-label="Delete timeline event" title="Delete">×</button>
-                                        </form>
-                                    </div>
-                                </div>
-
-                                <div class="event-meta">
-                                    <span th:text="${event.eventDateDisplay}">Aug 26, 2026</span>
-                                    <span th:if="${event.eventTimeDisplay != null}" th:text="${event.eventTimeDisplay}">2:00 PM</span>
-                                    <span th:if="${event.contactName != null}" th:text="${'with ' + event.contactName}">with Jay</span>
-                                    <span th:if="${event.interview}" class="mini-pill">Interview</span>
-                                    <span th:if="${event.eventType.name() == 'CODING_ASSESSMENT' or event.eventType.name() == 'TAKE_HOME_ASSESSMENT'}"
-                                          class="mini-pill mini-pill-assessment">Assessment</span>
-                                </div>
-
-                                <p th:if="${event.notes != null}" class="event-notes" th:text="${event.notes}">Interview notes.</p>
-                            </div>
-                        </li>
-                    </ol>
-                </div>
-
-                <details class="activity-composer" id="activity-composer"
-                         th:classappend="${editingEvent ? ' activity-composer-editing' : ''}"
-                         th:attr="open=${editingEvent} ? 'open' : null">
-                    <summary class="activity-composer-summary">
-                        <span class="composer-icon" th:text="${editingEvent ? '✎' : '＋'}">＋</span>
-                        <span class="activity-composer-heading-copy">
-                            <strong th:text="${editingEvent ? 'Edit activity' : 'Add activity'}">Add activity</strong>
-                            <small th:text="${editingEvent
-                                    ? 'Update the event without deleting and recreating it.'
-                                    : 'Add a lifecycle event when you need it.'}">
-                                Add timeline activity.
-                            </small>
-                        </span>
-                        <span class="composer-chevron" aria-hidden="true">⌄</span>
-                    </summary>
-
-                    <form class="event-form"
-                          th:action="${editingEvent
-                              ? '/applications/' + jobApplication.id + '/events/' + eventForm.id
-                              : '/applications/' + jobApplication.id + '/events'}"
-                          th:object="${eventForm}"
-                          method="post">
-                        <label class="field">
-                            <span>Activity type</span>
-                            <select th:field="*{eventType}" required>
-                                <option th:each="type : ${eventTypes}"
-                                        th:value="${type}"
-                                        th:text="${type.category.displayName + ' · ' + type.displayName}">Activity · Other</option>
-                            </select>
-                        </label>
-
-                        <label class="field">
-                            <span>Title <em class="optional">Optional</em></span>
-                            <input type="text" th:field="*{title}" placeholder="e.g. Recruiter reached out">
-                        </label>
-
-                        <div class="event-form-row">
-                            <label class="field">
-                                <span>Date</span>
-                                <input type="date" name="eventDate" th:value="${eventForm.eventDateInputValue}" required>
-                            </label>
-                            <label class="field">
-                                <span>Time <em class="optional">Optional</em></span>
-                                <input type="time" name="eventTime" th:value="${eventForm.eventTimeInputValue}">
-                            </label>
-                        </div>
-
-                        <label class="field">
-                            <span>Person <em class="optional">Optional</em></span>
-                            <input type="text" th:field="*{contactName}" placeholder="e.g. Jay, team lead">
-                        </label>
-
-                        <label class="field">
-                            <span>Notes <em class="optional">Optional</em></span>
-                            <textarea th:field="*{notes}" rows="4" placeholder="What happened? What should future-you remember?"></textarea>
-                        </label>
-
-                        <div class="event-form-actions" th:if="${editingEvent}">
-                            <a class="button button-secondary" th:href="@{/applications/{id}(id=${jobApplication.id})}">Cancel</a>
-                            <button type="submit" class="button button-primary">Save activity</button>
-                        </div>
-                        <button th:unless="${editingEvent}" type="submit" class="button button-primary event-submit">Add to timeline</button>
-                    </form>
-                </details>
-            </div>
-        </section>
 
         <section class="panel application-prep-panel" id="interview-prep">
             <div class="panel-header application-prep-header">
@@ -748,6 +797,6 @@
         </section>
     </main>
 </div>
-<script th:src="@{/js/application-detail.js?v=1.4.4-material-return-session}" src="/js/application-detail.js"></script>
+<script th:src="@{/js/application-detail.js?v=1.4.5-inline-event-edit}" src="/js/application-detail.js"></script>
 </body>
 </html>
