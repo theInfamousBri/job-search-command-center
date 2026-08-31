@@ -22,6 +22,7 @@ import com.brianna.jobsearch.service.ApplicationImportService;
 import com.brianna.jobsearch.service.ApplicationContactService;
 import com.brianna.jobsearch.service.CompanyLogoService;
 import com.brianna.jobsearch.service.CompanyManagementService;
+import com.brianna.jobsearch.service.CompensationService;
 import com.brianna.jobsearch.service.JobApplicationService;
 import com.brianna.jobsearch.service.MaterialService;
 import com.brianna.jobsearch.service.PrepService;
@@ -63,6 +64,7 @@ public class JobApplicationController {
     private final CompanyLogoService companyLogoService;
     private final CompanyManagementService companyManagementService;
     private final MaterialService materialService;
+    private final CompensationService compensationService;
 
     public JobApplicationController(
             JobApplicationService service,
@@ -72,7 +74,8 @@ public class JobApplicationController {
             ApplicationContactService applicationContactService,
             CompanyLogoService companyLogoService,
             CompanyManagementService companyManagementService,
-            MaterialService materialService) {
+            MaterialService materialService,
+            CompensationService compensationService) {
         this.service = service;
         this.prepService = prepService;
         this.importService = importService;
@@ -81,6 +84,7 @@ public class JobApplicationController {
         this.companyLogoService = companyLogoService;
         this.companyManagementService = companyManagementService;
         this.materialService = materialService;
+        this.compensationService = compensationService;
     }
 
     @ModelAttribute("statuses")
@@ -329,6 +333,7 @@ public class JobApplicationController {
         model.addAttribute("linkableMaterials", materialService.linkableForApplication(id));
         model.addAttribute("linkedPeople", applicationContactService.forApplication(id));
         model.addAttribute("linkablePeople", applicationContactService.linkableForApplication(id));
+        model.addAttribute("compensationContext", compensationService.contextFor(application));
 
         if (editEvent != null) {
             model.addAttribute("eventForm", service.getEvent(id, editEvent));

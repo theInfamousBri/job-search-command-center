@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="${jobApplication.company + ' · ' + jobApplication.role}">Application · Job Search</title>
-    <link rel="stylesheet" th:href="@{/css/app.css?v=1.4.4-form-type}">
+    <link rel="stylesheet" th:href="@{/css/app.css?v=1.4.5-comp-context-boost}">
     <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
 </head>
 <body>
@@ -213,31 +213,97 @@
             </section>
             </div>
 
-            <section class="panel application-info-panel role-details-panel">
-                <div class="panel-header">
-                    <div>
-                        <p class="eyebrow">ROLE</p>
-                        <h2>Role details</h2>
+            <div class="application-overview-right">
+                <section class="panel application-info-panel role-details-panel">
+                    <div class="panel-header">
+                        <div>
+                            <p class="eyebrow">ROLE</p>
+                            <h2>Role details</h2>
+                        </div>
                     </div>
-                </div>
 
-                <dl class="info-list role-details-list">
-                    <div class="role-details-requisition"><dt>Requisition / Job ID</dt><dd th:text="${jobApplication.requisitionId == null ? '—' : jobApplication.requisitionId}">R-274666</dd></div>
-                    <div><dt>Work arrangement</dt><dd th:text="${jobApplication.workArrangement == null ? '—' : jobApplication.workArrangement}">Hybrid</dd></div>
-                    <div><dt>Experience required</dt><dd th:text="${jobApplication.yearsExperienceRequired == null ? '—' : jobApplication.yearsExperienceRequired}">3+</dd></div>
-                    <div><dt>Role family</dt><dd th:text="${jobApplication.roleFamily == null ? '—' : jobApplication.roleFamily.displayName}">Backend / Platform</dd></div>
-                    <div><dt>Industry / domain</dt><dd th:text="${jobApplication.industryDomain == null ? '—' : jobApplication.industryDomain.displayName}">Fintech &amp; Payments</dd></div>
-                </dl>
+                    <dl class="info-list role-details-list">
+                        <div class="role-details-requisition"><dt>Requisition / Job ID</dt><dd th:text="${jobApplication.requisitionId == null ? '—' : jobApplication.requisitionId}">R-274666</dd></div>
+                        <div><dt>Work arrangement</dt><dd th:text="${jobApplication.workArrangement == null ? '—' : jobApplication.workArrangement}">Hybrid</dd></div>
+                        <div><dt>Experience required</dt><dd th:text="${jobApplication.yearsExperienceRequired == null ? '—' : jobApplication.yearsExperienceRequired}">3+</dd></div>
+                        <div><dt>Role family</dt><dd th:text="${jobApplication.roleFamily == null ? '—' : jobApplication.roleFamily.displayName}">Backend / Platform</dd></div>
+                        <div><dt>Industry / domain</dt><dd th:text="${jobApplication.industryDomain == null ? '—' : jobApplication.industryDomain.displayName}">Fintech &amp; Payments</dd></div>
+                    </dl>
 
-                <div class="role-details-focus" th:if="${jobApplication.careerFocus != null and !#strings.isEmpty(jobApplication.careerFocus)}">
-                    <span>Focus</span>
-                    <strong th:text="${jobApplication.careerFocus}">Distributed systems</strong>
-                </div>
+                    <div class="role-details-focus" th:if="${jobApplication.careerFocus != null and !#strings.isEmpty(jobApplication.careerFocus)}">
+                        <span>Focus</span>
+                        <strong th:text="${jobApplication.careerFocus}">Distributed systems</strong>
+                    </div>
 
-                <footer class="role-details-footer">
-                    <span th:text="|Updated ${jobApplication.updatedDateTimeDisplay}|"></span>
-                </footer>
-            </section>
+                    <footer class="role-details-footer">
+                        <span th:text="|Updated ${jobApplication.updatedDateTimeDisplay}|"></span>
+                    </footer>
+                </section>
+
+                <section class="panel compensation-context-panel" th:if="${compensationContext != null}">
+                    <div class="panel-header compensation-context-header">
+                        <div>
+                            <p class="eyebrow">COMPENSATION</p>
+                            <h2>Salary context</h2>
+                        </div>
+                        <span class="compensation-current" th:if="${compensationContext.targetParsed}"
+                              th:text="${compensationContext.targetRangeDisplay}"
+                              th:title="${jobApplication.salary}">$160k – $185k</span>
+                    </div>
+
+                    <div th:if="${compensationContext.benchmarkAvailable}" class="compensation-context-body">
+                        <div class="compensation-insight-row">
+                            <div>
+                                <strong th:text="${compensationContext.positionLabel}">Spans tracked median</strong>
+                                <p th:text="${compensationContext.positionDescription}">This range overlaps the middle 50% of comparable tracked roles.</p>
+                            </div>
+                            <span class="sample-pill"
+                                  th:text="|${compensationContext.sampleSize} comps · ${compensationContext.sampleStrength}|">7 comps · Directional</span>
+                        </div>
+
+                        <div class="compensation-range-visual"
+                             th:style="|--comp-middle-left:${compensationContext.middleLeftPercent}%; --comp-middle-width:${compensationContext.middleWidthPercent}%; --comp-median:${compensationContext.medianPercent}%; --comp-target-left:${compensationContext.targetLeftPercent}%; --comp-target-width:${compensationContext.targetWidthPercent}%;|">
+                            <div class="compensation-range-track" aria-hidden="true">
+                                <span class="compensation-middle-band"></span>
+                                <span class="compensation-median-marker"></span>
+                                <span class="compensation-target-range"></span>
+                            </div>
+                            <div class="compensation-scale-labels">
+                                <span th:text="${compensationContext.scaleMinDisplay}">$135k</span>
+                                <span th:text="${compensationContext.scaleMaxDisplay}">$195k</span>
+                            </div>
+                        </div>
+
+                        <div class="compensation-legend" aria-label="Salary range legend">
+                            <span><i class="compensation-legend-target"></i>This role</span>
+                            <span><i class="compensation-legend-middle"></i>Tracked middle 50%</span>
+                            <span><i class="compensation-legend-median"></i>Median</span>
+                        </div>
+
+                        <dl class="compensation-context-metrics">
+                            <div><dt>Median</dt><dd th:text="${compensationContext.medianDisplay}">$158k</dd></div>
+                            <div><dt>Middle 50%</dt><dd th:text="${compensationContext.middleFiftyDisplay}">$145k – $171k</dd></div>
+                            <div><dt>Range midpoint</dt><dd><span th:text="${compensationContext.targetMidpointDisplay}">$172.5k</span><span class="compensation-delta" th:text="${compensationContext.midpointDeltaDisplay}">+9% vs median</span></dd></div>
+                            <div><dt>Compared with</dt><dd th:text="${compensationContext.comparisonLabel}">Backend / Platform roles</dd></div>
+                        </dl>
+
+                        <p class="compensation-context-note" th:if="${compensationContext.comparisonNote != null}"
+                           th:text="${compensationContext.comparisonNote}">Using broader tracked history.</p>
+                    </div>
+
+                    <div th:unless="${compensationContext.benchmarkAvailable}" class="compensation-context-empty">
+                        <span class="compensation-empty-icon" aria-hidden="true">↔</span>
+                        <div>
+                            <strong th:text="${compensationContext.targetParsed ? 'Not enough comparable salary data yet' : 'Annual salary context unavailable'}">Not enough comparable salary data yet</strong>
+                            <p th:text="${compensationContext.message}">Add a few more salary ranges to unlock comparison context.</p>
+                        </div>
+                    </div>
+
+                    <footer class="compensation-context-footer">
+                        Based on the midpoint of saved annual salary ranges.
+                    </footer>
+                </section>
+            </div>
         </div>
 
         <section class="panel lifecycle-panel" id="application-timeline">

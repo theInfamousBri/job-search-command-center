@@ -18,6 +18,7 @@ import com.brianna.jobsearch.model.ApplicationState;
 import com.brianna.jobsearch.model.ApplicationStatus;
 import com.brianna.jobsearch.model.CompanyContact;
 import com.brianna.jobsearch.model.CompanyContactRelationship;
+import com.brianna.jobsearch.model.CompensationContext;
 import com.brianna.jobsearch.model.CareerRoleFamily;
 import com.brianna.jobsearch.model.IndustryDomain;
 import com.brianna.jobsearch.model.JobApplication;
@@ -27,6 +28,7 @@ import com.brianna.jobsearch.service.ApplicationContactService;
 import com.brianna.jobsearch.service.ApplicationImportService;
 import com.brianna.jobsearch.service.CompanyLogoService;
 import com.brianna.jobsearch.service.CompanyManagementService;
+import com.brianna.jobsearch.service.CompensationService;
 import com.brianna.jobsearch.service.JobApplicationService;
 import com.brianna.jobsearch.service.MaterialService;
 import com.brianna.jobsearch.service.PrepService;
@@ -53,13 +55,14 @@ class JobApplicationControllerTest {
     @Mock private CompanyLogoService logos;
     @Mock private CompanyManagementService companies;
     @Mock private MaterialService materials;
+    @Mock private CompensationService compensation;
 
     private MockMvc mvc;
 
     @BeforeEach
     void setUp() {
         JobApplicationController controller = new JobApplicationController(
-                applications, prep, imports, attachments, contacts, logos, companies, materials);
+                applications, prep, imports, attachments, contacts, logos, companies, materials, compensation);
         mvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 
@@ -121,6 +124,34 @@ class JobApplicationControllerTest {
                 .andExpect(model().attribute("linkablePeople", List.of(linkable)));
     }
 
+
+
+    @Test
+    void applicationDetailIncludesCompensationContext() throws Exception {
+        JobApplication application = application(42L);
+        application.setSalary("$160,000 – $185,000");
+        CompensationContext context = new CompensationContext(
+                true, true, 7, "Directional", "Backend / Platform roles", null,
+                "$160k – $185k", "$172.5k", "+9% vs median", "$158k", "$145k – $171k",
+                "Spans tracked median", "This range overlaps the tracked middle 50% for comparable roles.",
+                null, "$135k", "$195k", 16.7, 43.3, 38.3, 41.7, 41.7);
+
+        when(applications.get(42L)).thenReturn(application);
+        when(applications.eventsForApplication(42L)).thenReturn(List.of());
+        when(prep.forApplication(42L)).thenReturn(List.of());
+        when(prep.linkableReusableForApplication(42L)).thenReturn(List.of());
+        when(attachments.forApplication(42L)).thenReturn(List.of());
+        when(materials.forApplication(42L)).thenReturn(List.of());
+        when(materials.linkableForApplication(42L)).thenReturn(List.of());
+        when(contacts.forApplication(42L)).thenReturn(List.of());
+        when(contacts.linkableForApplication(42L)).thenReturn(List.of());
+        when(compensation.contextFor(application)).thenReturn(context);
+
+        mvc.perform(get("/applications/42"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("applications/detail"))
+                .andExpect(model().attribute("compensationContext", context));
+    }
 
     @Test
     void applicationDetailExposesNormalizedTaxonomyWhilePreservingLegacyDataInModel() throws Exception {

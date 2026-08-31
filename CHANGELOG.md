@@ -2,6 +2,20 @@
 
 ## 1.4.0 (in progress)
 
+### Compensation context
+
+- Adds a compact **Salary context** card beneath Role Details on Application Detail.
+- Parses common annual compensation formats (`$150,000 – $180,000`, `$150k–$180k`, shared-`k` ranges, and single annual salaries) without rewriting the original employer-entered compensation text.
+- Intentionally excludes hourly / daily / weekly / monthly rates instead of mixing incompatible units into annual comparisons.
+- Prefers other tracked applications in the same **Role Family** when at least three comparable salaries are available; otherwise falls back explicitly to broader tracked salary history.
+- Shows the median, middle 50%, sample size, comparison scope, and a restrained target-range overlay rather than a noisy global minimum / maximum chart.
+- Adds sample-size and unparseable-compensation fallbacks so sparse data does not produce false precision.
+- Adds focused service/controller/template regression tests around salary parsing, comparison scope, quartile context, and Application Detail wiring.
+- Adds a single centered GitHub Actions CI badge to the README header without introducing a larger badge row.
+- Adds **Stronger sample / Directional** sample-strength context, a range-midpoint delta versus the tracked median, and more precise range-position language.
+- Refines large cohorts by Work Arrangement when at least 10 same-Role-Family peers remain, while retaining the broader Role Family fallback for smaller samples.
+- Uses the compact parsed annual range in the card header so long employer compensation notes do not crowd or wrap the Salary context title; the original text remains available elsewhere and as hover context.
+
 ### Global search / command palette
 
 - Replaces the application-only top-bar search experience with a global `Ctrl/Cmd + K` command palette.

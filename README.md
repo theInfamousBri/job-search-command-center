@@ -6,6 +6,8 @@
 **A local-first command center for applications, interview prep, follow-ups, calendar events, imports, and job-search analytics.**
 
 Development version **1.4.0-SNAPSHOT** · Latest release **v1.3.0**
+
+[![CI](https://github.com/theInfamousBri/job-search-command-center/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/theInfamousBri/job-search-command-center/actions/workflows/ci.yml)
 </div>
 
 ---
@@ -71,6 +73,21 @@ Applications can store:
 - a saved copy of the job description
 
 The tracker supports text search across company, company domain, role, **requisition / job ID**, location, work arrangement, experience requirements, role family, source, state, next step, archived cover-letter text, notes, and saved job descriptions. Exact company + requisition matches are also used to warn about likely duplicate applications before saving, with an explicit override for legitimate edge cases.
+
+### Compensation context
+
+Application Detail can turn saved annual compensation text into a small **Salary context** card. The app keeps the employer-entered salary string untouched, but parses common annual formats such as `$150,000 – $180,000`, `$150k–$180k`, and `$115–184k + bonus` for local comparison. Hourly / monthly rates are intentionally excluded instead of mixing incompatible units.
+
+When at least three other applications have comparable salary data, each comparable range contributes its midpoint to the benchmark and the card shows:
+
+- the tracked median
+- the middle 50% of comparable salaries
+- the current role range overlaid against that middle band
+- a simple above / below / spans-median summary
+- the range midpoint and its concise delta versus the tracked median
+- the number, sample strength, and scope of applications used for comparison
+
+Role Family is used first when there is enough data. Large Role Family cohorts can refine further by Work Arrangement when at least 10 salary-bearing peers remain; otherwise the broader Role Family sample stays in place. If that sample is too small, the card clearly falls back to broader tracked salary history; if even that sample is too small, it shows a quiet data-needed state rather than overstating a tiny sample. The visualization deliberately avoids global minimum / maximum framing so outliers do not dominate the scale.
 
 ### Global search / command palette
 
@@ -517,6 +534,7 @@ src/main/java/com/brianna/jobsearch/
 │   ├── MaterialFile.java
 │   ├── MaterialType.java
 │   ├── CompanyContact.java
+│   ├── CompensationContext.java
 │   └── importing/
 │       ├── ApplicationImportPreview.java
 │       ├── ApplicationImportResult.java
@@ -538,6 +556,7 @@ src/main/java/com/brianna/jobsearch/
 │   ├── ApplicationImportService.java
 │   ├── CompanyLogoService.java
 │   ├── CompanyManagementService.java
+│   ├── CompensationService.java
 │   ├── JobApplicationService.java
 │   └── PrepService.java
 ├── JobSearchDashboardApplication.java

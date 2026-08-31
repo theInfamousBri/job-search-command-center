@@ -29,6 +29,12 @@ class ApplicationDetailTemplateTest {
         assertTrue(template.contains("jobApplication.requisitionId"));
         assertTrue(template.contains("What you submitted"));
         assertTrue(template.contains("Manage materials"));
+        assertTrue(template.contains("Salary context"));
+        assertTrue(template.contains("compensationContext"));
+        assertTrue(template.contains("Tracked middle 50%"));
+        assertTrue(template.contains("Range midpoint"));
+        assertTrue(template.contains("sampleStrength"));
+        assertTrue(template.contains("targetRangeDisplay"));
         assertTrue(template.contains("id=\"manage-materials\""));
         assertTrue(template.contains("application-detail.js?v=1.4.4-material-return"));
         assertFalse(template.contains("Store once, reference everywhere"));
