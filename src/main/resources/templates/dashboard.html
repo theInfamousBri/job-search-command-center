@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Dashboard · Job Search</title>
-    <link rel="stylesheet" th:href="@{/css/app.css?v=1.4.4-form-type}">
+    <link rel="stylesheet" th:href="@{/css/app.css?v=1.4.6-stale-review}">
     <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
 </head>
 <body>
@@ -130,39 +130,64 @@
                 </div>
             </section>
 
-            <section class="panel">
-                <div class="panel-header">
+            <section class="panel attention-panel">
+                <div class="panel-header attention-panel-header">
                     <div>
                         <p class="eyebrow">NEXT UP</p>
                         <h2>Needs attention</h2>
+                        <p class="panel-subtitle">One highest-value cue per application.</p>
                     </div>
-                    <a th:if="${dashboard.staleCount > 0}" class="text-link" th:href="@{/applications/stale}">
-                        Review stale <span class="attention-count" th:text="${dashboard.staleCount}">5</span> →
-                    </a>
+                    <div class="attention-header-actions">
+                        <span th:if="${attention.totalCount > 0}" class="event-count">
+                            <strong th:text="${attention.totalCount}">3</strong> cues
+                        </span>
+                    </div>
                 </div>
 
-                <div th:if="${#lists.isEmpty(dashboard.needsAttention)}" class="attention-clear">
+                <div th:if="${#lists.isEmpty(attention.items)}" class="attention-clear">
                     <span>✓</span>
                     <div>
-                        <strong>Nothing needs attention</strong>
-                        <p th:text="|No follow-up is due and no active application has gone untouched for ${dashboard.staleDays}+ days.|">Everything is current.</p>
+                        <strong>Nothing urgent right now</strong>
+                        <p>Upcoming interviews, follow-ups, and interview-process gaps will surface here.</p>
                     </div>
                 </div>
 
-                <div class="attention-list" th:unless="${#lists.isEmpty(dashboard.needsAttention)}">
-                    <a class="attention-item"
-                       th:each="app : ${dashboard.needsAttention}"
-                       th:href="@{/applications/{id}(id=${app.id})}">
-                        <span>
-                            <strong th:text="${app.company}">Company</strong>
-                            <small th:text="${app.role}">Role</small>
-                        </span>
-                        <span class="attention-meta">
-                            <span th:text="${app.status.displayName + ' · ' + app.state.displayName}">Applied · Active</span>
-                            <small th:text="${'Last updated ' + app.updatedDateDisplay}">Last updated Aug 1</small>
-                        </span>
-                    </a>
+                <div class="attention-list attention-smart-list" th:unless="${#lists.isEmpty(attention.items)}">
+                    <article class="attention-smart-item" th:each="item : ${attention.items}">
+                        <div class="attention-smart-topline">
+                            <span class="attention-urgency"
+                                  th:classappend="${' attention-urgency-' + item.urgency.cssName}"
+                                  th:text="${item.urgency.displayName}">Now</span>
+                            <a class="attention-company" th:href="${item.viewUrl}" th:text="${item.company}">Company</a>
+                        </div>
+                        <p class="attention-role" th:text="${item.role}">Senior Software Engineer</p>
+                        <strong class="attention-headline" th:text="${item.headline}">Interview tomorrow · no prep linked</strong>
+                        <p class="attention-detail" th:text="${item.detail}">There is an upcoming interview but no prep is linked yet.</p>
+                        <div class="attention-smart-actions">
+                            <a class="button button-primary button-small" th:href="${item.actionUrl}" th:text="${item.actionLabel}">Add prep</a>
+                            <a class="text-link" th:href="${item.viewUrl}">View application →</a>
+                        </div>
+                    </article>
                 </div>
+
+                <p class="attention-more-note" th:if="${attention.hasMore()}">
+                    Showing the <strong th:text="${#lists.size(attention.items)}">5</strong> most time-sensitive of
+                    <strong th:text="${attention.totalCount}">8</strong> current cues.
+                </p>
+
+                <a th:if="${dashboard.staleCount > 0}"
+                   class="attention-stale-summary"
+                   th:href="@{/applications/stale(days=${dashboard.staleDays})}">
+                    <span>
+                        <strong th:text="|${dashboard.staleCount} stale application${dashboard.staleCount == 1 ? '' : 's'} ready to review|">
+                            6 stale applications ready to review
+                        </strong>
+                        <small th:text="|Applied ${dashboard.staleDays}+ days ago with no response or lifecycle activity.|">
+                            Applied 45+ days ago with no response or lifecycle activity.
+                        </small>
+                    </span>
+                    <b>Review &amp; close →</b>
+                </a>
             </section>
         </div>
     </main>

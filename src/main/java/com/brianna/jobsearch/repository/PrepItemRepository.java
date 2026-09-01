@@ -221,6 +221,20 @@ public class PrepItemRepository {
                 """, Long.class));
     }
 
+    public long countForApplication(long applicationId) {
+        return valueOrZero(jdbcTemplate.queryForObject("""
+                SELECT COUNT(DISTINCT p.id)
+                FROM prep_items p
+                WHERE p.application_id = ?
+                   OR EXISTS (
+                       SELECT 1
+                       FROM prep_item_links pil
+                       WHERE pil.prep_item_id = p.id
+                         AND pil.application_id = ?
+                   )
+                """, Long.class, applicationId, applicationId));
+    }
+
     public List<PrepItem> findForApplication(long applicationId) {
         return jdbcTemplate.query("""
                 SELECT p.*,

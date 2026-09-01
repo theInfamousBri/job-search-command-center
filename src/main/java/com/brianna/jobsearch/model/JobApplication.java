@@ -52,6 +52,21 @@ public class JobApplication {
         return appliedDate == null ? "" : appliedDate.toString();
     }
 
+    public long getDaysSinceApplied() {
+        if (appliedDate == null) {
+            return 0L;
+        }
+        return Math.max(0L, ChronoUnit.DAYS.between(appliedDate, LocalDate.now()));
+    }
+
+    public String getAppliedAgeDisplay() {
+        long days = getDaysSinceApplied();
+        if (days == 0) {
+            return "Applied today";
+        }
+        return "Applied " + days + " day" + (days == 1 ? "" : "s") + " ago";
+    }
+
     public String getUpdatedDateDisplay() {
         return updatedAt == null ? "—" : updatedAt.format(DateTimeFormatter.ofPattern("MMM d"));
     }

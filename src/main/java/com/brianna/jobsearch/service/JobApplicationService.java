@@ -24,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class JobApplicationService {
 
-    public static final int DEFAULT_STALE_DAYS = 21;
+    public static final int DEFAULT_STALE_DAYS = 45;
 
     private final JobApplicationRepository repository;
     private final ApplicationEventRepository eventRepository;
@@ -88,7 +88,9 @@ public class JobApplicationService {
 
     public List<ApplicationEvent> eventsForApplication(long applicationId) {
         get(applicationId);
-        return eventRepository.findByApplicationId(applicationId);
+        return eventRepository.findByApplicationId(applicationId).stream()
+                .filter(event -> event.getEventType() != ApplicationEventType.STILL_ACTIVE)
+                .toList();
     }
 
     public List<CalendarEntry> calendarEvents(LocalDate startDate, LocalDate endDate) {
@@ -204,7 +206,13 @@ public class JobApplicationService {
     @Transactional
     public void acknowledgeStillActive(long id) {
         get(id);
-        repository.touch(id);
+        ApplicationEvent acknowledgement = new ApplicationEvent();
+        acknowledgement.setApplicationId(id);
+        acknowledgement.setEventType(ApplicationEventType.STILL_ACTIVE);
+        acknowledgement.setEventDate(LocalDate.now());
+        acknowledgement.setTitle("Still active");
+        acknowledgement.setNotes("Kept active from stale application review.");
+        eventRepository.save(acknowledgement);
     }
 
     @Transactional
@@ -264,7 +272,6 @@ public class JobApplicationService {
                 repository.countOffers(),
                 responseRate,
                 repository.findRecent(5),
-                repository.findNeedsAttention(5, DEFAULT_STALE_DAYS),
                 stale,
                 DEFAULT_STALE_DAYS);
     }
@@ -324,7 +331,7 @@ public class JobApplicationService {
             case REJECTED -> ApplicationStatus.REJECTED;
             case WITHDRAWN -> ApplicationStatus.WITHDRAWN;
             case NO_RESPONSE -> ApplicationStatus.NO_RESPONSE;
-            case RECRUITER_CONTACT, INTERVIEW_SCHEDULED, FOLLOW_UP, OTHER -> null;
+            case RECRUITER_CONTACT, INTERVIEW_SCHEDULED, FOLLOW_UP, STILL_ACTIVE, OTHER -> null;
         };
     }
 
@@ -366,7 +373,7 @@ public class JobApplicationService {
     }
 
     private int normalizeStaleDays(int days) {
-        return days == 14 || days == 21 || days == 30 || days == 45 || days == 60
+        return days == 30 || days == 45 || days == 60 || days == 90
                 ? days
                 : DEFAULT_STALE_DAYS;
     }
@@ -378,7 +385,6 @@ public class JobApplicationService {
             long offers,
             double responseRate,
             List<JobApplication> recent,
-            List<JobApplication> needsAttention,
             long staleCount,
             int staleDays) {
     }

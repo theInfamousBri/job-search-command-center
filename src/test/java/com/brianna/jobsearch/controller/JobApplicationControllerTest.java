@@ -68,6 +68,36 @@ class JobApplicationControllerTest {
 
 
     @Test
+    void staleReviewDefaultsToFortyFiveDayNoResponseQueue() throws Exception {
+        JobApplication stale = application(91L);
+        stale.setStatus(ApplicationStatus.APPLIED);
+        stale.setState(ApplicationState.ACTIVE);
+        when(applications.staleApplications(45)).thenReturn(List.of(stale));
+
+        mvc.perform(get("/applications/stale"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("applications/stale"))
+                .andExpect(model().attribute("staleApplications", List.of(stale)))
+                .andExpect(model().attribute("staleDays", 45))
+                .andExpect(model().attribute("staleDayOptions", List.of(30, 45, 60, 90)));
+    }
+
+    @Test
+    void staleBulkReviewCanCloseSelectedApplicationsAsNoResponse() throws Exception {
+        when(applications.applyStaleBulkAction(List.of(91L, 92L), "NO_RESPONSE")).thenReturn(2);
+
+        mvc.perform(post("/applications/stale/bulk")
+                        .param("selectedIds", "91", "92")
+                        .param("action", "NO_RESPONSE")
+                        .param("days", "45"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/applications/stale?days=45"))
+                .andExpect(flash().attribute("staleSuccess", "Updated 2 applications."));
+
+        verify(applications).applyStaleBulkAction(List.of(91L, 92L), "NO_RESPONSE");
+    }
+
+    @Test
     void createWithMatchingCompanyAndRequisitionShowsDuplicateWarningBeforeSaving() throws Exception {
         JobApplication duplicate = application(9L);
         duplicate.setCompany("Mastercard");

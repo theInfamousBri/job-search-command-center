@@ -512,50 +512,67 @@ public class JobApplicationRepository {
                 """, rowMapper, limit);
     }
 
-    public List<JobApplication> findNeedsAttention(int limit) {
-        return findNeedsAttention(limit, 21);
-    }
-
-    public List<JobApplication> findNeedsAttention(int limit, int staleDays) {
+    public List<JobApplication> findAttentionCandidates() {
         return jdbcTemplate.query("""
                 SELECT *
                 FROM job_applications
-                WHERE (
-                        state = 'FOLLOW_UP_DUE'
-                        OR (
-                            state IN ('ACTIVE', 'AWAITING_FEEDBACK')
-                            AND status IN ('APPLIED', 'RECRUITER_SCREEN', 'ASSESSMENT', 'HIRING_MANAGER',
-                                           'TECHNICAL_INTERVIEW', 'FINAL_ROUND')
-                            AND datetime(updated_at) <= datetime('now', ?)
-                        )
+                WHERE state NOT IN ('CLOSED', 'ON_HOLD')
+                  AND (
+                        state IN ('FOLLOW_UP_DUE', 'INTERVIEW_SCHEDULED')
+                        OR status IN ('RECRUITER_SCREEN', 'ASSESSMENT', 'HIRING_MANAGER',
+                                      'TECHNICAL_INTERVIEW', 'FINAL_ROUND')
+                        OR (status = 'APPLIED' AND state IN ('ACTIVE', 'AWAITING_FEEDBACK'))
                       )
-                ORDER BY CASE WHEN state = 'FOLLOW_UP_DUE' THEN 0 ELSE 1 END,
-                         updated_at ASC
-                LIMIT ?
-                """, rowMapper, "-" + Math.max(1, staleDays) + " days", limit);
+                  AND status NOT IN ('OFFER', 'REJECTED', 'WITHDRAWN', 'NO_RESPONSE')
+                ORDER BY updated_at ASC, company ASC
+                """, rowMapper);
     }
 
     public long countStale(int staleDays) {
+        String age = "-" + Math.max(1, staleDays) + " days";
         return valueOrZero(jdbcTemplate.queryForObject("""
                 SELECT COUNT(*)
-                FROM job_applications
-                WHERE state IN ('ACTIVE', 'AWAITING_FEEDBACK')
-                  AND status IN ('APPLIED', 'RECRUITER_SCREEN', 'ASSESSMENT', 'HIRING_MANAGER',
-                                 'TECHNICAL_INTERVIEW', 'FINAL_ROUND')
-                  AND datetime(updated_at) <= datetime('now', ?)
-                """, Long.class, "-" + Math.max(1, staleDays) + " days"));
+                FROM job_applications ja
+                WHERE ja.state = 'ACTIVE'
+                  AND ja.status = 'APPLIED'
+                  AND date(COALESCE(ja.applied_date, substr(ja.created_at, 1, 10))) <= date('now', ?)
+                  AND NOT EXISTS (
+                        SELECT 1
+                        FROM application_events ae
+                        WHERE ae.application_id = ja.id
+                          AND ae.event_type NOT IN ('SAVED', 'APPLIED', 'STILL_ACTIVE')
+                  )
+                  AND COALESCE((
+                        SELECT MAX(date(ae.event_date))
+                        FROM application_events ae
+                        WHERE ae.application_id = ja.id
+                          AND ae.event_type = 'STILL_ACTIVE'
+                  ), date(COALESCE(ja.applied_date, substr(ja.created_at, 1, 10)))) <= date('now', ?)
+                """, Long.class, age, age));
     }
 
     public List<JobApplication> findStale(int staleDays) {
+        String age = "-" + Math.max(1, staleDays) + " days";
         return jdbcTemplate.query("""
-                SELECT *
-                FROM job_applications
-                WHERE state IN ('ACTIVE', 'AWAITING_FEEDBACK')
-                  AND status IN ('APPLIED', 'RECRUITER_SCREEN', 'ASSESSMENT', 'HIRING_MANAGER',
-                                 'TECHNICAL_INTERVIEW', 'FINAL_ROUND')
-                  AND datetime(updated_at) <= datetime('now', ?)
-                ORDER BY updated_at ASC, company ASC
-                """, rowMapper, "-" + Math.max(1, staleDays) + " days");
+                SELECT ja.*
+                FROM job_applications ja
+                WHERE ja.state = 'ACTIVE'
+                  AND ja.status = 'APPLIED'
+                  AND date(COALESCE(ja.applied_date, substr(ja.created_at, 1, 10))) <= date('now', ?)
+                  AND NOT EXISTS (
+                        SELECT 1
+                        FROM application_events ae
+                        WHERE ae.application_id = ja.id
+                          AND ae.event_type NOT IN ('SAVED', 'APPLIED', 'STILL_ACTIVE')
+                  )
+                  AND COALESCE((
+                        SELECT MAX(date(ae.event_date))
+                        FROM application_events ae
+                        WHERE ae.application_id = ja.id
+                          AND ae.event_type = 'STILL_ACTIVE'
+                  ), date(COALESCE(ja.applied_date, substr(ja.created_at, 1, 10)))) <= date('now', ?)
+                ORDER BY COALESCE(ja.applied_date, substr(ja.created_at, 1, 10)) ASC, ja.company ASC
+                """, rowMapper, age, age);
     }
 
     private long valueOrZero(Long value) {

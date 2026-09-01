@@ -2,6 +2,18 @@
 
 ## 1.4.0 (in progress)
 
+### Smarter Needs Attention
+
+- Replaces the old stale-only dashboard cue with a rule-based Needs Attention engine that surfaces one highest-value action per application.
+- Prioritizes explicit follow-up, passed/interview-imminent, recent-interview follow-up, quiet interview process, missing Prep, and missing linked People cues before lower-urgency reminders.
+- Adds lower-priority **Keep warm** cues for active applications that have received no response after 14 days or have gone quiet for 21+ days after meaningful lifecycle activity.
+- Keeps terminal, Closed, On Hold, and Saved-only records out of the attention queue; the dashboard still caps visible cues so the surface remains selective.
+- Direct actions link into the relevant workflow (Add activity, Add prep, Add contacts, or Update application), and Add activity opens the lifecycle composer directly.
+- Adds focused service/repository tests around rule priority, suppression, candidate eligibility, threshold boundaries, and attention ordering.
+- Adds an aging handoff for unanswered applications: 14+ days stays a Keep-warm reminder, 30+ days uses stronger likely-no-response copy, and 45+ day applications with no employer/lifecycle progress roll into the stale-review queue instead of consuming a top-five dashboard cue.
+- Tightens stale-review eligibility to **Applied + Active** applications that have no post-application lifecycle progress, keeping recruiter screens, assessments, interviews, and other progressed applications out of bulk closure. Ordinary metadata edits no longer reset this clock; explicitly choosing **Still active** records a review acknowledgement that defers stale review for another threshold window.
+- Refreshes the stale-review page around a 45-day default with 30 / 45 / 60 / 90-day thresholds, a safer bulk **Mark selected no response** action, confirmation prompts, and a compact dashboard roll-up showing how many applications are ready to review.
+
 ### Compensation context
 
 - Adds a compact **Salary context** card beneath Role Details on Application Detail.

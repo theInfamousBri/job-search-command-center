@@ -120,6 +120,52 @@ class JobApplicationServiceTest {
     }
 
     @Test
+    void stillActiveReviewMarkerIsInternalAndDoesNotAppearInApplicationTimeline() {
+        JobApplication current = application(46L, ApplicationStatus.APPLIED);
+        when(applications.findById(46L)).thenReturn(Optional.of(current));
+        ApplicationEvent applied = event(ApplicationEventType.APPLIED);
+        ApplicationEvent review = event(ApplicationEventType.STILL_ACTIVE);
+        when(events.findByApplicationId(46L)).thenReturn(List.of(applied, review));
+
+        assertThat(service.eventsForApplication(46L))
+                .extracting(ApplicationEvent::getEventType)
+                .containsExactly(ApplicationEventType.APPLIED);
+    }
+
+    @Test
+    void acknowledgeStillActiveRecordsAReviewEventInsteadOfTouchingApplicationMetadata() {
+        JobApplication current = application(45L, ApplicationStatus.APPLIED);
+        when(applications.findById(45L)).thenReturn(Optional.of(current));
+
+        service.acknowledgeStillActive(45L);
+
+        verify(applications, never()).touch(45L);
+        ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
+        verify(events).save(captor.capture());
+        assertThat(captor.getValue().getApplicationId()).isEqualTo(45L);
+        assertThat(captor.getValue().getEventType()).isEqualTo(ApplicationEventType.STILL_ACTIVE);
+        assertThat(captor.getValue().getEventDate()).isEqualTo(LocalDate.now());
+    }
+
+    @Test
+    void markNoResponseClosesApplicationAndCreatesLifecycleMilestone() {
+        JobApplication current = application(44L, ApplicationStatus.APPLIED);
+        JobApplication previous = application(44L, ApplicationStatus.APPLIED);
+        when(applications.findById(44L))
+                .thenReturn(Optional.of(current), Optional.of(previous));
+
+        service.markNoResponse(44L);
+
+        assertThat(current.getStatus()).isEqualTo(ApplicationStatus.NO_RESPONSE);
+        assertThat(current.getState()).isEqualTo(ApplicationState.CLOSED);
+        verify(applications).update(current);
+        ArgumentCaptor<ApplicationEvent> captor = ArgumentCaptor.forClass(ApplicationEvent.class);
+        verify(events).save(captor.capture());
+        assertThat(captor.getValue().getApplicationId()).isEqualTo(44L);
+        assertThat(captor.getValue().getEventType()).isEqualTo(ApplicationEventType.NO_RESPONSE);
+    }
+
+    @Test
     void deleteRemovesChildRowsBeforeApplication() {
         InOrder order = inOrder(contacts, materials, attachments, events, applications);
 

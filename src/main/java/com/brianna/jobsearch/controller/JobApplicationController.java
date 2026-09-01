@@ -31,6 +31,7 @@ import jakarta.validation.Valid;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -104,7 +105,9 @@ public class JobApplicationController {
 
     @ModelAttribute("eventTypes")
     public ApplicationEventType[] eventTypes() {
-        return ApplicationEventType.values();
+        return Arrays.stream(ApplicationEventType.values())
+                .filter(type -> type != ApplicationEventType.STILL_ACTIVE)
+                .toArray(ApplicationEventType[]::new);
     }
 
     @ModelAttribute("roleFamilies")
@@ -158,9 +161,9 @@ public class JobApplicationController {
 
     @GetMapping("/applications/stale")
     public String staleApplications(
-            @RequestParam(defaultValue = "21") int days,
+            @RequestParam(defaultValue = "45") int days,
             Model model) {
-        List<Integer> options = List.of(14, 21, 30, 45, 60);
+        List<Integer> options = List.of(30, 45, 60, 90);
         int threshold = options.contains(days) ? days : JobApplicationService.DEFAULT_STALE_DAYS;
         model.addAttribute("staleApplications", service.staleApplications(threshold));
         model.addAttribute("staleDays", threshold);
@@ -171,7 +174,7 @@ public class JobApplicationController {
     @PostMapping("/applications/{id}/stale/keep-active")
     public String keepActive(
             @PathVariable long id,
-            @RequestParam(defaultValue = "21") int days,
+            @RequestParam(defaultValue = "45") int days,
             RedirectAttributes redirectAttributes) {
         service.acknowledgeStillActive(id);
         redirectAttributes.addFlashAttribute("staleSuccess", "Application kept active and its review date was refreshed.");
@@ -181,7 +184,7 @@ public class JobApplicationController {
     @PostMapping("/applications/{id}/stale/no-response")
     public String markNoResponse(
             @PathVariable long id,
-            @RequestParam(defaultValue = "21") int days,
+            @RequestParam(defaultValue = "45") int days,
             RedirectAttributes redirectAttributes) {
         service.markNoResponse(id);
         redirectAttributes.addFlashAttribute("staleSuccess", "Application marked No Response and closed.");
@@ -191,7 +194,7 @@ public class JobApplicationController {
     @PostMapping("/applications/{id}/stale/follow-up")
     public String markFollowUpDue(
             @PathVariable long id,
-            @RequestParam(defaultValue = "21") int days,
+            @RequestParam(defaultValue = "45") int days,
             RedirectAttributes redirectAttributes) {
         service.markFollowUpDue(id);
         redirectAttributes.addFlashAttribute("staleSuccess", "Application marked Follow-up Due and added to the calendar.");
@@ -202,7 +205,7 @@ public class JobApplicationController {
     public String bulkStaleAction(
             @RequestParam(required = false) List<Long> selectedIds,
             @RequestParam String action,
-            @RequestParam(defaultValue = "21") int days,
+            @RequestParam(defaultValue = "45") int days,
             RedirectAttributes redirectAttributes) {
         try {
             int changed = service.applyStaleBulkAction(selectedIds, action);

@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Review stale applications · Job Search</title>
-    <link rel="stylesheet" th:href="@{/css/app.css?v=1.4.4-form-type}">
+    <title>Close stale applications · Job Search</title>
+    <link rel="stylesheet" th:href="@{/css/app.css?v=1.4.6-stale-meta}">
     <link rel="icon" type="image/svg+xml" th:href="@{/images/job-search-logo.svg}" href="/images/job-search-logo.svg">
 </head>
 <body>
@@ -17,8 +17,8 @@
             <div>
                 <a class="back-link" th:href="@{/applications}">← Applications</a>
                 <p class="eyebrow">PIPELINE HYGIENE</p>
-                <h1>Review stale applications</h1>
-                <p class="subtle">Decide what to do with active applications that have not changed recently. Nothing is closed automatically.</p>
+                <h1>Close stale applications</h1>
+                <p class="subtle">Review likely ghosted applications in one place. Nothing is closed automatically.</p>
             </div>
         </header>
 
@@ -28,11 +28,12 @@
         <section class="panel stale-controls-panel">
             <form method="get" th:action="@{/applications/stale}" class="stale-threshold-form">
                 <div>
-                    <p class="eyebrow">STALE THRESHOLD</p>
-                    <strong th:text="|${#lists.size(staleApplications)} application${#lists.size(staleApplications) == 1 ? '' : 's'} need review|">5 applications need review</strong>
+                    <p class="eyebrow">LIKELY NO RESPONSE</p>
+                    <strong th:text="|${#lists.size(staleApplications)} application${#lists.size(staleApplications) == 1 ? '' : 's'} ready to review|">5 applications ready to review</strong>
+                    <small>Applied + Active with no post-application lifecycle progress for the selected age.</small>
                 </div>
                 <label>
-                    <span>Untouched for</span>
+                    <span>No lifecycle progress for</span>
                     <select name="days" class="filter-control" onchange="this.form.submit()">
                         <option th:each="option : ${staleDayOptions}"
                                 th:value="${option}"
@@ -48,7 +49,7 @@
                 <span>✓</span>
                 <div>
                     <strong>All caught up</strong>
-                    <p th:text="|No active applications have gone untouched for ${staleDays}+ days.|">No stale applications.</p>
+                    <p th:text="|No Applied / Active applications meet the ${staleDays}+ day no-response criteria.|">No stale applications.</p>
                 </div>
             </div>
         </section>
@@ -61,9 +62,15 @@
                     <span>Select all</span>
                 </label>
                 <div class="stale-bulk-actions">
+                    <button class="button button-danger-soft"
+                            name="action"
+                            value="NO_RESPONSE"
+                            type="submit"
+                            onclick="return confirm('Mark the selected applications No Response and close them?');">
+                        Mark selected no response
+                    </button>
                     <button class="button button-secondary" name="action" value="KEEP_ACTIVE" type="submit">Keep active</button>
                     <button class="button button-secondary" name="action" value="FOLLOW_UP" type="submit">Set follow-up due</button>
-                    <button class="button button-danger-soft" name="action" value="NO_RESPONSE" type="submit">Mark no response</button>
                 </div>
             </form>
 
@@ -90,7 +97,7 @@
                                     <small th:text="${app.role}">Role</small>
                                 </span>
                             </a>
-                            <span class="stale-age" th:text="${app.staleAgeDisplay}">29 days since update</span>
+                            <span class="stale-age" th:text="${app.appliedAgeDisplay}">Applied 52 days ago</span>
                         </div>
 
                         <div class="stale-card-meta">
@@ -104,6 +111,7 @@
                                   th:classappend="${' priority-' + #strings.toLowerCase(app.priority.name())}"
                                   th:text="${app.priority.displayName}">High</span>
                             <span class="muted" th:text="|Applied ${app.appliedDateDisplay}|">Applied Jul 29, 2026</span>
+                            <span class="muted" th:text="${app.staleAgeDisplay}">45 days since update</span>
                         </div>
 
                         <p class="stale-next-step" th:if="${app.nextStep != null}">
@@ -112,10 +120,23 @@
                     </div>
 
                     <div class="stale-card-actions">
-                        <button type="submit" class="text-action" th:attr="form=|keep-active-${app.id}|">Still active</button>
-                        <button type="submit" class="text-action" th:attr="form=|follow-up-${app.id}|">Follow-up due</button>
-                        <button type="submit" class="text-action danger" th:attr="form=|no-response-${app.id}|">No response</button>
-                        <a class="text-action" th:href="@{/applications/{id}(id=${app.id})}">Open →</a>
+                        <button type="submit"
+                                class="stale-action-button stale-action-neutral"
+                                th:attr="form=|keep-active-${app.id}|">
+                            Still active
+                        </button>
+                        <button type="submit"
+                                class="stale-action-button stale-action-follow-up"
+                                th:attr="form=|follow-up-${app.id}|">
+                            Follow-up due
+                        </button>
+                        <button type="submit"
+                                class="stale-action-button stale-action-danger"
+                                th:attr="form=|no-response-${app.id}|"
+                                onclick="return confirm('Mark this application No Response and close it?');">
+                            Mark no response
+                        </button>
+                        <a class="stale-open-link" th:href="@{/applications/{id}(id=${app.id})}">Open →</a>
                     </div>
                 </article>
             </div>

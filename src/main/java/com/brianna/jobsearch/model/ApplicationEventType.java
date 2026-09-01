@@ -7,6 +7,7 @@ public enum ApplicationEventType {
     RECRUITER_CONTACT("Recruiter Outreach", ApplicationEventCategory.COMMUNICATION),
     INTERVIEW_SCHEDULED("Interview Scheduled", ApplicationEventCategory.COMMUNICATION),
     FOLLOW_UP("Follow Up", ApplicationEventCategory.COMMUNICATION),
+    STILL_ACTIVE("Still Active Check", ApplicationEventCategory.ACTIVITY),
 
     CODING_ASSESSMENT("Coding Assessment", ApplicationEventCategory.ASSESSMENT),
     TAKE_HOME_ASSESSMENT("Take-home Assessment", ApplicationEventCategory.ASSESSMENT),

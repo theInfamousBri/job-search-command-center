@@ -89,6 +89,7 @@ public class ApplicationEventRepository {
                 FROM application_events ae
                 JOIN job_applications ja ON ja.id = ae.application_id
                 WHERE ae.event_date BETWEEN ? AND ?
+                  AND ae.event_type <> 'STILL_ACTIVE'
                 ORDER BY ae.event_date ASC,
                          CASE WHEN ae.event_time IS NULL THEN 1 ELSE 0 END ASC,
                          ae.event_time ASC,

@@ -48,7 +48,9 @@ The landing page provides an at-a-glance view of the active job search:
 - response rate
 - recently updated applications
 - applications that need attention
-- a stale-application review queue for old active / awaiting-feedback records
+- a stale-application review queue for likely ghosted Applied / Active records, with safe bulk No Response closure
+
+Needs Attention intentionally hands old unanswered applications off in stages: a Keep-warm cue begins after 14 days, wording strengthens after 30 days, and applications that remain Applied / Active, untouched, and without post-application lifecycle activity for 45+ days move into the stale-review queue. The app never closes them automatically; the review screen supports individual or bulk **No Response / Closed** decisions, keeping interview-stage history out of the cleanup flow.
 
 ### Application tracker
 

@@ -56,6 +56,15 @@ public class ApplicationContactRepository {
                 """, contactMapper, applicationId);
     }
 
+    public long countByApplicationId(long applicationId) {
+        Long count = jdbcTemplate.queryForObject("""
+                SELECT COUNT(*)
+                FROM application_contact_links
+                WHERE application_id = ?
+                """, Long.class, applicationId);
+        return count == null ? 0L : count;
+    }
+
     public List<CompanyContact> findLinkableForApplication(long applicationId, String companyKey) {
         return jdbcTemplate.query("""
                 SELECT cc.id, cc.company_key, cc.name, cc.role, cc.relationship_type,

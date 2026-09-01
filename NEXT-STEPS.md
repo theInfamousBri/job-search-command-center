@@ -48,8 +48,8 @@ The working theme for v1.4 is making the command center faster, more connected, 
 2. **People ↔ Applications — completed** — company-level contacts now link many-to-many to applications without duplication, with application-page linking/unlinking and safe relationship cleanup. Lifecycle events can reference saved people in a later chunk.
 3. **Application Detail navigation — completed** — the overview now prioritizes Notes, compact People, and Role Details; long notes collapse gracefully; legacy career-tag UI is retired; and Overview / Timeline / Prep / Materials jump navigation keeps the server-rendered page easy to scan.
 4. **Global Search / `Ctrl/Cmd + K` — completed** — grouped, keyboard-first search now spans Applications, Companies, and People, with exact Requisition / Job ID matches promoted above fuzzy matches. Prep, timeline, saved-description, and richer local-content search can still layer onto the same surface later.
-5. **Compensation context — in progress** — Application Detail now parses common annual salary formats and compares the current role against tracked medians / middle-50% ranges, preferring Role Family peers, refining by Work Arrangement only when a stronger 10+ peer sample remains, and falling back carefully when the sample is too small.
-6. **Smarter Needs Attention** — context-aware interview/follow-up/prep cues with useful direct actions.
+5. **Compensation context — completed** — Application Detail now parses common annual salary formats and compares the current role against tracked medians / middle-50% ranges, preferring Role Family peers, refining by Work Arrangement only when a stronger 10+ peer sample remains, and falling back carefully when the sample is too small.
+6. **Smarter Needs Attention — in progress** — context-aware interview/follow-up/prep cues now prioritize interview/follow-up actions, add conservative Keep-warm reminders, and hand 45+ day Applied / Active applications with no lifecycle progress into a review-and-close queue rather than silently closing them. Metadata edits do not reset the ghosting clock; an explicit Still active review does.
 7. **Dark mode + accessibility** — System / Light / Dark theming plus contrast, keyboard, focus-state, semantic-label, and form-error polish.
 8. **Backup / Export + acceptance** — full SQLite backup, useful exports, database-size visibility, and final v1.4 release cleanup.
 
@@ -74,7 +74,7 @@ The palette already supports arrow-key navigation, Enter-to-open, Escape-to-clos
 
 ### 2. Smarter dashboard actions
 
-The 1.1.1 stale-review queue now handles old active applications. Continue making **Needs attention** more context-aware:
+The stale-review workflow now acts as the safe cleanup endpoint for truly untouched Applied / Active applications: 45+ day likely-no-response records can be reviewed and bulk-closed without mixing in progressed interview pipelines. Continue making **Needs attention** more context-aware:
 
 - `Waiting 5 days after technical interview`
 - interview tomorrow / prep incomplete

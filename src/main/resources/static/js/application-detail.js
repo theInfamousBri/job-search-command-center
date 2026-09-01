@@ -51,6 +51,13 @@
         requestAnimationFrame(() => serverOpenEditor.scrollIntoView({block: 'center', behavior: 'auto'}));
     }
 
+    // Dashboard attention actions can deep-link directly into the Add activity composer.
+    const activityComposer = document.getElementById('activity-composer');
+    if (activityComposer && window.location.hash === '#activity-composer') {
+        activityComposer.open = true;
+        requestAnimationFrame(() => activityComposer.scrollIntoView({block: 'center', behavior: 'auto'}));
+    }
+
     const manager = document.getElementById('manage-materials');
     if (!manager) return;
 
